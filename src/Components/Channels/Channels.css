@@ -1,0 +1,76 @@
+.channels-page {
+  padding: 1rem;
+  margin-left: 70px;
+}
+
+.channels-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions .icon {
+  margin-left: 10px;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.channel-filters {
+  margin: 1rem 0;
+  display: flex;
+  gap: 10px;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border: none;
+  background: #eee;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  color: #fff;
+}
+
+.channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.channel-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.channel-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+.channel-info {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.follow-btn {
+  background: #25d366;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+@media (max-width: 768px) {
+  .channels-page {
+    margin-left: 0;
+    margin-bottom: 60px; 
+  }
+}
