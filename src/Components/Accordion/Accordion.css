@@ -1,0 +1,22 @@
+.accordion {
+  background-color: var(--card-bg);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+.accordion-header {
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.accordion-content {
+  padding: 15px;
+  background-color: var(--content-bg);
+  color: var(--text-color);
+}

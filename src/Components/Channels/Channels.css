@@ -1,6 +1,9 @@
 .channels-page {
   padding: 1rem;
   margin-left: 70px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  height: 100vh;
 }
 
 .channels-header {
@@ -30,7 +33,7 @@
 }
 
 .filter-btn.active {
-  color: #fff;
+  color: var(--text-color);
 }
 
 .channel-list {
@@ -43,10 +46,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
+  background: var(--bg-color);
   padding: 10px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px var(--text-color);
 }
 
 .channel-img {

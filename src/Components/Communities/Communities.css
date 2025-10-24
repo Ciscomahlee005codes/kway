@@ -1,6 +1,9 @@
 .communities {
   padding: 20px;
   margin-left: 70px;
+  background: var(--bg-color);
+  color: black;
+  height: 100vh;
 }
 
 .communities-header {
@@ -13,6 +16,7 @@
 .communities-header h2 {
   font-size: 20px;
   font-weight: bold;
+  color: var(--text-color);
 }
 
 .communities-list {
@@ -25,7 +29,7 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  background: #f8f9fa;
+  background: var(--bg-color);
   padding: 12px;
   border-radius: 12px;
   cursor: pointer;
@@ -33,7 +37,7 @@
 }
 
 .community-card:hover {
-  background: #eaeaea;
+  background: var(--secondary-bg);
 }
 
 .community-card img {
@@ -51,11 +55,12 @@
   margin: 0;
   font-size: 16px;
   font-weight: bold;
+  color: var(--text-color);
 }
 
 .community-info p {
   font-size: 13px;
-  color: #555;
+  color: var(--text-color);
   margin: 5px 0;
 }
 
@@ -75,7 +80,7 @@
 
 .arrow-icon {
   font-size: 18px;
-  color: #333;
+  color: var(--text-color);
 }
 
 .create-community {
@@ -85,6 +90,7 @@
   gap: 10px;
   padding: 12px;
   border: 1px dashed #aaa;
+  color: var(--text-color);
   border-radius: 10px;
   cursor: pointer;
 }

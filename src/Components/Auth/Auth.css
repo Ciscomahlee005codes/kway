@@ -1,0 +1,156 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css");
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  background-color: #f5fdf9;
+}
+
+/* Whole container split into two halves */
+.auth-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Left banner */
+.auth-banner {
+  flex: 1;
+  background: #0d6329;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.banner-content h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.banner-content p {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.banner-img {
+  width: 70%;
+  max-width: 320px;
+  border-radius: 20px;
+  margin-top: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.logo-img{
+  width: 100px;
+}
+.logo-circle {
+  background-color: #fff;
+  color: #0d6329;
+  font-size: 1.8rem;
+  border-radius: 50%;
+  height: 80px;
+  width: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 1rem auto;
+}
+
+/* Right side form */
+.auth-card {
+  flex: 1;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2.5rem;
+  box-shadow: -3px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.form-box {
+  width: 100%;
+  max-width: 370px;
+  text-align: center;
+}
+
+.form-box h2 {
+  color: #075e54;
+  margin-bottom: 0.3rem;
+}
+
+.subtitle {
+  color: #777;
+  margin-bottom: 1.5rem;
+}
+
+input {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  border-color: #0d6329;
+  outline: none;
+}
+
+button {
+  width: 100%;
+  background-color: #0d6329;
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background-color: #0a943f;
+}
+
+.switch-text {
+  margin-top: 1rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.switch-text span {
+  color: #0d6d30;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch-text span:hover {
+  color: #128c7e;
+}
+
+/* Responsive for small devices */
+@media (max-width: 850px) {
+  .auth-container {
+    flex-direction: column;
+  }
+
+  .auth-banner {
+    height: 35vh;
+    padding: 1.5rem;
+  }
+
+  .auth-card {
+    height: 65vh;
+  }
+
+  .banner-img {
+    display: none;
+  }
+}

@@ -1,7 +1,60 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
-*{
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600&display=swap');
+
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Roboto", sans-serif;
+  font-family: 'Rubik', sans-serif;
+}
+
+/* 🌞 Default Light Mode (like WhatsApp) */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #111b21; /* WhatsApp text grayish-black */
+  --accent-color: #0d6329; /* WhatsApp green */
+  --secondary-bg: #f0f2f5; /* chat bubbles / side panel */
+  --border-color: #e0e0e0;
+}
+
+/* 🌚 Dark Mode (like WhatsApp dark) */
+/* [data-theme="dark"] {
+  --bg-color: #111b21;
+  --text-color: #e9edef;
+  --accent-color: #25d366;
+  --secondary-bg: #202c33;
+  --border-color: #2a3942;
+} */
+
+/* 💙 Blue Theme */
+/* [data-theme="blue"] {
+  --bg-color: #eaf3ff;
+  --text-color: #002b5c;
+  --accent-color: #007bff;
+  --secondary-bg: #d4e6ff;
+  --border-color: #b0d4ff;
+} */
+
+/* 💚 Green Theme */
+/* [data-theme="green"] {
+  --bg-color: #eaffea;
+  --text-color: #003300;
+  --accent-color: #27ae60;
+  --secondary-bg: #d9f5dc;
+  --border-color: #b6e2b9;
+} */
+
+/* Apply globally */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Optional utility styles */
+.border {
+  border: 1px solid var(--border-color);
+}
+
+.bg-secondary {
+  background-color: var(--secondary-bg);
 }

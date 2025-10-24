@@ -1,51 +1,108 @@
 import React, { useState } from "react";
 import "./Chats.css";
-import { FiSearch } from "react-icons/fi";
+import { FiSearch, FiMic, FiPhone, FiVideo } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdAdd } from "react-icons/io";
-import { IoArrowBack } from "react-icons/io5"; 
-import KwayLogo from "../../assets/kway-logo-1.png"
+import { IoArrowBack } from "react-icons/io5";
+import KwayLogo from "../../assets/kway-logo-1.png";
 
-// Dummy chats
-const dummyChats = [
-  { id: 1, name: "John Doe", lastMessage: "Hey, how are you?", time: "10:30 AM" },
-  { id: 2, name: "Jane Smith", lastMessage: "Meeting at 5?", time: "09:45 AM" },
-  { id: 3, name: "Dev Group", lastMessage: "Push your code pls 🚀", time: "Yesterday" },
-  { id: 4, name: "Samuel", lastMessage: "Check this out!", time: "Monday" },
+const initialChats = [
+  { id: 1, name: "John Doe", lastMessage: "Hey, how are you?", time: "10:30 AM", active: true, messages: [] },
+  { id: 2, name: "Jane Smith", lastMessage: "Meeting at 5?", time: "09:45 AM", active: false, messages: [] },
+  { id: 3, name: "Dev Group", lastMessage: "Push your code pls 🚀", time: "Yesterday", active: true, messages: [] },
+  { id: 4, name: "Samuel", lastMessage: "Check this out!", time: "Monday", active: false, messages: [] },
 ];
 
 const Chats = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [chats, setChats] = useState(initialChats);
   const [activeChat, setActiveChat] = useState(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newContact, setNewContact] = useState({ name: "", lastMessage: "", phone: "" });
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  const handleVoiceClick = () => {
+    setRecording(true);
+    setTimeout(() => setRecording(false), 3000);
+  };
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) return;
+    const updatedChats = chats.map((chat) => {
+      if (chat.id === activeChat.id) {
+        const updatedMessages = [
+          ...(chat.messages || []),
+          { sender: "you", text: newMessage, time: "Now" },
+        ];
+        return { ...chat, messages: updatedMessages, lastMessage: newMessage, time: "Now" };
+      }
+      return chat;
+    });
+    setChats(updatedChats);
+    setActiveChat({
+      ...activeChat,
+      messages: [...(activeChat.messages || []), { sender: "you", text: newMessage, time: "Now" }],
+    });
+    setNewMessage("");
+  };
+
+  const handleAddContact = (e) => {
+    e.preventDefault();
+    if (!newContact.name) return;
+    const newChat = {
+      id: chats.length + 1,
+      name: newContact.name,
+      lastMessage: newContact.lastMessage || "New contact added",
+      time: "Now",
+      active: true,
+      messages: [],
+    };
+    setChats([...chats, newChat]);
+    setShowAddModal(false);
+    setNewContact({ name: "", lastMessage: "", phone: "" });
+  };
 
   return (
     <div className="chat-wrapper">
-      {/* Left Section - Chat List */}
+      {/* LEFT SECTION */}
       <div className={`chat-list-section ${activeChat ? "hide-on-mobile" : ""}`}>
-        {/* Header */}
         <div className="chat-header">
           <div className="chat-logo">
             <img src={KwayLogo} alt="Logo" />
           </div>
-        
 
           <div className="chat-actions">
-            <div className="chat-search">
-              <FiSearch className="search-icon" />
-              <input type="text" placeholder="Search..." />
+            <div className="mini-search-wrapper">
+              <FiSearch
+                className="search-icon"
+                title="Search Messages"
+                onClick={() => setShowSearch(!showSearch)}
+              />
+              {showSearch && (
+                <input
+                  type="text"
+                  className="mini-search-input"
+                  placeholder="Search messages..."
+                />
+              )}
             </div>
 
-            <IoMdAdd className="new-chat-icon" title="New Chat" />
+            <IoMdAdd
+              className="new-chat-icon"
+              title="Add New Contact"
+              onClick={() => setShowAddModal(true)}
+            />
 
             <div className="dropdown-wrapper">
               <BsThreeDotsVertical
                 className="menu-icon"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onClick={() => setShowDropdown(!showDropdown)}
               />
-              {dropdownOpen && (
-                <div className="dropdown-menu">
-                  <p>Profile</p>
-                  <p>Archived</p>
+              {showDropdown && (
+                <div className="dropdown-menu animated-dropdown">
+                  <p>WhatsApp</p>
                   <p>Settings</p>
                   <p>Logout</p>
                 </div>
@@ -54,17 +111,8 @@ const Chats = () => {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="chat-filters">
-          <button className="filter-btn active">All</button>
-          <button className="filter-btn">Unread</button>
-          <button className="filter-btn">Favorite</button>
-          <button className="filter-btn">Groups</button>
-        </div>
-
-        {/* Chat List */}
         <div className="chat-list">
-          {dummyChats.map((chat) => (
+          {chats.map((chat) => (
             <div
               key={chat.id}
               className={`chat-item ${activeChat?.id === chat.id ? "active" : ""}`}
@@ -81,31 +129,94 @@ const Chats = () => {
         </div>
       </div>
 
-      {/* Right Section - Active Chat */}
+      {/* RIGHT SECTION */}
       <div className={`chat-window ${activeChat ? "active" : ""}`}>
         {activeChat ? (
           <div className="chat-window-content">
             <div className="chat-window-header">
-              {/* Back button visible only on mobile */}
-              <IoArrowBack
-                className="back-btn"
-                onClick={() => setActiveChat(null)}
-              />
-              <h3>{activeChat.name}</h3>
+              <IoArrowBack className="back-btn" onClick={() => setActiveChat(null)} />
+              <div className="user-name-section">
+                <h3>{activeChat.name}</h3>
+                <span
+                  className={`status-dot ${activeChat.active ? "online" : "offline"}`}
+                  title={activeChat.active ? "Active" : "Offline"}
+                ></span>
+              </div>
+              <div className="header-actions">
+                <FiPhone className="action-icon" />
+                <FiVideo className="action-icon" />
+              </div>
             </div>
+
             <div className="chat-messages">
-              <p><strong>{activeChat.name}:</strong> {activeChat.lastMessage}</p>
-              <p><strong>You:</strong> Sure! 👍</p>
+              {(activeChat.messages || []).map((msg, index) => (
+                <div
+                  key={index}
+                  className={`message-bubble ${msg.sender === "you" ? "sent" : "received"}`}
+                >
+                  <p>{msg.text}</p>
+                </div>
+              ))}
             </div>
+
             <div className="chat-input">
-              <input type="text" placeholder="Type a message..." />
-              <button>Send</button>
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+              />
+              <button onClick={handleSendMessage}>Send</button>
+              <div
+                className={`voice-note-btn ${recording ? "recording" : ""}`}
+                onClick={handleVoiceClick}
+                title="Record Voice Note"
+              >
+                <FiMic />
+                {recording && <span className="pulse"></span>}
+              </div>
             </div>
           </div>
         ) : (
           <div className="empty-chat">👈 Select a chat to start messaging</div>
         )}
       </div>
+
+      {/* ADD CONTACT MODAL */}
+      {showAddModal && (
+        <div className="add-contact-modal">
+          <div className="modal-content">
+            <h3>Add New Contact</h3>
+            <form onSubmit={handleAddContact}>
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={newContact.name}
+                onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Phone Number"
+                value={newContact.phone}
+                onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Last Message (optional)"
+                value={newContact.lastMessage}
+                onChange={(e) => setNewContact({ ...newContact, lastMessage: e.target.value })}
+              />
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowAddModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
