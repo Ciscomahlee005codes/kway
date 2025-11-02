@@ -2,6 +2,9 @@ import React from "react";
 import { FiSearch } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { MdAdd } from "react-icons/md";
+import TechLogo from "../../assets/Tech-community.jpeg"
+import FootBallIcon from "../../assets/manU.png";
+import HealthLogo from "../../assets/health.png"
 import "./Channels.css";
 
 const Channels = () => {
@@ -10,19 +13,19 @@ const Channels = () => {
       id: 1,
       name: "Tech Updates",
       description: "Latest news in tech",
-      image: "https://via.placeholder.com/50",
+      image: TechLogo,
     },
     {
       id: 2,
       name: "Football Hub",
       description: "All about football 🔥",
-      image: "https://via.placeholder.com/50",
+      image: FootBallIcon,
     },
     {
       id: 3,
       name: "Health & Fitness",
       description: "Daily fitness motivation",
-      image: "https://via.placeholder.com/50",
+      image: HealthLogo,
     },
   ];
 

@@ -107,3 +107,11 @@
   color: #777;
   padding: 1rem 0;
 }
+@media (max-width: 768px) {
+  .contact-list-wrapper {
+  /* max-width: 600px; */
+  background: var(--bg-color);
+  padding: 20px;
+  margin-left: 0px;
+}
+}

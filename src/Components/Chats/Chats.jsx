@@ -4,7 +4,8 @@ import { FiSearch, FiMic, FiPhone, FiVideo } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdAdd } from "react-icons/io";
 import { IoArrowBack } from "react-icons/io5";
-import KwayLogo from "../../assets/kway-logo-1.png";
+import { FiSend } from "react-icons/fi";
+import { NavLink } from 'react-router-dom';
 
 const initialChats = [
   { id: 1, name: "John Doe", lastMessage: "Hey, how are you?", time: "10:30 AM", active: true, messages: [] },
@@ -70,7 +71,7 @@ const Chats = () => {
       <div className={`chat-list-section ${activeChat ? "hide-on-mobile" : ""}`}>
         <div className="chat-header">
           <div className="chat-logo">
-            <img src={KwayLogo} alt="Logo" />
+            <h3><span className="special">K</span>Way</h3>
           </div>
 
           <div className="chat-actions">
@@ -102,9 +103,10 @@ const Chats = () => {
               />
               {showDropdown && (
                 <div className="dropdown-menu animated-dropdown">
-                  <p>WhatsApp</p>
-                  <p>Settings</p>
-                  <p>Logout</p>
+                  <NavLink to="/help">Help & Support</NavLink>
+                  <NavLink to="/settings">Settings</NavLink>
+                  <NavLink to="/profile">Profile</NavLink>
+                  <NavLink to="/saved">Saved Messages</NavLink>
                 </div>
               )}
             </div>
@@ -159,24 +161,33 @@ const Chats = () => {
               ))}
             </div>
 
-            <div className="chat-input">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              />
-              <button onClick={handleSendMessage}>Send</button>
-              <div
-                className={`voice-note-btn ${recording ? "recording" : ""}`}
-                onClick={handleVoiceClick}
-                title="Record Voice Note"
-              >
-                <FiMic />
-                {recording && <span className="pulse"></span>}
-              </div>
-            </div>
+            <div className="chat-input-wrapper">
+  <div className="chat-input-box">
+    <input
+      type="text"
+      placeholder="Type a message..."
+      value={newMessage}
+      onChange={(e) => setNewMessage(e.target.value)}
+      onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+    />
+
+    <FiSend 
+      className="chat-send-icon"
+      onClick={handleSendMessage}
+    />
+  </div>
+
+  <div
+    className={`chat-voice-btn ${recording ? "chat-voice-recording" : ""}`}
+    onClick={handleVoiceClick}
+    title="Record Voice Note"
+  >
+    <FiMic />
+    {recording && <span className="chat-voice-pulse"></span>}
+  </div>
+</div>
+
+
           </div>
         ) : (
           <div className="empty-chat">👈 Select a chat to start messaging</div>

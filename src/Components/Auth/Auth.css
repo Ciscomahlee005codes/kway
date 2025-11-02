@@ -103,7 +103,7 @@ input:focus {
   outline: none;
 }
 
-button {
+.login-btn{
   width: 100%;
   background-color: #0d6329;
   color: white;

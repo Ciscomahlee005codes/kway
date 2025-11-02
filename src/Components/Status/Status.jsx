@@ -132,9 +132,9 @@ const Status = () => {
     <div className="status-page">
       {/* Header */}
       <div className="status-header">
-        <div className="status-logo">
-          <img src={KwayLogo} alt="Logo" />
-        </div>
+        <div className="chat-logo">
+            <h3><span className="special">K</span>Way</h3>
+          </div>
         <h2 className="status-title">Status</h2>
         <BsThreeDotsVertical className="status-menu" />
       </div>

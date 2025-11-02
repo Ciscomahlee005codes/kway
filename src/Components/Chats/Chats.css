@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Slab:ital,wght@0,100..700;1,100..700&family=Permanent+Marker&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Josefin+Slab:ital,wght@0,100..700;1,100..700&family=Permanent+Marker&display=swap');
 /* Chat Css */
 .chat-wrapper {
   display: flex;
@@ -27,11 +29,13 @@
   border-bottom: 1px solid rgba(0,0,0,0.1);
   height: 60px;
 }
-
-.chat-logo img {
-  height: 95px;
-  width: auto;
-  object-fit: contain;
+.special{
+  color: green;
+   font-family: "Caveat Brush", cursive;
+}
+.chat-logo h3{
+   font-family: "Permanent Marker", cursive;
+   font-size: 26px;
   display: block;
 }
 
@@ -80,6 +84,7 @@
 }
 
 .dropdown-menu {
+  display: grid;
   position: absolute;
   top: 120%;
   right: 0;
@@ -91,14 +96,14 @@
   z-index: 20;
 }
 
-.dropdown-menu p {
+.dropdown-menu a {
   margin: 0;
   padding: 0.5rem 1.5rem;
   cursor: pointer;
   color: var(--text-color);
 }
 
-.dropdown-menu p:hover {
+.dropdown-menu a:hover {
   background: rgba(0,0,0,0.05);
 }
 
@@ -232,17 +237,71 @@
 }
 
 /* Keep input fixed at bottom */
-.chat-input {
+.chat-input-wrapper {
   position: sticky;
   bottom: 0;
   left: 0;
   right: 0;
-  border-top: 1px solid rgba(0,0,0,0.1);
-  background: var(--bg-color);
   padding: 10px;
+  background: var(--bg-color);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  z-index: 5;
+}
+
+.chat-input-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--secondary-bg);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 25px;
+  padding: 8px 15px;
+}
+
+.chat-input-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 15px;
+}
+
+.chat-send-icon {
+  font-size: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chat-send-icon:hover {
+  opacity: 0.7;
+  transform: scale(1.1);
+}
+
+/* Voice button circle */
+.chat-voice-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+
+.chat-voice-btn:hover {
+  opacity: 0.8;
+}
+
+.chat-voice-recording {
+  background: #e53935;
+  animation: pulseMic 1s infinite;
 }
 
 
@@ -265,18 +324,21 @@
   background: transparent;
 }
 
-.chat-input button {
+.chat-send-btn {
   background: var(--accent-color);
-  color: #fff;
   border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
+  /* padding: 0.65rem 1.2rem; */
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: opacity 0.3s;
+  font-weight: 600;
+  transition: 0.25s;
 }
 
-.chat-input button:hover {
-  opacity: 0.9;
+.chat-send-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
 }
 
 .empty-chat {
@@ -409,49 +471,36 @@
   color: var(--accent-color);
 }
 
-/* Voice note button */
-.voice-note-btn {
+.chat-voice-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: var(--accent-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent-color);
-  color: white;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
   cursor: pointer;
-  transition: all 0.3s ease;
-  overflow: hidden;
   position: relative;
 }
 
-.voice-note-btn.recording {
-  background: #d32f2f;
-  transform: scale(1.1);
+.chat-voice-recording {
+  background: #e53935;
+  animation: pulseMic 1s infinite;
 }
 
-.voice-note-btn .pulse {
+.chat-voice-pulse {
   position: absolute;
   width: 100%;
   height: 100%;
+  background: rgba(227, 39, 39, 0.4);
   border-radius: 50%;
-  background: rgba(211, 47, 47, 0.4);
-  animation: pulseAnim 1s infinite;
+  animation: pulseMic 1s infinite;
 }
 
-@keyframes pulseAnim {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.4;
-  }
-  100% {
-    transform: scale(0.9);
-    opacity: 0.7;
-  }
+@keyframes pulseMic {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 0.4; }
+  100% { transform: scale(0.9); opacity: 0.7; }
 }
 
 /* Dropdown animation */

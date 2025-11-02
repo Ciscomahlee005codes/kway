@@ -121,7 +121,7 @@
   }
 
   .bottom-link:hover {
-    color: var(--accent-color);
+    color: white;
     transform: translateY(-3px);
   }
 

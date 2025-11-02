@@ -11,11 +11,11 @@ import { NavLink } from 'react-router-dom';
 
 const Sidebar = () => {
   const topLinks = [
-    { icon: <BsFillChatSquareTextFill />, label: "Chats", link: "/" },
+    { icon: <BsFillChatSquareTextFill />, label: "Chats", link: "/chat" },
     { icon: <HiOutlineStatusOnline />, label: "Status", link: "/status" },
     { icon: <MdLiveTv />, label: "Channels", link: "/channels" },
     { icon: <FaUsers />, label: "Groups", link: "/communities" },
-    { icon: <TiContacts />, label: "Contacts", link: "/conactlist" },
+    { icon: <TiContacts />, label: "Contacts", link: "/contactlist" },
   ];
 
   const bottomLinks = [
@@ -59,20 +59,23 @@ const Sidebar = () => {
       </div>
 
       {/* Bottom Nav for Mobile */}
-      <div className="bottom-nav">
-        {[...topLinks, ...bottomLinks].map((link, idx) => (
-          <NavLink 
-            key={idx}  
-            to={link.link} 
-            className={({ isActive }) => 
-              `bottom-link ${isActive ? "active-bottom-link" : ""}`
-            }
-          >
-            {link.icon}
-            <span>{link.label}</span>
-          </NavLink>
-        ))}
-      </div>
+<div className="bottom-nav">
+  {[...topLinks, ...bottomLinks]
+    .filter(link => link.label !== "Settings") // ✅ hide settings on mobile
+    .map((link, idx) => (
+      <NavLink 
+        key={idx}  
+        to={link.link} 
+        className={({ isActive }) => 
+          `bottom-link ${isActive ? "active-bottom-link" : ""}`
+        }
+      >
+        {link.icon}
+        <span>{link.label}</span>
+      </NavLink>
+  ))}
+</div>
+
     </div>
   )
 }

@@ -80,7 +80,7 @@ const Auth = () => {
                 onChange={handleChange}
               />
 
-              <button onClick={handleSubmit} disabled={isLoading}>
+              <button onClick={handleSubmit} disabled={isLoading} className="login-btn">
                 {isLoading ? "Logging in..." : "Login"}
               </button>
 
@@ -122,7 +122,7 @@ const Auth = () => {
                 onChange={handleChange}
               />
 
-              <button onClick={handleSubmit} disabled={isLoading}>
+              <button onClick={handleSubmit} disabled={isLoading} className="login-btn">
                 {isLoading ? "Creating..." : "Sign Up"}
               </button>
 

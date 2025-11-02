@@ -1,6 +1,9 @@
 import React from "react";
 import { FaUsers } from "react-icons/fa";
 import { IoIosArrowForward } from "react-icons/io";
+import TechLogo from "../../assets/Tech-community.jpeg"
+import HealthLogo from "../../assets/health.png"
+import StudentIcon from "../../assets/school-logo.jpeg"
 import "./Communities.css";
 
 const Communities = () => {
@@ -10,21 +13,21 @@ const Communities = () => {
       name: "Tech Enthusiasts",
       description: "A hub for developers, designers & techies.",
       groups: ["Web Devs", "AI Researchers", "UI/UX Team"],
-      image: "https://via.placeholder.com/80",
+      image: TechLogo,
     },
     {
       id: 2,
       name: "Fitness & Health",
       description: "Stay fit, eat well, and live healthy.",
       groups: ["Yoga", "Workout Buddies", "Diet Plans"],
-      image: "https://via.placeholder.com/80",
+      image: HealthLogo,
     },
     {
       id: 3,
       name: "Student Connect",
       description: "For learners across different universities.",
       groups: ["Engineering", "Medical Students", "Business Class"],
-      image: "https://via.placeholder.com/80",
+      image: StudentIcon,
     },
   ];
 

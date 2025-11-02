@@ -1,25 +1,29 @@
-import React, { useState } from "react";
-import { IoArrowBack, IoChevronForward } from "react-icons/io5";
-import { FaUserCircle, FaLock, FaBell, FaPaintBrush, FaInfoCircle, FaQuestionCircle, FaLanguage } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { IoChevronForward } from "react-icons/io5";
+import { 
+  FaUserCircle, FaLock, FaBell, FaPaintBrush, 
+  FaInfoCircle, FaQuestionCircle, FaLanguage 
+} from "react-icons/fa";
 import "./Settings.css";
 
 const Settings = () => {
   const [theme, setTheme] = useState("light");
 
+  useEffect(() => {
+    document.body.setAttribute("data-theme", theme);
+  }, [theme]);
+
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    document.body.setAttribute("data-theme", newTheme);
-    setTheme(newTheme);
+    setTheme(theme === "light" ? "dark" : "light");
   };
 
   return (
     <div className="settings-page">
-      {/* Header */}
+      
       <div className="settings-header">
         <h2>Settings</h2>
       </div>
 
-      {/* Profile section */}
       <div className="settings-profile">
         <FaUserCircle className="profile-picture" />
         <div className="profile-info">
@@ -28,8 +32,8 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Settings list */}
       <div className="settings-list">
+
         <div className="settings-item">
           <FaLock className="item-icon" />
           <div className="item-text">
@@ -52,11 +56,13 @@ const Settings = () => {
           <FaPaintBrush className="item-icon" />
           <div className="item-text">
             <h4>Appearance</h4>
-            <p>Light / Dark mode & colors</p>
+            <p>Light / Dark theme</p>
           </div>
-          <button onClick={toggleTheme} className="theme-toggle">
-            {theme === "light" ? "🌙" : "☀️"}
-          </button>
+
+          <label className="switch">
+            <input type="checkbox" checked={theme === "dark"} onChange={toggleTheme} />
+            <span className="slider"></span>
+          </label>
         </div>
 
         <div className="settings-item">
@@ -72,7 +78,7 @@ const Settings = () => {
           <FaInfoCircle className="item-icon" />
           <div className="item-text">
             <h4>Help</h4>
-            <p>FAQ, contact us, privacy policy</p>
+            <p>FAQ, contact us</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
@@ -85,7 +91,9 @@ const Settings = () => {
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
+
       </div>
+
     </div>
   );
 };
