@@ -168,6 +168,12 @@
   margin-right: 12px;
   font-weight: bold;
 }
+.chat-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
 
 .chat-info h4 {
   margin: 0;

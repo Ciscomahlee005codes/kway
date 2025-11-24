@@ -1,0 +1,122 @@
+/* FULL SCREEN OVERLAY */
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 5, 0.85);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  animation: fadeIn 0.3s ease;
+}
+
+/* CONTAINER */
+.call-container {
+  text-align: center;
+  color: #fff;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  animation: slideUp 0.4s ease;
+}
+
+.call-avatar-wrapper {
+  margin-bottom: 20px;
+}
+
+.call-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 4px solid #1dbf73;
+  object-fit: cover;
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* ANIMATIONS */
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(29, 191, 115, 0.7); }
+  70% { box-shadow: 0 0 25px 20px rgba(29, 191, 115, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(29, 191, 115, 0); }
+}
+
+.animate-bounce {
+  animation: bounce 0.8s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(-4px); }
+  50% { transform: translateY(4px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* USER TEXT */
+.call-info-text h2 {
+  font-size: 26px;
+  margin: 10px 0 5px;
+}
+
+.call-info-text p {
+  opacity: 0.7;
+  font-size: 15px;
+}
+
+/* ACTION BUTTONS */
+.call-actions {
+  margin-top: 35px;
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+}
+
+.call-circle {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  font-size: 22px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.call-circle.cancel {
+  background: #ff3333;
+  box-shadow: 0 0 15px #ff3333aa;
+}
+
+.call-circle.end {
+  background: #1dbf73;
+  box-shadow: 0 0 15px #1dbf73aa;
+}
+
+/* MOBILE FULL SCREEN */
+@media (max-width: 600px) {
+  .call-container {
+    max-width: 100%;
+    padding: 40px 20px;
+  }
+
+  .call-avatar {
+    width: 170px;
+    height: 170px;
+  }
+
+  .call-circle {
+    width: 70px;
+    height: 70px;
+    font-size: 24px;
+  }
+}

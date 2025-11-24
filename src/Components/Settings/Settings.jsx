@@ -7,14 +7,20 @@ import {
 import "./Settings.css";
 
 const Settings = () => {
-  const [theme, setTheme] = useState("light");
+
+  // Default theme = light
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("app-theme");
+    return saved ? saved : "light";
+  });
 
   useEffect(() => {
-    document.body.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("app-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    setTheme(prev => prev === "light" ? "dark" : "light");
   };
 
   return (
@@ -47,20 +53,26 @@ const Settings = () => {
           <FaBell className="item-icon" />
           <div className="item-text">
             <h4>Notifications</h4>
-            <p>Message, group & call tones</p>
+            <p>Messages & call tones</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
 
+        {/* APPEARANCE */}
         <div className="settings-item">
           <FaPaintBrush className="item-icon" />
           <div className="item-text">
             <h4>Appearance</h4>
-            <p>Light / Dark theme</p>
+            <p>Light / Dark mode</p>
           </div>
 
+          {/* SWITCH */}
           <label className="switch">
-            <input type="checkbox" checked={theme === "dark"} onChange={toggleTheme} />
+            <input
+              type="checkbox"
+              checked={theme === "dark"}
+              onChange={toggleTheme}
+            />
             <span className="slider"></span>
           </label>
         </div>
@@ -78,7 +90,7 @@ const Settings = () => {
           <FaInfoCircle className="item-icon" />
           <div className="item-text">
             <h4>Help</h4>
-            <p>FAQ, contact us</p>
+            <p>FAQ, Contact Support</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
@@ -87,7 +99,7 @@ const Settings = () => {
           <FaQuestionCircle className="item-icon" />
           <div className="item-text">
             <h4>About</h4>
-            <p>App version, developer info</p>
+            <p>Version, Developer info</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>

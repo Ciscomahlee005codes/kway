@@ -1,18 +1,82 @@
 import React, { useState } from "react";
 import "./Chats.css";
+import CallModal from "./CallModal";
 import { FiSearch, FiMic, FiPhone, FiVideo } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdAdd } from "react-icons/io";
 import { IoArrowBack } from "react-icons/io5";
 import { FiSend } from "react-icons/fi";
 import { NavLink } from 'react-router-dom';
+import ChatImg1 from "../../assets/chatImg-1.jpg"
+import ChatImg2 from "../../assets/chatImg-2.jpg"
+import ChatImg3 from "../../assets/chatImg-3.jpg"
+import ChatImg4 from "../../assets/chatImg-4.jpg"
 
 const initialChats = [
-  { id: 1, name: "John Doe", lastMessage: "Hey, how are you?", time: "10:30 AM", active: true, messages: [] },
-  { id: 2, name: "Jane Smith", lastMessage: "Meeting at 5?", time: "09:45 AM", active: false, messages: [] },
-  { id: 3, name: "Dev Group", lastMessage: "Push your code pls 🚀", time: "Yesterday", active: true, messages: [] },
-  { id: 4, name: "Samuel", lastMessage: "Check this out!", time: "Monday", active: false, messages: [] },
+  { 
+    id: 1, 
+    name: "John Doe", 
+    avatar: ChatImg1,
+    lastMessage: "Hey, how are you?", 
+    time: "10:30 AM", 
+    active: true, 
+    messages: [] 
+  },
+  { 
+    id: 2, 
+    name: "Jane Smith", 
+    avatar: ChatImg2,
+    lastMessage: "Meeting at 5?", 
+    time: "09:45 AM", 
+    active: false, 
+    messages: [] 
+  },
+  { 
+    id: 3, 
+    name: "Dev Group", 
+    lastMessage: "Push your code pls 🚀", 
+    time: "Yesterday", 
+    active: true, 
+    messages: [] 
+  },
+  { 
+    id: 4, 
+    name: "Samuel", 
+    avatar: ChatImg4,
+    lastMessage: "Check this out!", 
+    time: "Monday", 
+    active: false, 
+    messages: [] 
+  },
+
+  // These ones will remain WITHOUT images
+  { 
+    id: 5, 
+    name: "Tochukwu", 
+     avatar: ChatImg3,
+    lastMessage: "Afa Kosi", 
+    time: "Monday", 
+    active: false, 
+    messages: [] 
+  },
+  { 
+    id: 6, 
+    name: "Chekwube", 
+    lastMessage: "I've Sent it", 
+    time: "Monday", 
+    active: false, 
+    messages: [] 
+  },
+  { 
+    id: 7, 
+    name: "My Mummy", 
+    lastMessage: "Asa Nwam", 
+    time: "Yesterday", 
+    active: false, 
+    messages: [] 
+  },
 ];
+
 
 const Chats = () => {
   const [chats, setChats] = useState(initialChats);
@@ -23,6 +87,9 @@ const Chats = () => {
   const [newContact, setNewContact] = useState({ name: "", lastMessage: "", phone: "" });
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showCallModal, setShowCallModal] = useState(false);
+const [callType, setCallType] = useState("voice");
+
 
   const handleVoiceClick = () => {
     setRecording(true);
@@ -120,7 +187,14 @@ const Chats = () => {
               className={`chat-item ${activeChat?.id === chat.id ? "active" : ""}`}
               onClick={() => setActiveChat(chat)}
             >
-              <div className="chat-avatar">{chat.name[0]}</div>
+              <div className="chat-avatar">
+  {chat.avatar ? (
+    <img src={chat.avatar} alt={chat.name} className="chat-avatar-img" />
+  ) : (
+    chat.name[0]
+  )}
+</div>
+
               <div className="chat-info">
                 <h4>{chat.name}</h4>
                 <p>{chat.lastMessage}</p>
@@ -144,10 +218,24 @@ const Chats = () => {
                   title={activeChat.active ? "Active" : "Offline"}
                 ></span>
               </div>
-              <div className="header-actions">
-                <FiPhone className="action-icon" />
-                <FiVideo className="action-icon" />
-              </div>
+               <div className="header-actions">
+  <FiPhone
+    className="action-icon"
+    onClick={() => {
+      setCallType("voice");
+      setShowCallModal(true);
+    }}
+  />
+
+  <FiVideo
+    className="action-icon"
+    onClick={() => {
+      setCallType("video");
+      setShowCallModal(true);
+    }}
+  />
+</div>
+
             </div>
 
             <div className="chat-messages">
@@ -228,6 +316,14 @@ const Chats = () => {
           </div>
         </div>
       )}
+      {showCallModal && (
+  <CallModal
+    type={callType}
+    participant={activeChat}
+    onClose={() => setShowCallModal(false)}
+  />
+)}
+
     </div>
   );
 };
