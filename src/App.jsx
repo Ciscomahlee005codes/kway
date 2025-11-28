@@ -8,6 +8,11 @@ import ContactPage from "./Pages/ContactPage/ContactPage";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
 import SettingsPage from "./Pages/SettingsPage/SettingsPage";
 import Auth from "./Components/Auth/Auth";
+import AccountPage from "./Pages/AccountPage/AccountPage";
+import NotificationPage from "./Components/NotificationPage/NotificationPage";
+import LanguagePage from "./Components/LanguagePage/LanguagePage";
+import Help from "./Components/Help/Help";
+import About from "./Components/About/About";
 
 function App() {
   const location = useLocation();
@@ -27,6 +32,11 @@ function App() {
         <Route path="/contactlist" element={<ContactPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/account" element={<AccountPage />} />
+         <Route path="/settings/notifications" element={<NotificationPage />} />
+        <Route path="/settings/language" element={<LanguagePage />} /> 
+        <Route path="/settings/help" element={<Help />} /> 
+          <Route path="/settings/about" element={<About />} /> 
       </Routes>
     </div>
   );

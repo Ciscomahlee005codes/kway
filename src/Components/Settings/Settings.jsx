@@ -4,9 +4,12 @@ import {
   FaUserCircle, FaLock, FaBell, FaPaintBrush, 
   FaInfoCircle, FaQuestionCircle, FaLanguage 
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import "./Settings.css";
 
 const Settings = () => {
+
+  const navigate = useNavigate();
 
   // Default theme = light
   const [theme, setTheme] = useState(() => {
@@ -30,7 +33,11 @@ const Settings = () => {
         <h2>Settings</h2>
       </div>
 
-      <div className="settings-profile">
+      {/* PROFILE SECTION */}
+      <div 
+        className="settings-profile"
+        onClick={() => navigate("/profile")}
+      >
         <FaUserCircle className="profile-picture" />
         <div className="profile-info">
           <h3>John Doe</h3>
@@ -40,7 +47,11 @@ const Settings = () => {
 
       <div className="settings-list">
 
-        <div className="settings-item">
+        {/* ACCOUNT */}
+        <div 
+          className="settings-item"
+          onClick={() => navigate("/settings/account")}
+        >
           <FaLock className="item-icon" />
           <div className="item-text">
             <h4>Account</h4>
@@ -49,7 +60,11 @@ const Settings = () => {
           <IoChevronForward className="item-arrow" />
         </div>
 
-        <div className="settings-item">
+        {/* NOTIFICATIONS */}
+        <div 
+          className="settings-item"
+          onClick={() => navigate("/settings/notifications")}
+        >
           <FaBell className="item-icon" />
           <div className="item-text">
             <h4>Notifications</h4>
@@ -77,7 +92,11 @@ const Settings = () => {
           </label>
         </div>
 
-        <div className="settings-item">
+        {/* LANGUAGE */}
+        <div 
+          className="settings-item"
+          onClick={() => navigate("/settings/language")}
+        >
           <FaLanguage className="item-icon" />
           <div className="item-text">
             <h4>Language</h4>
@@ -86,7 +105,11 @@ const Settings = () => {
           <IoChevronForward className="item-arrow" />
         </div>
 
-        <div className="settings-item">
+        {/* HELP */}
+        <div 
+          className="settings-item"
+          onClick={() => navigate("/settings/help")}
+        >
           <FaInfoCircle className="item-icon" />
           <div className="item-text">
             <h4>Help</h4>
@@ -95,7 +118,11 @@ const Settings = () => {
           <IoChevronForward className="item-arrow" />
         </div>
 
-        <div className="settings-item">
+        {/* ABOUT */}
+        <div 
+          className="settings-item"
+          onClick={() => navigate("/settings/about")}
+        >
           <FaQuestionCircle className="item-icon" />
           <div className="item-text">
             <h4>About</h4>
