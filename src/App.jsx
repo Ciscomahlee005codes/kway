@@ -13,12 +13,25 @@ import NotificationPage from "./Components/NotificationPage/NotificationPage";
 import LanguagePage from "./Components/LanguagePage/LanguagePage";
 import Help from "./Components/Help/Help";
 import About from "./Components/About/About";
+import AdminAuth from "./Admin/AdminAuth/AdminAuth";
+import AdminSidebar from "./Admin/AdminComponents/AdminSidebar/AdminSidebar";
+import AdminHomePage from "./Admin/AdminPages/AdminHomePage/AdminHomePage";
+import UserManagePage from "./Admin/AdminPages/UserManagePage/UserManagePage";
+import AdminChatMonitorPage from "./Admin/AdminPages/AdminChatMonitorPage/AdminChatMonitorPage";
+import AdminNotificationPage from "./Admin/AdminPages/AdminNotificationPage/AdminNotificationPage";
+import AdminSettingsPage from "./Admin/AdminPages/AdminSettingsPage/AdminSettingsPage";
+import PhoneVerification from "./Components/Verification/PhoneVerification";
+import ProfileSetup from "./Components/ProfileSetup/ProfileSetup";
+import UsersProfile from "./Components/Chats/UsersProfile";
 
 function App() {
   const location = useLocation();
 
   // Hide sidebar on Auth route
-  const hideSidebar = location.pathname === "/";
+  const hideSidebar =
+  location.pathname === "/" ||
+  location.pathname.startsWith("/admin") ||  location.pathname === "/phonenumber/verification" || location.pathname === "/profile-setup";
+
 
   return (
     <div className="app">
@@ -37,6 +50,17 @@ function App() {
         <Route path="/settings/language" element={<LanguagePage />} /> 
         <Route path="/settings/help" element={<Help />} /> 
           <Route path="/settings/about" element={<About />} /> 
+          <Route path="/phonenumber/verification" element={<PhoneVerification />} /> 
+          <Route path="/profile-setup" element={<ProfileSetup />} /> 
+          <Route path="/user-profile" element={<UsersProfile />} />
+
+          {/* Admin Panel */}
+          <Route path="/admin/auth" element={<AdminAuth />} /> 
+          <Route path="/admin/home" element={<AdminHomePage />} /> 
+          <Route path="/admin/usermanagement" element={<UserManagePage />} /> 
+          <Route path="/admin/chatMonitor" element={<AdminChatMonitorPage />} /> 
+           <Route path="/admin/notifications" element={<AdminNotificationPage />} />           
+           <Route path="/admin/settings" element={<AdminSettingsPage />} />
       </Routes>
     </div>
   );

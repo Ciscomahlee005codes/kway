@@ -1,11 +1,13 @@
+/* Status Page */
 .status-page {
   flex: 1;
-  background: var(--bg-color);
+  background: var(--bg-color, #f9f9f9);
   display: flex;
   flex-direction: column;
   margin-left: 70px;
   height: 100vh;
   overflow-y: auto;
+  font-family: Arial, sans-serif;
 }
 
 /* Header */
@@ -17,10 +19,18 @@
   border-bottom: 1px solid #ddd;
   height: 60px;
 }
-
-.status-logo img {
-  height: 35px;
-  width: auto;
+/* Full-screen text status */
+.status-text-full {
+  width: 100%;
+  height: 100%; /* full height */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  font-size: 2rem;
+  color: white;
+  word-wrap: break-word;
 }
 
 .status-title {
@@ -35,24 +45,29 @@
   cursor: pointer;
 }
 
-/* My status */
+/* My Status */
 .my-status {
   display: flex;
   align-items: center;
   padding: 1rem;
-  border-bottom: 8px solid var(--secondary-bg);
+  border-bottom: 8px solid var(--secondary-bg, #eee);
+  cursor: pointer;
 }
 
 .status-avatar {
   position: relative;
   margin-right: 1rem;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
 }
 
 .avatar {
-  width: 55px;
-  height: 55px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #ddd;
 }
 
 .add-icon {
@@ -62,26 +77,9 @@
   background: #25d366;
   color: white;
   border-radius: 50%;
-  padding: 2px;
+  padding: 3px;
   font-size: 1rem;
-}
-
-/* Unviewed status (beeping green ring) */
-.unviewed .avatar {
-  border: 3px solid #25d366;
-  animation: pulseBorder 1.5s infinite;
-}
-
-@keyframes pulseBorder {
-  0% {
-    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(37, 211, 102, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
-  }
+  border: 2px solid white;
 }
 
 .status-text h3 {
@@ -99,9 +97,10 @@
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   color: gray;
-  background: var(--secondary-bg);
+  background: var(--secondary-bg, #eee);
 }
 
+/* Status List */
 .status-list {
   display: flex;
   flex-direction: column;
@@ -111,16 +110,60 @@
   display: flex;
   align-items: center;
   padding: 0.8rem 1rem;
-  border-bottom: 1px solid var(--secondary-bg);
+  border-bottom: 1px solid var(--secondary-bg, #eee);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .status-item:hover {
-  background: var(--secondary-bg);
+  background: var(--secondary-bg, #f0f0f0);
 }
 
-/* Modal */
+/* WhatsApp style ring */
+.status-avatar.ring {
+  border-radius: 50%;
+  padding: 2px;
+  background: green;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-avatar.ring img,
+.status-avatar.ring .text-avatar {
+  border-radius: 50%;
+  border: 3px solid white;
+  width: 55px;
+  height: 55px;
+}
+
+/* Text avatar inside ring */
+.text-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  text-align: center;
+  padding: 5px;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+}
+
+/* Multiple stories indicator (small dots around ring) */
+.status-avatar.ring::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px white;
+}
+
+/* Modal (full screen) */
 .status-modal {
   position: fixed;
   inset: 0;
@@ -143,13 +186,13 @@
   object-fit: cover;
 }
 
-/* Top black overlay */
+/* Top overlay */
 .status-top-overlay {
   position: absolute;
   top: 0;
   width: 100%;
   height: 80px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
   padding: 10px 20px;
   display: flex;
   align-items: center;
@@ -170,24 +213,13 @@
   border: 2px solid #25d366;
 }
 
-.status-user-info h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.status-user-info p {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #ccc;
-}
-
-/* Bottom black overlay */
+/* Bottom overlay */
 .status-bottom-overlay {
   position: absolute;
   bottom: 0;
   width: 100%;
   min-height: 90px;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -201,6 +233,7 @@
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.7);
 }
 
+/* Close & Nav Buttons */
 .close-btn {
   position: absolute;
   top: 20px;
@@ -231,7 +264,8 @@
 .nav-btn.right {
   right: 15px;
 }
-/* Progress bar (top indicators) */
+
+/* Progress bar */
 .progress-container {
   position: absolute;
   top: 10px;
@@ -245,7 +279,7 @@
 .progress-bar {
   flex: 1;
   height: 3px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 5px;
   overflow: hidden;
 }
@@ -257,12 +291,99 @@
 }
 
 .progress-bar.filled {
-  background: rgba(255,255,255,0.7);
+  background: rgba(255, 255, 255, 0.7);
 }
 
-@media (max-width: 768px) {
-  .status-page {
-    margin-left: 0;
-    margin-bottom: 60px;
-  }
+/* Post Modal */
+.post-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.post-box {
+  width: 90%;
+  max-width: 400px;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.post-btn {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  background: #0d6329;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+.post-textarea {
+  width: 100%;
+  height: 120px;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.file-input {
+  margin-top: 10px;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.send-btn {
+  background: #0d6329;
+  padding: 8px 18px;
+  border-radius: 6px;
+  color: white;
+  border: none;
+}
+
+/* Background picker circles */
+.bg-picker {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.color-circle {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.color-circle.selected {
+  border: 2px solid #000;
+}
+
+/* Status preview */
+.status-preview {
+  margin-top: 10px;
+  padding: 15px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px;
+}
+
+.preview-img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
 }

@@ -1,0 +1,174 @@
+/* Sidebar container */
+.adminDash-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 250px;
+  background-color: #0d6329;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+/* Collapsed Sidebar */
+.adminDash-sidebar.collapsed {
+  width: 70px;
+}
+
+/* Header */
+.adminDash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Logo text */
+.adminDash-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Toggle button */
+.adminDash-toggleBtn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* Nav menu */
+.adminDash-navMenu {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+/* Nav items */
+.adminDash-navItem {
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  color: white;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.adminDash-navItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.adminDash-navItem.active {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Icons */
+.adminDash-navIcon {
+  font-size: 1.2rem;
+  margin-right: 1rem;
+}
+
+/* Hide text when collapsed */
+.adminDash-sidebar.collapsed .adminDash-navText {
+  display: none;
+}
+
+/* Logout */
+.adminDash-logout {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+/* ======= LOGOUT MODAL ======= */
+
+.logoutOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+  z-index: 2000;
+}
+
+.logoutModal {
+  background: #fff;
+  width: 320px;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  animation: scaleIn 0.3s ease;
+}
+
+.logoutModal h3 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #0d6329;
+}
+
+.logoutModal p {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.logoutButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cancelBtn,
+.confirmBtn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.2s ease;
+}
+
+.cancelBtn {
+  background: #ccc;
+}
+
+.cancelBtn:hover {
+  opacity: 0.8;
+}
+
+.confirmBtn {
+  background: #0d6329;
+  color: white;
+}
+
+.confirmBtn:hover {
+  opacity: 0.8;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+

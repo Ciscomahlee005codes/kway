@@ -1,0 +1,204 @@
+/* ---------- OVERLAY ---------- */
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+/* ---------- SHEET ---------- */
+.profile-sheet {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color, #f9f9f9);
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
+  animation: fadeIn 0.2s ease;
+  transition: transform 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+/* ---------- HEADER ---------- */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--secondary-bg, #ffffff);
+  border-bottom: 1px solid #ddd;
+}
+
+.profile-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.back-icon {
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text-color, #333);
+}
+
+/* ---------- AVATAR SECTION ---------- */
+.profile-avatar-section {
+  text-align: center;
+  padding: 28px 16px 20px;
+}
+
+.avatar-wrapper {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar2 {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar-section h2 {
+  margin: 8px 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.status {
+  font-size: 14px;
+  font-weight: 500;
+  color: gray;
+}
+
+.status.online {
+  color: green;
+}
+
+.status.offline {
+  color: red;
+}
+
+/* ---------- ACTIONS ---------- */
+.profile-actions {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding: 16px;
+}
+
+.action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 18px;
+  background: var(--secondary-bg, #fff);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-card svg {
+  font-size: 22px;
+  color: var(--primary-color, #007bff);
+}
+
+/* ---------- INFO ---------- */
+.profile-info {
+  margin-top: auto;
+  padding: 20px 0;
+}
+
+.info-row {
+  padding: 14px 16px;
+  background: var(--secondary-bg, #fff);
+  margin: 10px 14px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+}
+
+.info-row .label {
+  font-weight: 500;
+  color: #555;
+}
+
+.info-row .value {
+  font-weight: 600;
+  color: #222;
+}
+
+.info-row.danger {
+  background: #e53935;
+  color: white;
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.info-row.danger:hover {
+  background: #d32f2f;
+}
+
+/* ---------- DRAG HANDLE (MOBILE ONLY) ---------- */
+.drag-handle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .profile-overlay {
+    align-items: flex-end;
+  }
+
+  .profile-sheet {
+    height: 90%;
+    border-radius: 18px 18px 0 0;
+    animation: slideUp 0.25s ease;
+  }
+
+  .drag-handle {
+    display: block;
+    width: 40px;
+    height: 5px;
+    background: #aaa;
+    border-radius: 10px;
+    margin: 10px auto 6px;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

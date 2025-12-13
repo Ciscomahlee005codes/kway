@@ -1,0 +1,191 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css");
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  background-color: #eef3f1;
+}
+
+/* Layout */
+.admin-auth-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Left Banner */
+.admin-auth-banner {
+  flex: 1;
+  background: #0d6329;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.banner-content h1 {
+  margin-top: 1rem;
+  font-size: 2.3rem;
+  font-weight: 600;
+}
+
+.banner-content p {
+  opacity: 0.9;
+  margin: 1rem auto 2rem;
+  max-width: 350px;
+  line-height: 1.6;
+}
+
+.admin-logo-circle {
+  height: 95px;
+  width: 95px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-logo-icon {
+  width: 100%;
+}
+
+.banner-img {
+  width: 65%;
+  max-width: 300px;
+  margin-top: 1.2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+/* Right Form Area */
+.admin-auth-card {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+}
+
+/* Form */
+.form-box {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.form-box h2 {
+  color: #0e3f2e;
+}
+
+.subtitle {
+  color: #666;
+  margin-bottom: 1.4rem;
+}
+
+input {
+  width: 100%;
+  padding: 0.85rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  transition: 0.3s;
+}
+
+input:focus {
+  border-color: #0e3f2e;
+  outline: none;
+}
+
+.admin-login-btn {
+  width: 100%;
+  padding: 0.9rem;
+  background: #0d6329;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.admin-login-btn:hover {
+  background: #076525;
+}
+
+.switch-text {
+  margin-top: 1rem;
+  color: #444;
+}
+
+.switch-text span {
+  color: #0d6329;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.switch-text span:hover {
+  color: #1b6c50;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  width: 90%;
+  max-width: 400px;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  animation: pop 0.45s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.close-btn {
+  background: #0d6329;
+  color: white;
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #054b22;
+}
+
+/* Mobile */
+@media (max-width: 850px) {
+  .admin-auth-container {
+    flex-direction: column;
+  }
+
+  .admin-auth-banner {
+    height: 35vh;
+  }
+
+  .admin-auth-card {
+    height: 65vh;
+  }
+
+  .banner-img {
+    display: none;
+  }
+}

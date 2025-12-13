@@ -1,0 +1,120 @@
+/* Page wrapper */
+.adminDash-home {
+  padding: 20px;
+  color: #222;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Header */
+.adminDash-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #0d6329;
+}
+
+.adminDash-header p {
+  margin-top: 5px;
+  color: #555;
+}
+
+/* Stats Grid */
+.adminDash-stats {
+  margin-top: 25px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.adminDash-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+  transition: 0.3s;
+}
+
+.adminDash-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+}
+
+.adminDash-card h3 {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.adminDash-number {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0d6329;
+}
+
+/* Recent Activity Section */
+.adminDash-section {
+  margin-top: 40px;
+}
+
+.adminDash-section h2 {
+  font-size: 22px;
+  margin-bottom: 15px;
+  color: #0d6329;
+}
+
+/* Activity list */
+.adminDash-activity-list {
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+}
+
+.adminDash-activity {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.adminDash-activity:last-child {
+  border-bottom: none;
+}
+
+.adminDash-activity p {
+  margin: 0;
+  flex: 1;
+  padding-left: 10px;
+}
+
+.adminDash-activity .time {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Dot indicators */
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot.online {
+  background: #0d942f;
+}
+
+.dot.chat {
+  background: #128c7e;
+}
+
+.dot.alert {
+  background: #d9534f;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .adminDash-header h1 {
+    font-size: 26px;
+  }
+}

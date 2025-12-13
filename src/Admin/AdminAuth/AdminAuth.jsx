@@ -2,18 +2,22 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import KwayLogo from "../../assets/kway-logo-1.png";
-import "./Auth.css";
+import "./AdminAuth.css";
 
-const Auth = () => {
+const AdminAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ name: "", phone: "", password: "" });
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    email: "", 
+    password: "" 
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
 
   const navigate = useNavigate();
 
   const toggleForm = () => {
-    setFormData({ name: "", phone: "", password: "" });
+    setFormData({ name: "", email: "", password: "" });
     setIsLogin(!isLogin);
   };
 
@@ -22,16 +26,7 @@ const Auth = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const simulateLoading = (callback) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      callback();
-      setIsLoading(false);
-    }, 1200);
-  };
-
   const handleSubmit = () => {
-    // Show development modal
     setShowDevModal(true);
   };
 
@@ -39,80 +34,85 @@ const Auth = () => {
     setShowDevModal(false);
     setIsLoading(true);
 
-    // small delay before redirecting
     setTimeout(() => {
       setIsLoading(false);
-      navigate("/phonenumber/verification");
-    }, 800);
-  };
-
-  const handleModalClickOutside = () => {
-    handleGotIt();
+      navigate("/admin/home");
+    }, 900);
   };
 
   return (
-    <div className="auth-container">
-      {/* Left Side Banner */}
-      <div className="auth-banner">
+    <div className="admin-auth-container">
+      {/* Left Admin Banner */}
+      <div className="admin-auth-banner">
         <div className="banner-content">
-          <div className="logo-circle">
-            <img className="logo-img" src={KwayLogo} alt="Kway Logo" />
+          <div className="admin-logo-circle">
+           <img className="admin-logo-icon" src={KwayLogo} alt="Logo" />
           </div>
-          <h1>Kway!!!</h1>
-          <p>Stay connected with your friends and loved ones — anytime, anywhere 💬</p>
-          <img src="/chat-banner.png" alt="Chat illustration" className="banner-img" />
+
+          <h1>Admin Portal</h1>
+          <p>Manage users, monitor chats, and control your entire system securely.</p>
+
+          <img 
+            src="/admin-secure.png" 
+            alt="Admin illustration" 
+            className="banner-img" 
+          />
         </div>
       </div>
 
-      {/* Right Side Form */}
-      <div className="auth-card">
+      {/* Right Auth Card */}
+      <div className="admin-auth-card">
         <AnimatePresence mode="wait">
           {isLogin ? (
             <motion.div
-              key="login"
+              key="admin-login"
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -60 }}
               transition={{ duration: 0.4 }}
               className="form-box"
             >
-              <h2>Welcome Back 👋</h2>
-              <p className="subtitle">Login to continue chatting</p>
+              <h2>Welcome Admin 👋</h2>
+              <p className="subtitle">Login to access the dashboard</p>
 
               <input
                 type="text"
-                name="phone"
-                placeholder="Phone Number"
-                value={formData.phone}
+                name="email"
+                placeholder="Admin Email"
+                value={formData.email}
                 onChange={handleChange}
               />
               <input
                 type="password"
                 name="password"
-                placeholder="Password"
+                placeholder="Admin Password"
                 value={formData.password}
                 onChange={handleChange}
               />
 
-              <button onClick={handleSubmit} disabled={isLoading} className="login-btn">
-                {isLoading ? "Logging in..." : "Login"}
+              <button 
+                onClick={handleSubmit} 
+                disabled={isLoading} 
+                className="admin-login-btn"
+              >
+                {isLoading ? "Verifying..." : "Login"}
               </button>
 
               <p className="switch-text">
-                New here? <span onClick={toggleForm}>Create an account</span>
+                New Admin? <span onClick={toggleForm}>Create Admin</span>
               </p>
             </motion.div>
           ) : (
             <motion.div
-              key="signup"
+              key="admin-signup"
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -60 }}
               transition={{ duration: 0.4 }}
               className="form-box"
             >
-              <h2>Create Account 📝</h2>
-              <p className="subtitle">Join the chat community</p>
+              <h2>Create Admin 🛠️</h2>
+              <p className="subtitle">Register a new admin account</p>
 
               <input
                 type="text"
@@ -121,45 +121,51 @@ const Auth = () => {
                 value={formData.name}
                 onChange={handleChange}
               />
+
               <input
-                type="text"
-                name="phone"
-                placeholder="Phone Number"
-                value={formData.phone}
+                type="email"
+                name="email"
+                placeholder="Admin Email"
+                value={formData.email}
                 onChange={handleChange}
               />
+
               <input
                 type="password"
                 name="password"
-                placeholder="Password"
+                placeholder="Admin Password"
                 value={formData.password}
                 onChange={handleChange}
               />
 
-              <button onClick={handleSubmit} disabled={isLoading} className="login-btn">
-                {isLoading ? "Creating..." : "Sign Up"}
+              <button 
+                onClick={handleSubmit} 
+                disabled={isLoading} 
+                className="admin-login-btn"
+              >
+                {isLoading ? "Creating..." : "Create Admin"}
               </button>
 
               <p className="switch-text">
-                Already have an account? <span onClick={toggleForm}>Login</span>
+                Already an admin? <span onClick={toggleForm}>Login</span>
               </p>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Development Modal */}
+      {/* Dev Modal */}
       {showDevModal && (
-        <div className="modal-overlay" onClick={handleModalClickOutside}>
+        <div className="modal-overlay" onClick={handleGotIt}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <h3>🚧 Under Development!</h3>
+            <h3>🔧 Admin System in Progress</h3>
             <p>
-              Hey there! Kway Messenger is still under development. 
-              You can't chat just yet 😅. 
-              Feel free to reach out to the developer to "buy him data" or just say hi!
+              This Admin Portal is still being developed.  
+              Dashboard access will be available soon!
             </p>
+
             <button className="close-btn" onClick={handleGotIt}>
-              Got it!
+              Continue
             </button>
           </div>
         </div>
@@ -168,4 +174,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default AdminAuth;
