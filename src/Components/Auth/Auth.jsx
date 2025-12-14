@@ -58,9 +58,9 @@ const Auth = () => {
           <div className="logo-circle">
             <img className="logo-img" src={KwayLogo} alt="Kway Logo" />
           </div>
-          <h1>Kway!!!</h1>
+          <h1>Kway!!!</h1> 
           <p>Stay connected with your friends and loved ones — anytime, anywhere 💬</p>
-          <img src="/chat-banner.png" alt="Chat illustration" className="banner-img" />
+          {/* <img src="/chat-banner.png" alt="Chat illustration" className="banner-img" /> */}
         </div>
       </div>
 
