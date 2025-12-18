@@ -153,11 +153,19 @@ textarea {
 
 .success-modal {
   background: #fff;
-  padding: 30px 35px;
-  border-radius: 20px;
+  padding: 40px 45px;
+  border-radius: 24px;
   text-align: center;
-  width: 280px;
+  width: 420px;          /* wider */
+  max-width: 90vw;       /* mobile safe */
+  min-height: 220px;     /* taller */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
+
 
 .check-circle {
   width: 70px;
@@ -262,6 +270,28 @@ textarea {
 .review-item {
   font-size: 13px;
   margin-top: 6px;
+}
+.gender-picker {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.gender-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1.5px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.gender-btn.active {
+  background: #0d6329;
+  color: #fff;
+  border-color: #0d6329;
 }
 
 .color-dot {

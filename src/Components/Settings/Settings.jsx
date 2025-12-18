@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { IoChevronForward } from "react-icons/io5";
-import { 
-  FaUserCircle, FaLock, FaBell, FaPaintBrush, 
-  FaInfoCircle, FaQuestionCircle, FaLanguage 
+import {
+  FaUserCircle,
+  FaLock,
+  FaBell,
+  FaPaintBrush,
+  FaInfoCircle,
+  FaQuestionCircle,
+  FaLanguage,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./Settings.css";
 
 const Settings = () => {
-
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
-  // Default theme = light
   const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem("app-theme");
-    return saved ? saved : "light";
+    return localStorage.getItem("app-theme") || "light";
   });
 
   useEffect(() => {
@@ -23,52 +27,52 @@ const Settings = () => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === "light" ? "dark" : "light");
+    setTheme(prev => (prev === "light" ? "dark" : "light"));
   };
 
   return (
     <div className="settings-page">
-      
+
       <div className="settings-header">
-        <h2>Settings</h2>
+        <h2>{t("settings")}</h2>
       </div>
 
-      {/* PROFILE SECTION */}
-      <div 
+      {/* PROFILE */}
+      <div
         className="settings-profile"
         onClick={() => navigate("/profile")}
       >
         <FaUserCircle className="profile-picture" />
         <div className="profile-info">
-          <h3>John Doe</h3>
-          <p>Hey there! I’m using Kway Chat 😎</p>
+          <h3>{t("profileName")}</h3>
+          <p>{t("profileStatus")}</p>
         </div>
       </div>
 
       <div className="settings-list">
 
         {/* ACCOUNT */}
-        <div 
+        <div
           className="settings-item"
           onClick={() => navigate("/settings/account")}
         >
           <FaLock className="item-icon" />
           <div className="item-text">
-            <h4>Account</h4>
-            <p>Privacy, security, change number</p>
+            <h4>{t("account")}</h4>
+            <p>{t("accountDesc")}</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
 
         {/* NOTIFICATIONS */}
-        <div 
+        <div
           className="settings-item"
           onClick={() => navigate("/settings/notifications")}
         >
           <FaBell className="item-icon" />
           <div className="item-text">
-            <h4>Notifications</h4>
-            <p>Messages & call tones</p>
+            <h4>{t("notifications")}</h4>
+            <p>{t("notificationsDesc")}</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
@@ -77,11 +81,10 @@ const Settings = () => {
         <div className="settings-item">
           <FaPaintBrush className="item-icon" />
           <div className="item-text">
-            <h4>Appearance</h4>
-            <p>Light / Dark mode</p>
+            <h4>{t("appearance")}</h4>
+            <p>{t("appearanceDesc")}</p>
           </div>
 
-          {/* SWITCH */}
           <label className="switch">
             <input
               type="checkbox"
@@ -93,46 +96,45 @@ const Settings = () => {
         </div>
 
         {/* LANGUAGE */}
-        <div 
+        <div
           className="settings-item"
           onClick={() => navigate("/settings/language")}
         >
           <FaLanguage className="item-icon" />
           <div className="item-text">
-            <h4>Language</h4>
-            <p>App language</p>
+            <h4>{t("language")}</h4>
+            <p>{t("languageDesc")}</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
 
         {/* HELP */}
-        <div 
+        <div
           className="settings-item"
           onClick={() => navigate("/settings/help")}
         >
           <FaInfoCircle className="item-icon" />
           <div className="item-text">
-            <h4>Help</h4>
-            <p>FAQ, Contact Support</p>
+            <h4>{t("help")}</h4>
+            <p>{t("helpDesc")}</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
 
         {/* ABOUT */}
-        <div 
+        <div
           className="settings-item"
           onClick={() => navigate("/settings/about")}
         >
           <FaQuestionCircle className="item-icon" />
           <div className="item-text">
-            <h4>About</h4>
-            <p>Version, Developer info</p>
+            <h4>{t("about")}</h4>
+            <p>{t("aboutDesc")}</p>
           </div>
           <IoChevronForward className="item-arrow" />
         </div>
 
       </div>
-
     </div>
   );
 };

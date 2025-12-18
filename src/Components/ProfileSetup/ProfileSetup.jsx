@@ -20,6 +20,8 @@ const ProfileSetup = () => {
   const [chatMode, setChatMode] = useState("Calm 🌿");
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [gender, setGender] = useState("");
+
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
@@ -30,23 +32,28 @@ const ProfileSetup = () => {
     const random = Math.floor(Math.random() * 1000);
     setPhoto(`https://api.dicebear.com/7.x/thumbs/svg?seed=${random}`);
   };
-
+  
   const handleConfirm = () => {
-    const userData = {
-      photo,
-      name,
-      username,
-      about,
-      theme,
-      dob,
-      chatMode,
-    };
-
-    console.log("FINAL USER DATA:", userData);
-
-    setShowSuccess(true);
-    setTimeout(() => navigate("/chat"), 1600);
+  const userData = {
+    photo,
+    name,
+    username,
+    about,
+    theme,
+    dob,
+    chatMode,
+    gender,
   };
+
+  console.log("FINAL USER DATA:", userData);
+
+  setShowSuccess(true);
+
+  setTimeout(() => {
+    navigate("/chat");
+  }, 3200);
+};
+
 
   return (
     <div className="profile-setup-container">
@@ -154,6 +161,26 @@ const ProfileSetup = () => {
                 </div>
               </div>
 
+              <div className="input-group">
+  <label>Gender</label>
+  <div className="gender-picker">
+    <button
+      className={`gender-btn ${gender === "male" ? "active" : ""}`}
+      onClick={() => setGender("male")}
+    >
+      👨 Male
+    </button>
+
+    <button
+      className={`gender-btn ${gender === "female" ? "active" : ""}`}
+      onClick={() => setGender("female")}
+    >
+      👩 Female
+    </button>
+  </div>
+</div>
+
+
               <button
                 className="save-btn"
                 style={{ backgroundColor: theme }}
@@ -211,17 +238,43 @@ const ProfileSetup = () => {
       </motion.div>
 
       {/* SUCCESS MODAL */}
-      {showSuccess && (
-        <motion.div className="success-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <motion.div className="success-modal" initial={{ scale: 0.6 }} animate={{ scale: 1 }}>
-            <div className="check-circle">
-              <IoCheckmark />
-            </div>
-            <h3>Profile Ready!</h3>
-            <p>Taking you to chats…</p>
-          </motion.div>
-        </motion.div>
-      )}
+       {showSuccess && (
+  <motion.div
+    className="success-overlay"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+  >
+    <motion.div
+      className="success-modal"
+      initial={{ scale: 0.75, opacity: 0, y: 30 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 120,
+        damping: 12,
+      }}
+    >
+      <motion.h2
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          repeat: Infinity,
+          repeatType: "reverse",
+          duration: 0.9,
+        }}
+        style={{ color: theme }}
+      >
+        Kway @{username?.toLowerCase() || "friend"} 👋
+      </motion.h2>
+
+      <p style={{ marginTop: "8px", opacity: 0.7 }}>
+        Setting things up for you…
+      </p>
+    </motion.div>
+  </motion.div>
+)}
+
+
     </div>
   );
 };

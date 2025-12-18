@@ -1,10 +1,20 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
-import { FaBell, FaVolumeUp, FaMoon, FaToggleOn, FaToggleOff, FaArrowLeft } from "react-icons/fa"; // ✅ Add back icon
+import { useNavigate } from "react-router-dom";
+import {
+  FaBell,
+  FaVolumeUp,
+  FaMoon,
+  FaToggleOn,
+  FaToggleOff,
+  FaArrowLeft,
+} from "react-icons/fa";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./NotificationPage.css";
 
 const NotificationPage = () => {
-  const navigate = useNavigate(); // ✅ Initialize navigate
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -14,22 +24,28 @@ const NotificationPage = () => {
     <div className="notification-container fade-in">
       {/* Back Button */}
       <div className="back-button" onClick={() => navigate("/settings")}>
-        <FaArrowLeft className="back-icon" /> Back
+        <FaArrowLeft className="back-icon" /> {t("back")}
       </div>
 
-      <h2 className="notification-title slide-down">Notification Settings</h2>
+      <h2 className="notification-title slide-down">
+        {t("notificationSettings")}
+      </h2>
 
       {/* PUSH NOTIFICATIONS */}
       <div className="section-card pop-in">
         <div className="section-header">
           <FaBell className="icon" />
-          <h3>Push Notifications</h3>
+          <h3>{t("pushNotifications")}</h3>
         </div>
 
         <div className="toggle-row">
-          <label>Enable Push Notifications</label>
+          <label>{t("enablePush")}</label>
           <div onClick={() => setPushEnabled(!pushEnabled)}>
-            {pushEnabled ? <FaToggleOn className="toggle on" /> : <FaToggleOff className="toggle off" />}
+            {pushEnabled ? (
+              <FaToggleOn className="toggle on" />
+            ) : (
+              <FaToggleOff className="toggle off" />
+            )}
           </div>
         </div>
       </div>
@@ -38,29 +54,37 @@ const NotificationPage = () => {
       <div className="section-card pop-in">
         <div className="section-header">
           <FaVolumeUp className="icon" />
-          <h3>Message Alerts</h3>
+          <h3>{t("messageAlerts")}</h3>
         </div>
 
         <div className="toggle-row">
-          <label>Notification Sound</label>
+          <label>{t("notificationSound")}</label>
           <div onClick={() => setSoundEnabled(!soundEnabled)}>
-            {soundEnabled ? <FaToggleOn className="toggle on" /> : <FaToggleOff className="toggle off" />}
+            {soundEnabled ? (
+              <FaToggleOn className="toggle on" />
+            ) : (
+              <FaToggleOff className="toggle off" />
+            )}
           </div>
         </div>
 
         <div className="toggle-row">
-          <label>Vibration</label>
+          <label>{t("vibration")}</label>
           <div onClick={() => setVibrationEnabled(!vibrationEnabled)}>
-            {vibrationEnabled ? <FaToggleOn className="toggle on" /> : <FaToggleOff className="toggle off" />}
+            {vibrationEnabled ? (
+              <FaToggleOn className="toggle on" />
+            ) : (
+              <FaToggleOff className="toggle off" />
+            )}
           </div>
         </div>
 
         {soundEnabled && (
           <select className="tone-select fade-in">
-            <option>Classic Tone</option>
-            <option>Ping</option>
-            <option>Soft Beep</option>
-            <option>Crystal Drop</option>
+            <option>{t("classicTone")}</option>
+            <option>{t("ping")}</option>
+            <option>{t("softBeep")}</option>
+            <option>{t("crystalDrop")}</option>
           </select>
         )}
       </div>
@@ -69,18 +93,22 @@ const NotificationPage = () => {
       <div className="section-card pop-in">
         <div className="section-header">
           <FaMoon className="icon" />
-          <h3>Do Not Disturb</h3>
+          <h3>{t("doNotDisturb")}</h3>
         </div>
 
         <div className="toggle-row">
-          <label>Activate DND Mode</label>
+          <label>{t("activateDnd")}</label>
           <div onClick={() => setDndEnabled(!dndEnabled)}>
-            {dndEnabled ? <FaToggleOn className="toggle on" /> : <FaToggleOff className="toggle off" />}
+            {dndEnabled ? (
+              <FaToggleOn className="toggle on" />
+            ) : (
+              <FaToggleOff className="toggle off" />
+            )}
           </div>
         </div>
 
         {dndEnabled && (
-          <p className="dnd-text fade-in">All notifications will be silenced.</p>
+          <p className="dnd-text fade-in">{t("dndDescription")}</p>
         )}
       </div>
     </div>

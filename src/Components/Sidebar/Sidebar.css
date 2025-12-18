@@ -121,7 +121,7 @@
   }
 
   .bottom-link:hover {
-    color: white;
+    color: rgb(160, 164, 158);
     transform: translateY(-3px);
   }
 

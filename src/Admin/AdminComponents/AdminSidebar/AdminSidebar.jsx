@@ -12,7 +12,7 @@ import {
 import "./AdminSidebar.css";
 
 const AdminSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const toggleSidebar = () => setCollapsed(!collapsed);

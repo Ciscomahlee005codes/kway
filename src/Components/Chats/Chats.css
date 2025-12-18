@@ -221,28 +221,166 @@
 }
 
 /* Chat bubbles */
+.message-wrapper {
+  display: flex;
+  position: relative;
+}
+
+.message-wrapper.sent {
+  justify-content: flex-end;
+}
+
+.message-wrapper.received {
+  justify-content: flex-start;
+}
+
 .message-bubble {
   max-width: 70%;
   padding: 10px 14px;
   border-radius: 16px;
   font-size: 15px;
   line-height: 1.4;
-  word-wrap: break-word;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
-.message-bubble.sent {
-  align-self: flex-end;
+/* SENT */
+.message-wrapper.sent .message-bubble {
   background: var(--accent-color);
   color: #fff;
   border-bottom-right-radius: 4px;
 }
 
-.message-bubble.received {
-  align-self: flex-start;
+/* RECEIVED */
+.message-wrapper.received .message-bubble {
   background: var(--secondary-bg);
   color: var(--text-color);
   border-bottom-left-radius: 4px;
 }
+.message-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+.status {
+  font-size: 12px;
+}
+
+.status .seen {
+  color: #34B7F1; /* WhatsApp blue */
+}
+
+/* Wrap message properly */
+.reply-preview {
+  background: rgba(0,0,0,0.1);
+  padding: 6px 8px;
+  border-left: 3px solid var(--accent-color);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.reply-preview span {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.reply-preview p {
+  font-size: 13px;
+  margin: 2px 0 0;
+}
+
+/* Reaction sits nicely under bubble */
+.reaction-overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 998;
+}
+
+.message-reaction {
+  position: absolute;
+  bottom: -14px;
+  right: 10px;
+  background: var(--secondary-bg);
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 16px;
+}
+
+/* Emoji button */
+.emoji-btn {
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-right: 6px;
+  color: var(--accent-color);
+}
+
+/* Emoji Picker */
+.emoji-picker-wrapper {
+  position: absolute;
+  bottom: 80px;
+  left: 10px;
+  z-index: 999;
+}
+
+/* Reaction Picker (WhatsApp-style) */
+.reaction-picker {
+  position: fixed;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.8);
+  background: #fff;
+  border-radius: 30px;
+  padding: 14px 18px;
+  display: flex;
+  gap: 12px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  z-index: 999;
+  opacity: 0;
+}
+.reaction-picker.pop {
+  animation: popIn 0.25s ease forwards;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+.reaction-picker span {
+  font-size: 20px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.reaction-picker span:hover {
+   transform: scale(1.4) rotate(6deg);
+}
+.reaction-close {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 
 /* Keep input fixed at bottom */
 .chat-input-wrapper {
@@ -353,6 +491,7 @@
   align-items: center;
   gap: 12px;
   flex: 1;
+  cursor: pointer;
 }
 
 .chat-header-avatar {
@@ -402,11 +541,7 @@
 .back-btn {
   display: none;
 }
-.message-reaction {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 18px;
-}
+
 
 .reaction-picker {
   position: fixed;
@@ -644,7 +779,20 @@
     height: 100vh;
     background: var(--bg-color);
   }
-
+.chat-input-wrapper {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: var(--bg-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(0,0,0,0.15);
+  margin-bottom: 5rem;
+  z-index: 5;
+}
   .chat-list-section {
     width: 100%;
   }
@@ -662,11 +810,17 @@
     display: flex;
   }
 
-  .back-btn {
-    display: block;
-    font-size: 1.4rem;
-    margin-right: 10px;
+   .arrowback-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    width: 30px;
+    height: 30px;
+    border: none;
+    outline: none;
     cursor: pointer;
     color: var(--accent-color);
+    transition: background 0.2s;
   }
 }

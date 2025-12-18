@@ -22,13 +22,14 @@ body {
   background: var(--bg-color);
   color: var(--text-color);
   transition: all 0.3s ease;
+   height: 100vh;
 }
 
 /* Settings Page */
 .settings-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 110vh;
   margin-left: 70px;
   background: var(--bg-color);
 }

@@ -1,19 +1,18 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
-import { FaArrowLeft } from "react-icons/fa"; // ✅ Back icon
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./Help.css";
 
 const Help = () => {
-  const navigate = useNavigate(); // ✅ Initialize navigate
+  const navigate = useNavigate();
+  const { t } = useLanguage(); // ✅ Ensure t() comes from your LanguageContext
   const [active, setActive] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [issue, setIssue] = useState("");
   const [file, setFile] = useState(null);
 
-  const toggle = (i) => {
-    setActive(active === i ? null : i);
-  };
-
+  const toggle = (i) => setActive(active === i ? null : i);
   const openModal = () => setShowModal(true);
   const closeModal = () => {
     setShowModal(false);
@@ -23,7 +22,7 @@ const Help = () => {
 
   const submitReport = () => {
     if (!issue.trim()) {
-      alert("Please describe the problem.");
+      alert(t("problemRequired"));
       return;
     }
 
@@ -31,25 +30,40 @@ const Help = () => {
     console.log("File:", file);
 
     closeModal();
-    alert("Your report has been submitted!");
+    alert(t("reportSubmitted"));
   };
 
+  // ✅ Build FAQs dynamically using t()
   const faqs = [
-    { q: "How do I change my password?", a: "Go to Settings → Account → Password Change." },
-    { q: "How do I enable Two-Factor Authentication?", a: "Go to Settings → Account → Two-Factor Authentication." },
-    { q: "How do I change the language?", a: "Go to Settings → Language and select your preferred one." },
-    { q: "How do I report a problem?", a: "Scroll to the bottom and click ‘Report a Problem’." },
-    { q: "How can I backup my messages?", a: "Cloud backup is coming soon." }
+    {
+      q: t("faqChangePasswordQ"),
+      a: t("faqChangePasswordA"),
+    },
+    {
+      q: t("faqEnable2FAQ"),
+      a: t("faqEnable2FAA"),
+    },
+    {
+      q: t("faqChangeLanguageQ"),
+      a: t("faqChangeLanguageA"),
+    },
+    {
+      q: t("faqReportProblemQ"),
+      a: t("faqReportProblemA"),
+    },
+    {
+      q: t("faqBackupQ"),
+      a: t("faqBackupA"),
+    },
   ];
 
   return (
     <div className="help-container">
-      {/* Back Button */}
       <div className="back-button" onClick={() => navigate("/settings")}>
-        <FaArrowLeft className="back-icon" /> Back
+        <FaArrowLeft className="back-icon" /> {t("back")}
       </div>
 
-      <h2 className="help-title">Help & Support</h2>
+      <h2 className="help-title">{t("helpSupport")}</h2>
 
       <div className="faq-list">
         {faqs.map((item, i) => (
@@ -67,32 +81,31 @@ const Help = () => {
       </div>
 
       <button className="report-btn" onClick={openModal}>
-        Report a Problem
+        {t("reportProblem")}
       </button>
 
-      {/* MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <h3>Report a Problem</h3>
+            <h3>{t("reportProblem")}</h3>
 
             <textarea
-              placeholder="Describe the issue..."
+              placeholder={t("describeIssue")}
               value={issue}
               onChange={(e) => setIssue(e.target.value)}
-            ></textarea>
+            />
 
             <label className="file-upload">
-              Upload Screenshot (Optional)
+              {t("uploadScreenshot")}
               <input type="file" onChange={(e) => setFile(e.target.files[0])} />
             </label>
 
             <div className="modal-actions">
               <button className="cancel-btn" onClick={closeModal}>
-                Cancel
+                {t("cancel")}
               </button>
               <button className="submit-btn" onClick={submitReport}>
-                Submit
+                {t("submit")}
               </button>
             </div>
           </div>

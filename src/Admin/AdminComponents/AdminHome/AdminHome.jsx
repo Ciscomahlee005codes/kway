@@ -7,7 +7,7 @@ const AdminHome = () => {
 
       {/* Header */}
       <div className="adminDash-header">
-        <h1>Dashboard</h1>
+        <h1><span style={{color: "black"}}>K</span>way Dashboard</h1>
         <p>Welcome back, Admin 👋</p>
       </div>
 

@@ -1,12 +1,20 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+
 import KwayLogo from "../../assets/kway-logo-1.png";
 import "./Auth.css";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ name: "", phone: "", password: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    password: "",
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [showDevModal, setShowDevModal] = useState(false);
 
@@ -22,16 +30,7 @@ const Auth = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const simulateLoading = (callback) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      callback();
-      setIsLoading(false);
-    }, 1200);
-  };
-
   const handleSubmit = () => {
-    // Show development modal
     setShowDevModal(true);
   };
 
@@ -39,53 +38,59 @@ const Auth = () => {
     setShowDevModal(false);
     setIsLoading(true);
 
-    // small delay before redirecting
     setTimeout(() => {
       setIsLoading(false);
       navigate("/phonenumber/verification");
     }, 800);
   };
 
-  const handleModalClickOutside = () => {
-    handleGotIt();
-  };
-
   return (
     <div className="auth-container">
-      {/* Left Side Banner */}
+      {/* LEFT BANNER */}
       <div className="auth-banner">
         <div className="banner-content">
           <div className="logo-circle">
-            <img className="logo-img" src={KwayLogo} alt="Kway Logo" />
+            <img src={KwayLogo} alt="Kway Logo" className="logo-img" />
           </div>
-          <h1>Kway!!!</h1> 
-          <p>Stay connected with your friends and loved ones — anytime, anywhere 💬</p>
-          {/* <img src="/chat-banner.png" alt="Chat illustration" className="banner-img" /> */}
+          <h1>Kway!!!</h1>
+          <p>
+            Stay connected with your friends and loved ones — anytime, anywhere 💬
+          </p>
         </div>
       </div>
 
-      {/* Right Side Form */}
+      {/* RIGHT FORM */}
       <div className="auth-card">
         <AnimatePresence mode="wait">
           {isLogin ? (
             <motion.div
               key="login"
+              className="form-box"
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -60 }}
-              transition={{ duration: 0.4 }}
-              className="form-box"
             >
               <h2>Welcome Back 👋</h2>
               <p className="subtitle">Login to continue chatting</p>
 
-              <input
-                type="text"
-                name="phone"
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={handleChange}
-              />
+              {/* PHONE INPUT */}
+              <PhoneInput
+  country="ng"
+  value={formData.phone}
+  onChange={(value) =>
+    setFormData((prev) => ({ ...prev, phone: value }))
+  }
+  countryCodeEditable={false}
+  enableAreaCodes={true}
+  inputProps={{
+    name: "phone",
+    required: true,
+  }}
+  containerClass="phone-container"
+  inputClass="phone-input"
+/>
+
+
               <input
                 type="password"
                 name="password"
@@ -94,7 +99,11 @@ const Auth = () => {
                 onChange={handleChange}
               />
 
-              <button onClick={handleSubmit} disabled={isLoading} className="login-btn">
+              <button
+                className="login-btn"
+                onClick={handleSubmit}
+                disabled={isLoading}
+              >
                 {isLoading ? "Logging in..." : "Login"}
               </button>
 
@@ -105,11 +114,10 @@ const Auth = () => {
           ) : (
             <motion.div
               key="signup"
+              className="form-box"
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -60 }}
-              transition={{ duration: 0.4 }}
-              className="form-box"
             >
               <h2>Create Account 📝</h2>
               <p className="subtitle">Join the chat community</p>
@@ -121,13 +129,25 @@ const Auth = () => {
                 value={formData.name}
                 onChange={handleChange}
               />
-              <input
-                type="text"
-                name="phone"
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={handleChange}
-              />
+
+              {/* PHONE INPUT */}
+              <PhoneInput
+  country="ng"
+  value={formData.phone}
+  onChange={(value) =>
+    setFormData((prev) => ({ ...prev, phone: value }))
+  }
+  countryCodeEditable={false}
+  enableAreaCodes={true}
+  inputProps={{
+    name: "phone",
+    required: true,
+  }}
+  containerClass="phone-container"
+  inputClass="phone-input"
+/>
+
+
               <input
                 type="password"
                 name="password"
@@ -136,7 +156,11 @@ const Auth = () => {
                 onChange={handleChange}
               />
 
-              <button onClick={handleSubmit} disabled={isLoading} className="login-btn">
+              <button
+                className="login-btn"
+                onClick={handleSubmit}
+                disabled={isLoading}
+              >
                 {isLoading ? "Creating..." : "Sign Up"}
               </button>
 
@@ -148,15 +172,13 @@ const Auth = () => {
         </AnimatePresence>
       </div>
 
-      {/* Development Modal */}
+      {/* DEV MODAL */}
       {showDevModal && (
-        <div className="modal-overlay" onClick={handleModalClickOutside}>
+        <div className="modal-overlay" onClick={handleGotIt}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h3>🚧 Under Development!</h3>
             <p>
-              Hey there! Kway Messenger is still under development. 
-              You can't chat just yet 😅. 
-              Feel free to reach out to the developer to "buy him data" or just say hi!
+              Kway Messenger is still under development. You can’t chat yet 😅
             </p>
             <button className="close-btn" onClick={handleGotIt}>
               Got it!

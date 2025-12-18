@@ -61,7 +61,7 @@ const Sidebar = () => {
       {/* Bottom Nav for Mobile */}
 <div className="bottom-nav">
   {[...topLinks, ...bottomLinks]
-    .filter(link => link.label !== "Settings") // ✅ hide settings on mobile
+    .filter(link => link.label !== "Channels") // ✅ hide settings on mobile
     .map((link, idx) => (
       <NavLink 
         key={idx}  
