@@ -4,6 +4,8 @@ import { FiMic, FiPhone, FiVideo, FiSend, FiSmile } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
+import { useEffect, useRef } from "react";
+
 
 const ChatWindow = ({
   activeChat,
@@ -26,6 +28,29 @@ const ChatWindow = ({
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pressTimer, setPressTimer] = useState(null);
+  const emojiRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+useEffect(() => {
+  // Close dropdown when chat changes
+  setShowChatDropdown(false);
+}, [activeChat]);
+
+
+
+useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(e.target)
+    ) {
+      setShowChatDropdown(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
 
   if (!activeChat) {
     return (
@@ -34,6 +59,8 @@ const ChatWindow = ({
       </div>
     );
   }
+
+  
 
   return (
     <div className="chat-window active">
@@ -72,7 +99,7 @@ const ChatWindow = ({
             }}
           />
 
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative" }} ref={dropdownRef}>
             <BsThreeDotsVertical
               onClick={(e) => {
                 e.stopPropagation();
@@ -168,13 +195,22 @@ const ChatWindow = ({
         <FiSend className="chat-send-icon" onClick={handleSendMessage} />
 
         <div
-          className={`chat-voice-btn ${
-            recording ? "chat-voice-recording" : ""
-          }`}
-          onClick={handleVoiceClick}
-        >
-          <FiMic />
-        </div>
+  className={`chat-voice-btn ${
+    recording ? "chat-voice-recording" : ""
+  }`}
+  onClick={handleVoiceClick}
+>
+  <FiMic />
+
+  {recording && (
+    <div className="voice-wave">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <span key={i}></span>
+      ))}
+    </div>
+  )}
+</div>
+
         <div className="voice-note">
   <div className="waveform">
     {Array.from({ length: 20 }).map((_, i) => (
@@ -188,15 +224,23 @@ const ChatWindow = ({
 
       {/* ================= EMOJI PICKER ================= */}
       {showEmojiPicker && (
-        <div className="emoji-picker-wrapper">
-          <EmojiPicker
-            onEmojiClick={(emoji) =>
-              setNewMessage(prev => prev + emoji.emoji)
-            }
-            theme="auto"
-          />
-        </div>
-      )}
+  <div className="emoji-picker-wrapper" ref={emojiRef}>
+    <button
+      className="emoji-close-btn"
+      onClick={() => setShowEmojiPicker(false)}
+    >
+      ✕
+    </button>
+
+    <EmojiPicker
+      onEmojiClick={(emoji) =>
+        setNewMessage((prev) => prev + emoji.emoji)
+      }
+      theme="auto"
+    />
+  </div>
+)}
+
 
       {/* ================= REACTIONS ================= */}
        {reactionPicker.open && (

@@ -1,11 +1,11 @@
-/* MAIN WRAPPER */
+/* MAIN */
 .admin-monitor-container {
   display: flex;
   height: 100vh;
   background: #f2f4f7;
 }
 
-/* LEFT SIDE - CHAT LIST */
+/* LEFT */
 .admin-monitor-left {
   width: 30%;
   background: #fff;
@@ -28,23 +28,14 @@
   margin-bottom: 15px;
 }
 
-/* CHAT ITEM */
-.admin-monitor-chatlist {
-  margin-top: 10px;
-}
-
+/* CHAT LIST */
 .admin-monitor-chatitem {
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #eee;
   background: #fafafa;
   margin-bottom: 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.admin-monitor-chatitem:hover {
-  background: #e8f2ff;
+  border: 1px solid #eee;
 }
 
 .admin-monitor-chatitem.active {
@@ -72,7 +63,7 @@
   border-radius: 5px;
 }
 
-/* RIGHT SIDE - CHAT VIEW */
+/* RIGHT */
 .admin-monitor-right {
   flex: 1;
   display: flex;
@@ -80,23 +71,32 @@
 }
 
 .admin-monitor-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: #fff;
   padding: 15px;
   border-bottom: 1px solid #ddd;
 }
 
-.admin-monitor-header h4 span {
+.admin-monitor-back {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
   color: #4c8bf5;
 }
 
+/* MESSAGES */
 .admin-monitor-messages {
   flex: 1;
-  overflow-y: auto;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .admin-monitor-message {
-  max-width: 60%;
+  max-width: 65%;
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 12px;
@@ -116,16 +116,38 @@
 
 .admin-monitor-message small {
   font-size: 11px;
-  color: #eee;
-  display: block;
-  margin-top: 5px;
+  opacity: 0.7;
 }
 
+/* EMPTY */
 .admin-monitor-empty {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
   color: #777;
-  font-size: 16px;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .admin-monitor-container {
+    flex-direction: column;
+  }
+
+  .admin-monitor-left,
+  .admin-monitor-right {
+    width: 100%;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
+
+  .show-mobile {
+    display: flex;
+  }
+
+  .admin-monitor-back {
+    display: inline-block;
+  }
 }

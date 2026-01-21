@@ -9,7 +9,7 @@ import ChatImg3 from "../../assets/chatImg-3.jpg";
 import ChatImg4 from "../../assets/chatImg-4.jpg";
 
 const initialChats = [
-  { id: 1, name: "John Doe", avatar: ChatImg1, lastMessage: "Hey, how are you?", time: "10:30 AM", active: true, messages: [] },
+  { id: 1, name: "John Doe", avatar: ChatImg1, lastMessage: "Hey, how are you?", time: "10:30 AM", active: true,  unreadCount: 3, messages: [] },
   { id: 2, name: "Jane Smith", avatar: ChatImg2, lastMessage: "Meeting at 5?", time: "09:45 AM", active: false, messages: [] },
   { id: 3, name: "Dev Group", lastMessage: "Push your code pls 🚀", time: "Yesterday", active: true, messages: [] },
   { id: 4, name: "Samuel", avatar: ChatImg4, lastMessage: "Check this out!", time: "Monday", active: false, messages: [] },
@@ -71,21 +71,28 @@ const Chats = () => {
   };
 
   const handleAddContact = (e) => {
-    e.preventDefault();
-    if (!newContact.name) return;
+  e.preventDefault();
 
-    setChats([...chats, {
+  if (!newContact.name || !newContact.phone) return;
+
+  setChats([
+    ...chats,
+    {
       id: chats.length + 1,
       name: newContact.name,
+      phone: newContact.phone,
       lastMessage: newContact.lastMessage || "New contact added",
       time: "Now",
       active: true,
+      unreadCount: 0,
       messages: [],
-    }]);
+    },
+  ]);
 
-    setShowAddModal(false);
-    setNewContact({ name: "", lastMessage: "", phone: "" });
-  };
+  setShowAddModal(false);
+  setNewContact({ name: "", phone: "", lastMessage: "" });
+};
+
 
   return (
     <div className="chat-wrapper">
@@ -130,10 +137,66 @@ const Chats = () => {
       )}
 
       {showAddModal && (
-        <div className="add-contact-modal">
-          {/* unchanged modal */}
+  <div
+    className="add-contact-modal"
+    onClick={() => setShowAddModal(false)}
+  >
+    <div
+      className="modal-content"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h3>Add New Contact</h3>
+
+      <form onSubmit={handleAddContact}>
+        {/* NAME */}
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={newContact.name}
+          onChange={(e) =>
+            setNewContact({ ...newContact, name: e.target.value })
+          }
+          required
+        />
+
+        {/* PHONE NUMBER */}
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          value={newContact.phone}
+          onChange={(e) =>
+            setNewContact({ ...newContact, phone: e.target.value })
+          }
+          required
+        />
+
+        {/* OPTIONAL MESSAGE */}
+        <input
+          type="text"
+          placeholder="Initial message (optional)"
+          value={newContact.lastMessage}
+          onChange={(e) =>
+            setNewContact({ ...newContact, lastMessage: e.target.value })
+          }
+        />
+
+        <div className="modal-actions">
+          <button
+            type="button"
+            onClick={() => setShowAddModal(false)}
+          >
+            Cancel
+          </button>
+
+          <button type="submit">
+            Add Contact
+          </button>
         </div>
-      )}
+      </form>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

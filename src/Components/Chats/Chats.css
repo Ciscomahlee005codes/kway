@@ -328,6 +328,21 @@
   z-index: 999;
 }
 
+.emoji-close-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #000;
+  color: #fff;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+
 /* Reaction Picker (WhatsApp-style) */
 .reaction-picker {
   position: fixed;
@@ -429,26 +444,48 @@
 
 /* Voice button circle */
 .chat-voice-btn {
-  width: 45px;
-  height: 45px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--accent-color);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: 0.2s;
   position: relative;
-}
-
-.chat-voice-btn:hover {
-  opacity: 0.8;
+  overflow: hidden;
 }
 
 .chat-voice-recording {
   background: #e53935;
-  animation: pulseMic 1s infinite;
 }
+
+.voice-wave {
+  position: absolute;
+  bottom: -8px;
+  display: flex;
+  gap: 4px;
+}
+
+.voice-wave span {
+  width: 4px;
+  height: 10px;
+  background: #fff;
+  border-radius: 4px;
+  animation: wave 1s infinite ease-in-out;
+}
+
+.voice-wave span:nth-child(1) { animation-delay: 0s; }
+.voice-wave span:nth-child(2) { animation-delay: 0.15s; }
+.voice-wave span:nth-child(3) { animation-delay: 0.3s; }
+.voice-wave span:nth-child(4) { animation-delay: 0.45s; }
+.voice-wave span:nth-child(5) { animation-delay: 0.6s; }
+
+@keyframes wave {
+  0%, 100% { height: 6px; }
+  50% { height: 18px; }
+}
+
 
 
 .chat-input {
@@ -681,7 +718,7 @@
   color: var(--accent-color);
 }
 
-.chat-voice-btn {
+/* .chat-voice-btn {
   width: 45px;
   height: 45px;
   border-radius: 50%;
@@ -711,7 +748,7 @@
   0% { transform: scale(0.9); opacity: 0.7; }
   50% { transform: scale(1.2); opacity: 0.4; }
   100% { transform: scale(0.9); opacity: 0.7; }
-}
+} */
 
 /* Dropdown animation */
 .animated-dropdown {
@@ -749,6 +786,112 @@
   box-shadow: 0px 3px 6px rgba(0,0,0,0.1);
   animation: dropDown 0.3s ease;
   z-index: 25;
+}
+/* Floating Add Chat Button (WhatsApp-style) */
+.floating-add-btn {
+  position: absolute;
+  right: 20px;
+  bottom: 80px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  z-index: 50;
+}
+
+.floating-add-btn:hover {
+  transform: scale(1.1);
+  opacity: 0.9;
+}
+
+/* Ensure chat list is relative */
+.chat-list-section {
+  position: relative;
+}
+
+/* Mini search already exists, just ensure icon feels clickable */
+.action-icon {
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--accent-color);
+}
+/* 🔦 Highlighted search text */
+mark {
+  background: rgba(0, 255, 170, 0.25);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
+/* 🔔 Unread badge */
+.unread-badge {
+  background: var(--accent-color);
+  color: #fff;
+  min-width: 20px;
+  height: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+/* Chat meta */
+.chat-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* 📱 Context menu */
+.chat-context-menu {
+  position: fixed;
+  background: #111;
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+  z-index: 999;
+  animation: popIn 0.15s ease;
+}
+
+.chat-context-menu button {
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.chat-context-menu button:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+/* Context animation */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes dropDown {

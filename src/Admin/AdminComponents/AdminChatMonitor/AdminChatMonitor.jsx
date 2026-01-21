@@ -5,24 +5,9 @@ const AdminChatMonitor = () => {
   const [selectedChat, setSelectedChat] = useState(null);
 
   const chatList = [
-    {
-      id: 1,
-      users: ["John Doe", "Admin"],
-      lastMsg: "User: I need help",
-      flagged: false,
-    },
-    {
-      id: 2,
-      users: ["Sarah", "Support"],
-      lastMsg: "Support: Issue resolved ✔",
-      flagged: true,
-    },
-    {
-      id: 3,
-      users: ["Emeka", "Admin"],
-      lastMsg: "User: Thank you!",
-      flagged: false,
-    },
+    { id: 1, users: ["John Doe", "Admin"], lastMsg: "User: I need help", flagged: false },
+    { id: 2, users: ["Sarah", "Support"], lastMsg: "Support: Issue resolved ✔", flagged: true },
+    { id: 3, users: ["Emeka", "Admin"], lastMsg: "User: Thank you!", flagged: false },
   ];
 
   const monitoredMessages = [
@@ -33,9 +18,12 @@ const AdminChatMonitor = () => {
 
   return (
     <div className="admin-monitor-container">
-
-      {/* LEFT PANEL - CHAT LIST */}
-      <div className="admin-monitor-left">
+      {/* LEFT PANEL */}
+      <div
+        className={`admin-monitor-left ${
+          selectedChat ? "hide-mobile" : ""
+        }`}
+      >
         <h3 className="admin-monitor-title">Chat Monitoring</h3>
 
         <input
@@ -54,7 +42,7 @@ const AdminChatMonitor = () => {
               onClick={() => setSelectedChat(chat.id)}
             >
               <div className="admin-monitor-chat-users">
-                <strong>{chat.users[0]}</strong> &nbsp;↔&nbsp; {chat.users[1]}
+                <strong>{chat.users[0]}</strong> ↔ {chat.users[1]}
               </div>
               <p className="admin-monitor-lastmsg">{chat.lastMsg}</p>
 
@@ -66,16 +54,26 @@ const AdminChatMonitor = () => {
         </div>
       </div>
 
-      {/* RIGHT PANEL - CHAT VIEW */}
-      <div className="admin-monitor-right">
+      {/* RIGHT PANEL */}
+      <div
+        className={`admin-monitor-right ${
+          selectedChat ? "show-mobile" : ""
+        }`}
+      >
         {selectedChat ? (
           <>
             <div className="admin-monitor-header">
+              <button
+                className="admin-monitor-back"
+                onClick={() => setSelectedChat(null)}
+              >
+                ← Back
+              </button>
+
               <h4>
-                Conversation Between:{" "}
-                <span>
-                  {chatList.find((c) => c.id === selectedChat)?.users.join(" & ")}
-                </span>
+                {chatList
+                  .find((c) => c.id === selectedChat)
+                  ?.users.join(" & ")}
               </h4>
             </div>
 

@@ -142,7 +142,7 @@
 
 .info-row .value {
   font-weight: 600;
-  color: #222;
+  color: var(--text-color);
 }
 
 .info-row.danger {

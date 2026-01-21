@@ -17,11 +17,8 @@ const UserManagement = () => {
 
   return (
     <div className="adminDash-userPage">
-
-      {/* Header */}
       <h1 className="adminDash-userHeader">User Management</h1>
 
-      {/* Search Bar */}
       <div className="adminDash-searchWrapper">
         <input
           type="text"
@@ -32,7 +29,6 @@ const UserManagement = () => {
         />
       </div>
 
-      {/* User Table */}
       <div className="adminDash-tableWrapper">
         <table className="adminDash-table">
           <thead>
@@ -45,21 +41,19 @@ const UserManagement = () => {
           </thead>
 
           <tbody>
-            {filteredUsers.length > 0 ? (
+            {filteredUsers.length ? (
               filteredUsers.map((user) => (
                 <tr key={user.id}>
-                  <td>{user.name}</td>
-                  <td>{user.phone}</td>
+                  <td data-label="Name">{user.name}</td>
+                  <td data-label="Phone">{user.phone}</td>
 
-                  <td>
-                    <span
-                      className={`adminDash-status adminDash-${user.status}`}
-                    >
+                  <td data-label="Status">
+                    <span className={`adminDash-status adminDash-${user.status}`}>
                       {user.status}
                     </span>
                   </td>
 
-                  <td className="adminDash-actions">
+                  <td data-label="Actions" className="adminDash-actions">
                     <button className="adminDash-btn view">View</button>
                     <button className="adminDash-btn block">Block</button>
                     <button className="adminDash-btn delete">Delete</button>

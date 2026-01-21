@@ -1,20 +1,37 @@
+/* BASE CONTAINER */
 .admin-notify-container {
   padding: 20px;
+  max-width: 1100px;
+  margin: auto;
 }
 
+.admin-notify-container h2 {
+  margin-bottom: 15px;
+  font-size: 1.6rem;
+}
+
+/* TABS */
 .admin-notify-tabs {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .admin-notify-tabs button {
-  padding: 10px 20px;
+  flex: 1;
+  min-width: 150px;
+  padding: 12px;
   border: none;
-  background: #ddd;
+  background: #e4e4e4;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.admin-notify-tabs button:hover {
+  background: #d6d6d6;
 }
 
 .admin-notify-tabs .active {
@@ -22,14 +39,15 @@
   color: white;
 }
 
+/* CONTENT CARD */
 .admin-notify-content {
   background: white;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 /* NOTIFICATION LIST */
-
 .notify-list {
   display: flex;
   flex-direction: column;
@@ -37,10 +55,15 @@
 }
 
 .notify-item {
-  padding: 12px 15px;
+  padding: 14px 16px;
   background: #f4f7ff;
   border-left: 4px solid #0b5be0;
-  border-radius: 6px;
+  border-radius: 8px;
+}
+
+.notify-item p {
+  margin: 0 0 6px;
+  font-weight: 500;
 }
 
 .notify-item span {
@@ -48,38 +71,87 @@
   color: gray;
 }
 
-/* ANNOUNCEMENTS SECTION */
-
+/* ANNOUNCEMENTS */
 .announce-section h3 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  font-size: 1.3rem;
 }
 
 .announce-item {
   background: #eef5ff;
-  padding: 15px;
-  border-radius: 6px;
-  margin-bottom: 10px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
+.announce-item strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.announce-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* ANNOUNCE FORM */
 .announce-form {
-  margin-top: 20px;
+  margin-top: 25px;
   background: #fafafa;
-  padding: 15px;
-  border-radius: 6px;
+  padding: 16px;
+  border-radius: 10px;
+}
+
+.announce-form h4 {
+  margin-bottom: 10px;
 }
 
 .announce-form input,
 .announce-form textarea {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.announce-form textarea {
+  resize: vertical;
+  min-height: 100px;
 }
 
 .announce-form button {
-  padding: 10px 20px;
+  width: 100%;
+  padding: 12px;
   background: #0b5be0;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.announce-form button:hover {
+  background: #0949b7;
+}
+
+/* 📱 MOBILE OPTIMIZATION */
+@media (max-width: 600px) {
+  .admin-notify-container {
+    padding: 15px;
+  }
+
+  .admin-notify-container h2 {
+    font-size: 1.4rem;
+  }
+
+  .admin-notify-content {
+    padding: 15px;
+  }
+
+  .notify-item {
+    padding: 12px;
+  }
 }
