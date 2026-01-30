@@ -148,51 +148,47 @@ const Chats = () => {
       <h3>Add New Contact</h3>
 
       <form onSubmit={handleAddContact}>
-        {/* NAME */}
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={newContact.name}
-          onChange={(e) =>
-            setNewContact({ ...newContact, name: e.target.value })
-          }
-          required
-        />
+  <input
+    type="text"
+    placeholder="Full Name"
+    value={newContact.name}
+    onChange={(e) =>
+      setNewContact({ ...newContact, name: e.target.value })
+    }
+    required
+  />
 
-        {/* PHONE NUMBER */}
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          value={newContact.phone}
-          onChange={(e) =>
-            setNewContact({ ...newContact, phone: e.target.value })
-          }
-          required
-        />
+  <input
+    type="text"
+    placeholder="@username"
+    value={newContact.username}
+    onChange={(e) =>
+      setNewContact({ ...newContact, username: e.target.value })
+    }
+    required
+  />
 
-        {/* OPTIONAL MESSAGE */}
-        <input
-          type="text"
-          placeholder="Initial message (optional)"
-          value={newContact.lastMessage}
-          onChange={(e) =>
-            setNewContact({ ...newContact, lastMessage: e.target.value })
-          }
-        />
+  <input
+    type="email"
+    placeholder="Email Address"
+    value={newContact.email}
+    onChange={(e) =>
+      setNewContact({ ...newContact, email: e.target.value })
+    }
+    required
+  />
 
-        <div className="modal-actions">
-          <button
-            type="button"
-            onClick={() => setShowAddModal(false)}
-          >
-            Cancel
-          </button>
+  <div className="modal-actions">
+    <button type="button" onClick={() => setShowAddModal(false)}>
+      Cancel
+    </button>
 
-          <button type="submit">
-            Add Contact
-          </button>
-        </div>
-      </form>
+    <button type="submit">
+      Add Contact
+    </button>
+  </div>
+</form>
+
     </div>
   </div>
 )}

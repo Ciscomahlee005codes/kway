@@ -23,6 +23,9 @@ import AdminSettingsPage from "./Admin/AdminPages/AdminSettingsPage/AdminSetting
 import PhoneVerification from "./Components/Verification/PhoneVerification";
 import ProfileSetup from "./Components/ProfileSetup/ProfileSetup";
 import UsersProfile from "./Components/Chats/UsersProfile";
+import { Toaster } from "react-hot-toast";
+import ForgotPassword from "./Components/Auth/ForgotPassword";
+import EditProfileModal from "./Components/Chats/EditProfileModal";
 
 function App() {
   const location = useLocation();
@@ -30,12 +33,14 @@ function App() {
   // Hide sidebar on Auth route
   const hideSidebar =
   location.pathname === "/" ||
-  location.pathname.startsWith("/admin") ||  location.pathname === "/phonenumber/verification" || location.pathname === "/profile-setup";
+  location.pathname.startsWith("/admin") ||  location.pathname === "/phonenumber/verification" || location.pathname === "/profile-setup" || location.pathname === "/forgot-password";
 
 
   return (
     <div className="app">
       {!hideSidebar && <Sidebar />}
+      
+<Toaster position="top-right" reverseOrder={false} />
       <Routes>
         <Route path="/" element={<Auth />} />
         <Route path="/chat" element={<ChatPage />} />
@@ -53,6 +58,7 @@ function App() {
           <Route path="/phonenumber/verification" element={<PhoneVerification />} /> 
           <Route path="/profile-setup" element={<ProfileSetup />} /> 
           <Route path="/user-profile" element={<UsersProfile />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Admin Panel */}
           <Route path="/admin/auth" element={<AdminAuth />} /> 

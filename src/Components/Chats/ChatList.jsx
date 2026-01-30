@@ -47,7 +47,7 @@ const ChatList = ({
               <input
                 autoFocus
                 className="mini-search-input"
-                placeholder="Search chats..."
+                placeholder="Search users, chats..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onBlur={() => {

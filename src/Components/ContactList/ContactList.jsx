@@ -1,66 +1,98 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import "./ContactList.css";
 import { FiSearch } from "react-icons/fi";
 import { IoMdAdd } from "react-icons/io";
 
+// Example structure based on new Kway model
 const dummyContacts = [
-  { id: 1, name: "Alice Johnson", phone: "+2348012345678" },
-  { id: 2, name: "Bob Smith", phone: "+2348098765432" },
-  { id: 3, name: "Charlie Brown", phone: "+2348023456789" },
-  { id: 4, name: "David Okoro", phone: "+2348034567890" },
-  { id: 5, name: "Eunice Abiola", phone: "+2348045678901" },
-  { id: 6, name: "Faith Chukwudi", phone: "+2348056789012" },
-  { id: 7, name: "George Emeka", phone: "+2348067890123" },
-  { id: 8, name: "Hannah Ijeoma", phone: "+2348078901234" },
+  {
+    id: 1,
+    full_name: "Alice Johnson",
+    username: "alice_j",
+    avatar_url: "",
+    bio: "Frontend Dev 🚀",
+  },
+  {
+    id: 2,
+    full_name: "Bob Smith",
+    username: "bobcodes",
+    avatar_url: "",
+    bio: "Building cool stuff",
+  },
+  {
+    id: 3,
+    full_name: "Charlie Brown",
+    username: "charlie_b",
+    avatar_url: "",
+    bio: "Coffee + Code",
+  },
+   {
+    id: 4,
+    full_name: "Alex Dibe",
+    username: "alex_tony",
+    avatar_url: "",
+    bio: "Accounting Student",
+  },
 ];
 
 const ContactList = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredContacts = dummyContacts
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .filter(contact =>
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const filteredContacts = useMemo(() => {
+    return dummyContacts
+      .filter((contact) =>
+        contact.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contact.username.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }, [searchTerm]);
 
   return (
     <div className="contact-list-wrapper">
       <div className="contact-header">
-        <h2>Contacts</h2>
+        <h2>Chats</h2>
+
         <div className="contact-actions">
-          <button className="btn new-contact">
-            <IoMdAdd /> New Contact
+          <button className="btn">
+            <IoMdAdd /> New Chat
           </button>
-          <button className="btn new-group">
+
+          <button className="btn secondary">
             <IoMdAdd /> New Group
           </button>
         </div>
+
         <div className="contact-search">
           <FiSearch className="search-icon" />
           <input
             type="text"
-            placeholder="Search contacts..."
+            placeholder="Search by name or username..."
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
       <div className="contacts">
         {filteredContacts.length > 0 ? (
-          filteredContacts.map(contact => (
+          filteredContacts.map((contact) => (
             <div key={contact.id} className="contact-item">
               <div className="contact-avatar">
-                {contact.name[0].toUpperCase()}
+                {contact.avatar_url ? (
+                  <img src={contact.avatar_url} alt="avatar" />
+                ) : (
+                  contact.full_name[0].toUpperCase()
+                )}
               </div>
+
               <div className="contact-info">
-                <h4>{contact.name}</h4>
-                <p>{contact.phone}</p>
+                <h4>{contact.full_name}</h4>
+                <p>@{contact.username}</p>
               </div>
             </div>
           ))
         ) : (
-          <p className="no-contacts">No contacts found 😕</p>
+          <p className="no-contacts">No users found 😕</p>
         )}
       </div>
     </div>

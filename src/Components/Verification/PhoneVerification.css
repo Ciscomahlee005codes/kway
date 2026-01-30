@@ -60,25 +60,15 @@
   margin: 8px 0 20px;
   font-size: 14px;
 }
-
-.otp-box {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 25px;
-}
-
-.otp-input {
-  width: 48px;
-  height: 55px;
-  font-size: 24px;
+.verify-note {
+  font-size: 13px;
+  color: #555;
   text-align: center;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  outline: none;
-  background: var(--bg-color);
-  color: var(--text-color);
-  transition: 0.25s ease;
+  margin-top: 10px;
+  opacity: 0.8;
 }
+
+
 
 .otp-input:focus {
   border-color: var(--accent-color);

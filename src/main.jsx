@@ -4,13 +4,16 @@ import './index.css'
 import { ThemeProvider } from "./Context/ThemeContext.jsx"
 import { LanguageProvider } from "./Context/LanguageContext.jsx"
 import App from './App.jsx'
+import { AuthContextProvider } from "./Context/AuthContext.jsx"
 
 createRoot(document.getElementById('root')).render(
   <HashRouter>
-  <ThemeProvider>
+  <AuthContextProvider>
+    <ThemeProvider>
     <LanguageProvider>
       <App />
     </LanguageProvider>
   </ThemeProvider> 
+  </AuthContextProvider>
   </HashRouter>,
 )

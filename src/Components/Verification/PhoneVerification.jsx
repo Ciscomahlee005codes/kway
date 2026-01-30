@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { IoChevronBack } from "react-icons/io5";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { UserAuth } from "../../Context/AuthContext";
 import "./PhoneVerification.css";
 
 const PhoneVerification = () => {
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(60);
   const [isResendActive, setIsResendActive] = useState(false);
-  const [toast, setToast] = useState(null);
-  const [shake, setShake] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const { sendLoginOtp } = UserAuth();
 
-  // Default OTP for testing
-  const DEFAULT_TEST_OTP = "123456";
+  const email = location.state?.email;
 
-  // Timer countdown
+  // ================= TIMER =================
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => setTimer((t) => t - 1), 1000);
@@ -27,110 +26,58 @@ const PhoneVerification = () => {
     }
   }, [timer]);
 
-   const handleChange = (value, index) => {
-  if (!/^[0-9]?$/.test(value)) return;
-
-  const newCode = [...code];
-  newCode[index] = value;
-  setCode(newCode);
-
-  // Auto-focus next
-  if (value && index < 5) {
-    document.getElementById(`otp-${index + 1}`).focus();
-  }
-};
- // Auto-submit when code reaches 6 digits
-useEffect(() => {
-  const fullCode = code.join("");
-
-  if (fullCode.length === 6) {
-    setTimeout(() => handleVerify(), 200);
-  }
-}, [code]);
-
-
-  const handleVerify = () => {
-    const fullCode = code.join("");
-
-    if (fullCode.length !== 6) {
-      setShake(true);
-      setToast({ type: "error", msg: "Please enter all 6 digits." });
-      setTimeout(() => setShake(false), 600);
-      return;
-    }
-
-    // Show loading
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
-
-      // Check against default OTP
-      if (fullCode !== DEFAULT_TEST_OTP) {
-        setShake(true);
-        setToast({ type: "error", msg: "Invalid code. Try again." });
-        setTimeout(() => setShake(false), 600);
-      } else {
-        setToast({ type: "success", msg: "Verified successfully!" });
-
-        // Navigate to profile setup (demo)
-        setTimeout(() => navigate("/profile-setup"), 1200);
-      }
-    }, 1200);
-  };
-
-  const handleResend = () => {
+  // ================= RESEND =================
+  const handleResend = async () => {
     if (!isResendActive) return;
 
-    setCode(["", "", "", "", "", ""]);
-    setTimer(60);
-    setIsResendActive(false);
-    setToast({ type: "success", msg: "Verification code resent!" });
+    setLoading(true);
+    const result = await sendLoginOtp(email);
+    setLoading(false);
+
+    if (result?.success) {
+      setTimer(60);
+      setIsResendActive(false);
+    }
   };
 
   return (
     <div className="verify-container">
-      <div className={`verify-card ${shake ? "shake" : ""}`}>
+      <div className="verify-card">
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <IoChevronBack className="back-icon" />
+          <IoChevronBack
+            className="back-icon"
+            onClick={() => navigate(-1)}
+          />
 
-          <h2>Verify Your Number</h2>
-          <p className="verify-sub">Enter the 6-digit OTP code (Test: 123456)</p>
+          <h2>Check Your Email</h2>
+          <p className="verify-sub">
+            We have sent a magic link to <strong>{email}</strong>. 
+            Click the link in your email to continue logging in.
+          </p>
 
-          <div className="otp-box">
-            {code.map((digit, index) => (
-              <input
-                key={index}
-                id={`otp-${index}`}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleChange(e.target.value, index)}
-                className="otp-input"
-              />
-            ))}
-          </div>
-
-          <button className="verify-btn" onClick={handleVerify} disabled={loading}>
-            {loading ? <div className="spinner"></div> : "Verify"}
+          <button
+            className="verify-btn"
+            onClick={handleResend}
+            disabled={loading || !isResendActive}
+          >
+            {loading ? (
+              <div className="loader"></div>
+            ) : isResendActive ? (
+              "Resend Magic Link"
+            ) : (
+              `Resend in ${timer}s`
+            )}
           </button>
 
-          <p className="resend">
-            {isResendActive ? (
-              <span onClick={handleResend}>Resend Code</span>
-            ) : (
-              <>Resend in {timer}s</>
-            )}
+          <p className="verify-note">
+            If you don’t see the email, check your spam folder.
           </p>
         </motion.div>
       </div>
-
-      {/* TOASTER */}
-      {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
     </div>
   );
 };
