@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { IoChevronForward } from "react-icons/io5";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
 import {
   FaUserCircle,
   FaLock,
@@ -16,6 +18,35 @@ import "./Settings.css";
 const Settings = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  const { session } = UserAuth();
+
+const [profile, setProfile] = useState(null);
+const [localPhoto, setLocalPhoto] = useState(null);
+ useEffect(() => {
+  const savedPhoto = localStorage.getItem("profile_photo");
+  if (savedPhoto) {
+    setLocalPhoto(savedPhoto);
+  }
+}, []);
+
+useEffect(() => {
+  if (!session?.user) return;
+
+  const fetchProfile = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("name, about, username")
+      .eq("id", session.user.id)
+      .single();
+
+    if (!error) {
+      setProfile(data);
+    }
+  };
+
+  fetchProfile();
+}, [session]);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("app-theme") || "light";
@@ -39,15 +70,29 @@ const Settings = () => {
 
       {/* PROFILE */}
       <div
-        className="settings-profile"
-        onClick={() => navigate("/profile")}
-      >
-        <FaUserCircle className="profile-picture" />
-        <div className="profile-info">
-          <h3>{t("profileName")}</h3>
-          <p>{t("profileStatus")}</p>
-        </div>
-      </div>
+  className="settings-profile"
+  onClick={() => navigate("/profile")}
+>
+  {localPhoto ? (
+    <img
+      src={localPhoto}
+      alt="Profile"
+      className="settings-avatar"
+    />
+  ) : (
+    <FaUserCircle className="profile-picture" />
+  )}
+
+  <div className="profile-info">
+    <h3>{profile?.name || "Your profile"}</h3>
+    <p className="profile-bio">
+      {profile?.about || "Tap to view profile"}
+    </p>
+  </div>
+
+  <IoChevronForward className="profile-arrow" />
+</div>
+
 
       <div className="settings-list">
 

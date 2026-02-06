@@ -7,15 +7,19 @@ import { IoEye, IoEyeOff } from "react-icons/io5";
 import KwayLogo from "../../assets/kway-logo-1.png";
 import "./Auth.css";
 import { UserAuth } from "../../Context/AuthContext";
+import { supabase } from "../../supabase";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { session, sendLoginOtp, sendSignupOtp } = UserAuth();
+  const { session, signIn, signUp, loading } = UserAuth();
 
   const [isLogin, setIsLogin] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showEmailSent, setShowEmailSent] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,27 +27,55 @@ const Auth = () => {
     confirmPassword: "",
   });
 
-  // ================= AUTO REDIRECT IF LOGGED IN =================
-  useEffect(() => {
-    if (session?.user) {
-      // Check if profile exists
-      (async () => {
-        try {
-          const { data: profile } = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/profiles/${session.user.id}`
-          ).then((res) => res.json());
+  // ==========================================
+  // 🔥 AUTO REDIRECT AFTER EMAIL CONFIRMATION
+  // ==========================================
+//   useEffect(() => {
+//   if (!session?.user) return;
 
-          if (!profile) navigate("/profile-setup");
-          else navigate("/chat");
-        } catch (err) {
-          console.error("Profile check error:", err);
-        }
-      })();
-    }
-  }, [session]);
+//   const checkProfile = async () => {
+//     const { data } = await supabase
+//       .from("profiles")
+//       .select("id")
+//       .eq("id", session.user.id)
+//       .maybeSingle();
+
+//     const currentPath = window.location.pathname;
+
+//     if (!data && currentPath !== "/profile-setup") {
+//       navigate("/profile-setup", { replace: true });
+//     }
+
+//     if (data && currentPath !== "/chat") {
+//       navigate("/chat", { replace: true });
+//     }
+//   };
+
+//   checkProfile();
+// }, [session, navigate]);
+
+
+  // ==========================================
+  // 🔐 PASSWORD STRENGTH
+  // ==========================================
+  const passwordStrength = useMemo(() => {
+    const password = formData.password;
+    if (!password) return "";
+
+    const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (strong.test(password)) return "strong";
+    if (password.length >= 6) return "medium";
+    return "weak";
+  }, [formData.password]);
 
   const toggleForm = () => {
-    setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
     setIsLogin((prev) => !prev);
   };
 
@@ -52,73 +84,126 @@ const Auth = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ================= PASSWORD STRENGTH =================
-  const passwordStrength = useMemo(() => {
-    const { password } = formData;
-    if (!password) return "";
-    const strongRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-    if (strongRegex.test(password)) return "strong";
-    if (password.length >= 6) return "medium";
-    return "weak";
-  }, [formData.password]);
-
-  // ================= VALIDATION =================
+  // ==========================================
+  // ✅ VALIDATION
+  // ==========================================
   const validateForm = () => {
     const { name, email, password, confirmPassword } = formData;
+
     if (!email) {
       toast.error("Email is required");
       return false;
     }
+
+    if (!password) {
+      toast.error("Password is required");
+      return false;
+    }
+
     if (!isLogin) {
       if (!name) {
         toast.error("Full name is required");
         return false;
       }
-      if (passwordStrength !== "strong") {
-        toast.error(
-          "Password must contain uppercase, lowercase, number & special character (8+ chars)"
-        );
+
+      if (password.length < 6) {
+        toast.error("Password must be at least 6 characters");
         return false;
       }
+
       if (password !== confirmPassword) {
         toast.error("Passwords do not match");
         return false;
       }
     }
+
     return true;
   };
 
-  // ================= SUBMIT =================
+  // ==========================================
+  // 🚀 SUBMIT
+  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsLoading(true);
-    const { name, email } = formData;
+    setIsSubmitting(true);
+
+    const { email, password } = formData;
 
     try {
       if (isLogin) {
-        // 🔥 LOGIN → Magic Link
-        const result = await sendLoginOtp(email);
-        if (result?.success) {
-          navigate("/check-email", { state: { email } });
-        }
+        // ===== LOGIN =====
+        const result = await signIn(email, password);
+        if (!result.success) return;
+          navigate("/profile-setup");
       } else {
-        // 🔥 SIGNUP → Magic Link
-        const result = await sendSignupOtp(email);
-        if (result?.success) {
-          localStorage.setItem("kway_temp_name", name);
-          navigate("/check-email", { state: { email } });
-        }
+        // ===== SIGN UP =====
+        const result = await signUp(email, password);
+        if (!result.success) return;
+
+        // Save email for display
+        setRegisteredEmail(email);
+
+        // Clear form
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
+
+        // Show email confirmation screen
+        setShowEmailSent(true);
       }
-    } catch (error) {
-      toast.error(error.message || "Unexpected error occurred");
+    } catch (err) {
+      toast.error(err.message || "Something went wrong");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
+  if (loading) return null;
+
+  // ==========================================
+  // 📩 EMAIL SENT SCREEN
+  // ==========================================
+   if (showEmailSent) {
+  return (
+    <div className="auth-container email-screen">
+      <div className="auth-card email-sent-card">
+        <div className="email-icon">📩</div>
+
+        <h2>Check Your Email</h2>
+
+        <p className="email-text">
+          We sent a confirmation link to
+        </p>
+
+        <p className="email-address">{registeredEmail}</p>
+
+        <p className="email-sub">
+          Please verify your email to continue.
+        </p>
+
+        <button
+          className="login-btn"
+          onClick={() => {
+            setShowEmailSent(false);
+            setIsLogin(true);
+          }}
+        >
+          Back to Login
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+  // ==========================================
+  // 🧾 NORMAL AUTH FORM
+  // ==========================================
   return (
     <div className="auth-container">
       <div className="auth-banner">
@@ -127,7 +212,7 @@ const Auth = () => {
             <img src={KwayLogo} alt="Kway Logo" className="logo-img" />
           </div>
           <h1>Kway</h1>
-          <p>Secure login with email verification 🔐</p>
+          <p>Secure messaging starts here 🔐</p>
         </div>
       </div>
 
@@ -137,11 +222,14 @@ const Auth = () => {
             key={isLogin ? "login" : "signup"}
             className="form-box"
             onSubmit={handleSubmit}
-            initial={{ opacity: 0, x: 60 }}
+            initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -60 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
           >
-            <h2>{isLogin ? "Welcome Back 👋" : "Create Account 📝"}</h2>
+            <h2>
+              {isLogin ? "Welcome Back 👋" : "Create Your Account 🚀"}
+            </h2>
 
             {!isLogin && (
               <input
@@ -162,70 +250,86 @@ const Auth = () => {
               required
             />
 
+            <div className="password-field">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder={
+                  isLogin ? "Enter Password" : "Create Password"
+                }
+                value={formData.password}
+                onChange={handleChange}
+              />
+              <span
+                className="toggle-password"
+                onClick={() =>
+                  setShowPassword((prev) => !prev)
+                }
+              >
+                {showPassword ? <IoEyeOff /> : <IoEye />}
+              </span>
+            </div>
+
+            {!isLogin && formData.password && (
+              <div className={`password-strength ${passwordStrength}`}>
+                {passwordStrength === "weak" && "Weak password"}
+                {passwordStrength === "medium" && "Medium strength"}
+                {passwordStrength === "strong" && "Strong password"}
+              </div>
+            )}
+
             {!isLogin && (
-              <>
-                <div className="password-field">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="Create Password"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                  <span
-                    className="toggle-password"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? <IoEyeOff /> : <IoEye />}
-                  </span>
-                </div>
-
-                {formData.password && (
-                  <div className={`password-strength ${passwordStrength}`}>
-                    {passwordStrength === "weak" && "Weak password ❌"}
-                    {passwordStrength === "medium" && "Medium strength ⚠️"}
-                    {passwordStrength === "strong" && "Strong password ✅"}
-                  </div>
-                )}
-
-                <div className="password-field">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                  />
-                  <span
-                    className="toggle-password"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  >
-                    {showConfirmPassword ? <IoEyeOff /> : <IoEye />}
-                  </span>
-                </div>
-              </>
+              <div className="password-field">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  placeholder="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                />
+                <span
+                  className="toggle-password"
+                  onClick={() =>
+                    setShowConfirmPassword((prev) => !prev)
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <IoEyeOff />
+                  ) : (
+                    <IoEye />
+                  )}
+                </span>
+              </div>
             )}
 
             {isLogin && (
               <div className="forgot-password">
-                <Link to="/forgot-password">Forgot Password?</Link>
+                <Link to="/forgot-password">
+                  Forgot Password?
+                </Link>
               </div>
             )}
 
-            <button type="submit" className="login-btn" disabled={isLoading}>
-              {isLoading
+            <button
+              type="submit"
+              className="login-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting
                 ? isLogin
-                  ? "Sending Magic Link..."
-                  : "Creating Account..."
+                  ? "Signing in..."
+                  : "Creating account..."
                 : isLogin
-                ? "Continue with Email"
+                ? "Login"
                 : "Create Account"}
             </button>
 
             <p className="switch-text">
-              {isLogin ? "New here?" : "Already have an account?"}{" "}
+              {isLogin
+                ? "Don't have an account?"
+                : "Already have an account?"}{" "}
               <span onClick={toggleForm}>
-                {isLogin ? "Create an account" : "Login"}
+                {isLogin ? "Sign Up" : "Login"}
               </span>
             </p>
           </motion.form>

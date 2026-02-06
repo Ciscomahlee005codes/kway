@@ -8,17 +8,40 @@ export const AuthContextProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // =====================================================
-  // 🔥 SEND LOGIN OTP (Email Only - No Auto Signup)
-  // =====================================================
-  const sendLoginOtp = async (email) => {
-    const toastId = toast.loading("Sending OTP to your email...");
+  // ============================================
+  // ✅ SIGN UP (Email + Password)
+  // ============================================
+  const signUp = async (email, password) => {
+  const toastId = toast.loading("Creating account...");
 
-    const { error } = await supabase.auth.signInWithOtp({
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: "http://localhost:5173", // 🔥 IMPORTANT
+    },
+  });
+
+  if (error) {
+    toast.error(error.message, { id: toastId });
+    return { success: false };
+  }
+
+  toast.success("Verification email sent 📩", { id: toastId });
+
+  return { success: true, data };
+};
+
+
+  // ============================================
+  // ✅ SIGN IN (Email + Password)
+  // ============================================
+  const signIn = async (email, password) => {
+    const toastId = toast.loading("Signing you in...");
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        shouldCreateUser: false,
-      },
+      password,
     });
 
     if (error) {
@@ -26,60 +49,14 @@ export const AuthContextProvider = ({ children }) => {
       return { success: false };
     }
 
-    toast.success("OTP sent successfully 📩", { id: toastId });
-    return { success: true };
-  };
-
-  // =====================================================
-  // 🔥 SEND SIGNUP OTP (Creates User)
-  // =====================================================
-  const sendSignupOtp = async (email) => {
-    const toastId = toast.loading("Creating account...");
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-      },
-    });
-
-    if (error) {
-      toast.error(error.message, { id: toastId });
-      return { success: false };
-    }
-
-    toast.success("Signup OTP sent 📩 Check your email.", {
-      id: toastId,
-    });
-
-    return { success: true };
-  };
-
-  // =====================================================
-  // 🔥 VERIFY EMAIL OTP
-  // =====================================================
-  const verifyEmailOtp = async ({ email, token }) => {
-    const toastId = toast.loading("Verifying code...");
-
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: "email",
-    });
-
-    if (error) {
-      toast.error("Invalid or expired code ❌", { id: toastId });
-      return { success: false };
-    }
-
-    toast.success("Verification successful 🎉", { id: toastId });
+    toast.success("Welcome back 🚀", { id: toastId });
 
     return { success: true, data };
   };
 
-  // =====================================================
-  // 🔥 FORGOT PASSWORD (Send Reset Link)
-  // =====================================================
+  // ============================================
+  // ✅ FORGOT PASSWORD
+  // ============================================
   const sendPasswordReset = async (email) => {
     const toastId = toast.loading("Sending reset link...");
 
@@ -92,13 +69,13 @@ export const AuthContextProvider = ({ children }) => {
       return { success: false };
     }
 
-    toast.success("Password reset email sent 📩", { id: toastId });
+    toast.success("Reset email sent 📩", { id: toastId });
     return { success: true };
   };
 
-  // =====================================================
-  // 🔥 UPDATE PASSWORD (After Reset)
-  // =====================================================
+  // ============================================
+  // ✅ UPDATE PASSWORD
+  // ============================================
   const updatePassword = async (newPassword) => {
     const toastId = toast.loading("Updating password...");
 
@@ -111,24 +88,21 @@ export const AuthContextProvider = ({ children }) => {
       return { success: false };
     }
 
-    toast.success("Password updated successfully 🎉", {
-      id: toastId,
-    });
-
+    toast.success("Password updated 🎉", { id: toastId });
     return { success: true };
   };
 
-  // =====================================================
-  // 🔥 SIGN OUT
-  // =====================================================
+  // ============================================
+  // ✅ SIGN OUT
+  // ============================================
   const signOut = async () => {
     await supabase.auth.signOut();
-    toast.success("Signed out successfully");
+    toast.success("Signed out");
   };
 
-  // =====================================================
-  // 🔥 SESSION HANDLING
-  // =====================================================
+  // ============================================
+  // ✅ SESSION HANDLING
+  // ============================================
   useEffect(() => {
     const getInitialSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -152,9 +126,8 @@ export const AuthContextProvider = ({ children }) => {
       value={{
         session,
         loading,
-        sendLoginOtp,
-        sendSignupOtp,
-        verifyEmailOtp,
+        signUp,
+        signIn,
         sendPasswordReset,
         updatePassword,
         signOut,

@@ -1,93 +1,159 @@
-import React from "react";
-import "./Profile.css";
-import profilePic from "../../assets/profile-img.jpg";
-import bannerImg from "../../assets/cover-img.jpg";
-
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
-  FaUser,
   FaEnvelope,
-  FaMapMarkerAlt,
-  FaPhoneAlt,
-  FaCommentDots,
+  FaBirthdayCake,
+  FaUser,
+  FaPalette,
 } from "react-icons/fa";
-import { FiMoreVertical } from "react-icons/fi";
-import { useLanguage } from "../../Context/LanguageContext";
+import "./Profile.css";
 
 const Profile = () => {
-  const { t } = useLanguage();
+  const { session, loading } = UserAuth();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [localPhoto, setLocalPhoto] = useState(null);
+
+useEffect(() => {
+  const savedPhoto = localStorage.getItem("profile_photo");
+  if (savedPhoto) {
+    setLocalPhoto(savedPhoto);
+  }
+}, []);
+
+
+  useEffect(() => {
+    if (loading) return; // wait for auth to restore
+
+    if (!session?.user) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Profile fetch error:", error);
+        return;
+      }
+
+      setProfile(data);
+    };
+
+    fetchProfile();
+  }, [session, loading, navigate]);
+
+  const handleEditPhoto = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onloadend = () => {
+    const base64Image = reader.result;
+
+    localStorage.setItem("profile_photo", base64Image);
+    setLocalPhoto(base64Image);
+  };
+
+  reader.readAsDataURL(file);
+};
+
+
+  // 🔥 No loading screen — just render nothing until ready
+  if (!profile) return null;
 
   return (
-    <div className="profile-container">
+    <div
+      className="profile-container"
+      style={{ "--theme-color": profile.theme }}
+    >
+      <motion.div
+        className="profile-card-refined"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        {/* HEADER */}
+        <div className="profile-header-refined">
+          <div className="profile-avatar-refined">
+            <label className="edit-avatar-btn">
+  ✏️
+  <input
+    type="file"
+    accept="image/*"
+    hidden
+    onChange={handleEditPhoto}
+  />
+</label>
 
-      <div className="profile-header">
-        <img src={bannerImg} alt="Banner" className="profile-banner" />
-
-        <div className="profile-avatar">
-          <img src={profilePic} alt="Profile" />
-          <span className="online-dot"></span>
-        </div>
-      </div>
-
-      <div className="profile-body">
-        <h2>Adam Zampa</h2>
-        <p className="profile-handle">@adamz</p>
-        <p className="profile-role">{t("profileRole")}</p>
-
-        <p className="profile-bio">{t("bioPlaceholder")}</p>
-
-        {/* Stats */}
-        <div className="profile-stats">
-          <div>
-            <strong>152</strong>
-            <span>{t("posts")}</span>
+            {localPhoto || profile.photo ? (
+  <img src={localPhoto || profile.photo} alt="Profile" />
+) : (
+              <div className="avatar-fallback">
+                {profile.username?.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
-          <div>
-            <strong>820</strong>
-            <span>{t("contacts")}</span>
-          </div>
-          <div>
-            <strong>98</strong>
-            <span>{t("media")}</span>
-          </div>
-        </div>
 
-        {/* Buttons */}
-        <div className="profile-actions">
-          <button className="btn-primary">
-            <FaCommentDots /> {t("message")}
-          </button>
-          <button className="btn-primary">
-            <FaPhoneAlt /> {t("call")}
-          </button>
-          <button className="btn-more">
-            <FiMoreVertical />
-          </button>
+          <h2 className="profile-name">{profile.name}</h2>
+          <p className="profile-handle">@{profile.username}</p>
+          <p className="profile-role">{profile.chat_mode}</p>
         </div>
 
-        {/* Contact details (values NOT translated) */}
-        <div className="profile-details">
-          <div className="profile-detail-item">
-            <FaUser className="detail-icon" />
-            <span>Adam Zampa</span>
-          </div>
+        {/* ABOUT */}
+        <div className="profile-section-refined">
+          <h4>About</h4>
+          <p>{profile.about || "No bio added yet."}</p>
+        </div>
+
+        {/* DETAILS */}
+        <div className="profile-details-refined">
           <div className="profile-detail-item">
             <FaEnvelope className="detail-icon" />
-            <span>admin@themesbrand.com</span>
+            <span className="user-info">{session.user.email}</span>
           </div>
+
           <div className="profile-detail-item">
-            <FaMapMarkerAlt className="detail-icon" />
-            <span>California, USA</span>
+            <FaBirthdayCake className="detail-icon" />
+            <span className="user-info">
+              {profile.dob
+                ? new Date(profile.dob).toLocaleDateString()
+                : "Not set"}
+            </span>
+          </div>
+
+          <div className="profile-detail-item">
+            <FaUser className="detail-icon" />
+            <span className="user-info">
+              {profile.gender || "Not specified"}
+            </span>
+          </div>
+
+          <div className="profile-detail-item">
+            <FaPalette className="detail-icon" />
+            <span className="user-info">Theme</span>
+            <div
+              className="theme-preview"
+              style={{ background: profile.theme }}
+            />
           </div>
         </div>
 
-        {/* Highlights */}
-        <div className="profile-highlights">
-          <div className="highlight-box">🏝️ {t("trips")}</div>
-          <div className="highlight-box">🎥 {t("reels")}</div>
-          <div className="highlight-box">👨‍💻 {t("code")}</div>
+        <div className="profile-footer-refined">
+          Joined{" "}
+          {profile.created_at
+            ? new Date(profile.created_at).toLocaleDateString()
+            : ""}
         </div>
-
-      </div>
+      </motion.div>
     </div>
   );
 };
