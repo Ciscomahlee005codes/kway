@@ -24,8 +24,11 @@ const en = {
     profileRole: "Front End Developer",
     // Profile Page
 
-  bioPlaceholder:
-    "Crafting beautiful web experiences ✨ | React | UI/UX | Tech lover 👨‍💻",
+  // Profile Page Extra
+notSet: "Not set",
+notSpecified: "Not specified",
+theme: "Theme",
+joined: "Joined",
 
   posts: "Posts",
   contacts: "Contacts",

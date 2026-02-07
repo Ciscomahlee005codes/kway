@@ -26,8 +26,11 @@ const de = {
 
     profileRole: "Frontend-Entwickler",
 
-  bioPlaceholder:
-    "Gestaltung schöner Web-Erlebnisse ✨ | React | UI/UX | Technikliebhaber 👨‍💻",
+  // Profile Page Extra
+notSet: "Nicht festgelegt",
+notSpecified: "Nicht angegeben",
+theme: "Thema",
+joined: "Beigetreten",
 
   posts: "Beiträge",
   contacts: "Kontakte",

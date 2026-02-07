@@ -26,8 +26,11 @@ const zh = {
 
   profileRole: "前端开发工程师",
 
-  bioPlaceholder:
-    "打造精美的网页体验 ✨ | React | UI/UX | 技术爱好者 👨‍💻",
+  // Profile Page Extra
+notSet: "未设置",
+notSpecified: "未指定",
+theme: "主题",
+joined: "加入时间",
 
   posts: "帖子",
   contacts: "联系人",

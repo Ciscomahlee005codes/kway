@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../Context/LanguageContext";
 import {
   FaEnvelope,
   FaBirthdayCake,
@@ -16,6 +17,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [localPhoto, setLocalPhoto] = useState(null);
+  const { t } = useLanguage();
 
 useEffect(() => {
   const savedPhoto = localStorage.getItem("profile_photo");
@@ -103,16 +105,20 @@ useEffect(() => {
             )}
           </div>
 
-          <h2 className="profile-name">{profile.name}</h2>
+          <h2 className="profile-name">
+  {profile.name || t("profileName")}
+</h2>
+
           <p className="profile-handle">@{profile.username}</p>
           <p className="profile-role">{profile.chat_mode}</p>
         </div>
 
         {/* ABOUT */}
-        <div className="profile-section-refined">
-          <h4>About</h4>
-          <p>{profile.about || "No bio added yet."}</p>
-        </div>
+<div className="profile-section-refined">
+  <h4>{t("about")}</h4>
+  <p>{profile.about || t("bioPlaceholder")}</p>
+</div>
+
 
         {/* DETAILS */}
         <div className="profile-details-refined">
@@ -123,23 +129,24 @@ useEffect(() => {
 
           <div className="profile-detail-item">
             <FaBirthdayCake className="detail-icon" />
-            <span className="user-info">
-              {profile.dob
-                ? new Date(profile.dob).toLocaleDateString()
-                : "Not set"}
-            </span>
+           <span className="user-info">
+  {profile.dob
+    ? new Date(profile.dob).toLocaleDateString()
+    : t("notSet")}
+</span>
+
           </div>
 
           <div className="profile-detail-item">
             <FaUser className="detail-icon" />
             <span className="user-info">
-              {profile.gender || "Not specified"}
+              {profile.gender || t("notSpecified")}
             </span>
           </div>
 
           <div className="profile-detail-item">
             <FaPalette className="detail-icon" />
-            <span className="user-info">Theme</span>
+           <span className="user-info">{t("theme")}</span>
             <div
               className="theme-preview"
               style={{ background: profile.theme }}
@@ -148,7 +155,7 @@ useEffect(() => {
         </div>
 
         <div className="profile-footer-refined">
-          Joined{" "}
+          {t("joined")}{" "}
           {profile.created_at
             ? new Date(profile.created_at).toLocaleDateString()
             : ""}

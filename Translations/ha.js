@@ -26,8 +26,11 @@ const ha = {
 
     profileRole: "Mai Haɓaka Front-End",
 
-  bioPlaceholder:
-    "Ina ƙirƙirar kyawawan abubuwan yanar gizo ✨ | React | UI/UX | Masoyin fasaha 👨‍💻",
+  // Profile Page Extra
+notSet: "Ba a saita ba",
+notSpecified: "Ba a bayyana ba",
+theme: "Jigo",
+joined: "An shiga",
 
   posts: "Rubuce-rubuce",
   contacts: "Lambobin Sadarwa",

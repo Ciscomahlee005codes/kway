@@ -3,10 +3,9 @@ import "./Sidebar.css"
 import { BsFillChatSquareTextFill } from "react-icons/bs";
 import { HiOutlineStatusOnline } from "react-icons/hi";
 import { MdLiveTv } from "react-icons/md";
-import { FaUsers } from "react-icons/fa";
-import { TiContacts } from "react-icons/ti";
+import { FaUsers, FaUserFriends, FaUserCircle } from "react-icons/fa";
+import { GiThreeFriends } from "react-icons/gi";
 import { IoSettingsSharp } from "react-icons/io5";
-import { FaUserCircle } from "react-icons/fa";
 import { NavLink } from 'react-router-dom';
 
 const Sidebar = () => {
@@ -15,7 +14,7 @@ const Sidebar = () => {
     { icon: <HiOutlineStatusOnline />, label: "Status", link: "/status" },
     { icon: <MdLiveTv />, label: "Channels", link: "/channels" },
     { icon: <FaUsers />, label: "Groups", link: "/communities" },
-    { icon: <TiContacts />, label: "Contacts", link: "/contactlist" },
+    { icon: <GiThreeFriends />, label: "LinkUp", link: "/contactlist" }, // ✅ updated
   ];
 
   const bottomLinks = [
@@ -59,23 +58,22 @@ const Sidebar = () => {
       </div>
 
       {/* Bottom Nav for Mobile */}
-<div className="bottom-nav">
-  {[...topLinks, ...bottomLinks]
-    .filter(link => link.label !== "Channels") // ✅ hide settings on mobile
-    .map((link, idx) => (
-      <NavLink 
-        key={idx}  
-        to={link.link} 
-        className={({ isActive }) => 
-          `bottom-link ${isActive ? "active-bottom-link" : ""}`
-        }
-      >
-        {link.icon}
-        <span>{link.label}</span>
-      </NavLink>
-  ))}
-</div>
-
+      <div className="bottom-nav">
+        {[...topLinks, ...bottomLinks]
+          .filter(link => link.label !== "Channels") // ✅ hide Channels on mobile
+          .map((link, idx) => (
+            <NavLink 
+              key={idx}  
+              to={link.link} 
+              className={({ isActive }) => 
+                `bottom-link ${isActive ? "active-bottom-link" : ""}`
+              }
+            >
+              {link.icon}
+              <span>{link.label}</span>
+            </NavLink>
+        ))}
+      </div>
     </div>
   )
 }

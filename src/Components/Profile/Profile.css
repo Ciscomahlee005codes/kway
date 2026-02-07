@@ -1,13 +1,15 @@
 .profile-container {
   flex: 1;
   background-color: var(--bg-color);
-  /* color: var(--text-color); */
   min-height: 100vh;
   margin-left: 70px;
   padding: 40px 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* keep card from being centered vertically */
+  padding-bottom: 100px; /* extra space for bottom navbar */
+  box-sizing: border-box;
+  overflow-y: auto; /* allow scrolling if content overflows */
 }
 .profile-name{
   font-size: 1.5rem;
@@ -144,10 +146,26 @@
 @media (max-width: 768px) {
   .profile-container {
     margin-left: 0;
-    padding: 30px 15px;
+    padding: 20px 15px;
+    padding-bottom: 150px; /* extra space above bottom nav */
+    align-items: flex-start;
   }
 
   .profile-card-refined {
     padding: 30px 20px;
   }
+
+  .profile-avatar-refined {
+    width: 90px;
+    height: 90px;
+  }
+
+  .profile-name {
+    font-size: 1.3rem;
+  }
+
+  .profile-section-refined p {
+    font-size: 0.9rem;
+  }
 }
+

@@ -26,8 +26,12 @@ const yo = {
 
    profileRole: "Oníṣe Front-End",
 
-  bioPlaceholder:
-    "Mo ń dá iriri wẹẹbu tó dára ✨ | React | UI/UX | Olólùfẹ́ imọ̀-ẹrọ 👨‍💻",
+  // Profile Page Extra
+notSet: "Ko tíì ṣètò",
+notSpecified: "Ko ṣàlàyé",
+theme: "Akori",
+joined: "Darapọ̀ ní",
+
 
   posts: "Àwọn ìkópọ̀",
   contacts: "Àwọn olubasọrọ",

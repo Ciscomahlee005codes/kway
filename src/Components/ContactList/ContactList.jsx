@@ -2,45 +2,24 @@ import React, { useState, useMemo } from "react";
 import "./ContactList.css";
 import { FiSearch } from "react-icons/fi";
 import { IoMdAdd } from "react-icons/io";
+import { FaTimes } from "react-icons/fa";
 
-// Example structure based on new Kway model
+// Dummy contacts (can be replaced with real API)
 const dummyContacts = [
-  {
-    id: 1,
-    full_name: "Alice Johnson",
-    username: "alice_j",
-    avatar_url: "",
-    bio: "Frontend Dev 🚀",
-  },
-  {
-    id: 2,
-    full_name: "Bob Smith",
-    username: "bobcodes",
-    avatar_url: "",
-    bio: "Building cool stuff",
-  },
-  {
-    id: 3,
-    full_name: "Charlie Brown",
-    username: "charlie_b",
-    avatar_url: "",
-    bio: "Coffee + Code",
-  },
-   {
-    id: 4,
-    full_name: "Alex Dibe",
-    username: "alex_tony",
-    avatar_url: "",
-    bio: "Accounting Student",
-  },
+  { id: 1, full_name: "Alice Johnson", username: "alice_j", avatar_url: "", bio: "Frontend Dev 🚀" },
+  { id: 2, full_name: "Bob Smith", username: "bobcodes", avatar_url: "", bio: "Building cool stuff" },
+  { id: 3, full_name: "Charlie Brown", username: "charlie_b", avatar_url: "", bio: "Coffee + Code" },
+  { id: 4, full_name: "Alex Dibe", username: "alex_tony", avatar_url: "", bio: "Accounting Student" },
 ];
 
 const ContactList = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showChatPopup, setShowChatPopup] = useState(false);
+  const [showGroupPopup, setShowGroupPopup] = useState(false);
 
   const filteredContacts = useMemo(() => {
     return dummyContacts
-      .filter((contact) =>
+      .filter(contact =>
         contact.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         contact.username.toLowerCase().includes(searchTerm.toLowerCase())
       )
@@ -49,15 +28,16 @@ const ContactList = () => {
 
   return (
     <div className="contact-list-wrapper">
+      {/* Header */}
       <div className="contact-header">
-        <h2>Chats</h2>
+        <h2>Contacts</h2>
 
         <div className="contact-actions">
-          <button className="btn">
+          <button className="btn" onClick={() => setShowChatPopup(true)}>
             <IoMdAdd /> New Chat
           </button>
 
-          <button className="btn secondary">
+          <button className="btn secondary" onClick={() => setShowGroupPopup(true)}>
             <IoMdAdd /> New Group
           </button>
         </div>
@@ -73,21 +53,18 @@ const ContactList = () => {
         </div>
       </div>
 
+      {/* Contacts List */}
       <div className="contacts">
         {filteredContacts.length > 0 ? (
-          filteredContacts.map((contact) => (
+          filteredContacts.map(contact => (
             <div key={contact.id} className="contact-item">
               <div className="contact-avatar">
-                {contact.avatar_url ? (
-                  <img src={contact.avatar_url} alt="avatar" />
-                ) : (
-                  contact.full_name[0].toUpperCase()
-                )}
+                {contact.avatar_url ? <img src={contact.avatar_url} alt="avatar" /> : contact.full_name[0].toUpperCase()}
               </div>
-
               <div className="contact-info">
                 <h4>{contact.full_name}</h4>
                 <p>@{contact.username}</p>
+                <span className="contact-bio">{contact.bio}</span>
               </div>
             </div>
           ))
@@ -95,6 +72,27 @@ const ContactList = () => {
           <p className="no-contacts">No users found 😕</p>
         )}
       </div>
+
+      {/* Popups */}
+      {showChatPopup && (
+        <div className="popup-overlay" onClick={() => setShowChatPopup(false)}>
+          <div className="popup" onClick={(e) => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setShowChatPopup(false)}><FaTimes /></button>
+            <h3>Start a New Chat</h3>
+            <p>Select a user to start chatting with.</p>
+          </div>
+        </div>
+      )}
+
+      {showGroupPopup && (
+        <div className="popup-overlay" onClick={() => setShowGroupPopup(false)}>
+          <div className="popup" onClick={(e) => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setShowGroupPopup(false)}><FaTimes /></button>
+            <h3>Create New Group</h3>
+            <p>Add members and set group name.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -26,8 +26,12 @@ const ig = {
 
     profileRole: "Onye Mmepụta Front-End",
 
-  bioPlaceholder:
-    "Na-emepụta ahụmịhe weebụ mara mma ✨ | React | UI/UX | Onye hụrụ teknụzụ n’anya 👨‍💻",
+  // Profile Page Extra
+  // Profile Page Extra
+notSet: "Edobeghị",
+notSpecified: "Akọwapụtaghị",
+theme: "Agba Isi",
+joined: "Sonyeere",
 
   posts: "Mbipụta",
   contacts: "Kọntaktị",

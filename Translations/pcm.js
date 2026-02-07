@@ -26,8 +26,11 @@ const pcm = {
 
    profileRole: "Front End Developer",
 
-  bioPlaceholder:
-    "I dey build fine web things ✨ | React | UI/UX | Tech lover 👨‍💻",
+  // Profile Page Extra
+notSet: "Not set",
+notSpecified: "Not specified",
+theme: "Theme",
+joined: "Joined",
 
   posts: "Posts",
   contacts: "Contacts",
