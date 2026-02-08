@@ -3,7 +3,6 @@ import { IoChevronForward } from "react-icons/io5";
 import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
 import {
-  FaUserCircle,
   FaLock,
   FaBell,
   FaPaintBrush,
@@ -18,35 +17,30 @@ import "./Settings.css";
 const Settings = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-
   const { session } = UserAuth();
 
-const [profile, setProfile] = useState(null);
-const [localPhoto, setLocalPhoto] = useState(null);
- useEffect(() => {
-  const savedPhoto = localStorage.getItem("profile_photo");
-  if (savedPhoto) {
-    setLocalPhoto(savedPhoto);
-  }
-}, []);
+  const [profile, setProfile] = useState(null);
 
-useEffect(() => {
-  if (!session?.user) return;
+  // 🔥 SAME FETCH LOGIC AS PROFILE PAGE
+  useEffect(() => {
+    if (!session?.user) return;
 
-  const fetchProfile = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("name, about, username")
-      .eq("id", session.user.id)
-      .single();
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*") // get photo too
+        .eq("id", session.user.id)
+        .single();
 
-    if (!error) {
-      setProfile(data);
-    }
-  };
+      if (!error) {
+        setProfile(data);
+      } else {
+        console.error("Profile fetch error:", error);
+      }
+    };
 
-  fetchProfile();
-}, [session]);
+    fetchProfile();
+  }, [session]);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("app-theme") || "light";
@@ -61,6 +55,8 @@ useEffect(() => {
     setTheme(prev => (prev === "light" ? "dark" : "light"));
   };
 
+  if (!profile) return null;
+
   return (
     <div className="settings-page">
 
@@ -68,35 +64,36 @@ useEffect(() => {
         <h2>{t("settings")}</h2>
       </div>
 
-      {/* PROFILE */}
+      {/* ================= PROFILE TOP ================= */}
       <div
-  className="settings-profile"
-  onClick={() => navigate("/profile")}
->
-  {localPhoto ? (
-    <img
-      src={localPhoto}
-      alt="Profile"
-      className="settings-avatar"
-    />
-  ) : (
-    <FaUserCircle className="profile-picture" />
-  )}
+        className="settings-profile"
+        onClick={() => navigate("/profile")}
+      >
+        {profile.photo ? (
+          <img
+            src={profile.photo}
+            alt="Profile"
+            className="settings-avatar"
+          />
+        ) : (
+          <div className="settings-avatar-fallback">
+            {profile.username?.charAt(0).toUpperCase()}
+          </div>
+        )}
 
-  <div className="profile-info">
-    <h3>{profile?.name || "Your profile"}</h3>
-    <p className="profile-bio">
-      {profile?.about || "Tap to view profile"}
-    </p>
-  </div>
+        <div className="profile-info">
+          <h3>{profile.name || t("profileName")}</h3>
+          <p className="profile-bio">
+            {profile.about || t("bioPlaceholder")}
+          </p>
+        </div>
 
-  <IoChevronForward className="profile-arrow" />
-</div>
+        <IoChevronForward className="profile-arrow" />
+      </div>
 
-
+      {/* ================= SETTINGS LIST ================= */}
       <div className="settings-list">
 
-        {/* ACCOUNT */}
         <div
           className="settings-item"
           onClick={() => navigate("/settings/account")}
@@ -109,7 +106,6 @@ useEffect(() => {
           <IoChevronForward className="item-arrow" />
         </div>
 
-        {/* NOTIFICATIONS */}
         <div
           className="settings-item"
           onClick={() => navigate("/settings/notifications")}
@@ -122,7 +118,6 @@ useEffect(() => {
           <IoChevronForward className="item-arrow" />
         </div>
 
-        {/* APPEARANCE */}
         <div className="settings-item">
           <FaPaintBrush className="item-icon" />
           <div className="item-text">
@@ -140,7 +135,6 @@ useEffect(() => {
           </label>
         </div>
 
-        {/* LANGUAGE */}
         <div
           className="settings-item"
           onClick={() => navigate("/settings/language")}
@@ -153,7 +147,6 @@ useEffect(() => {
           <IoChevronForward className="item-arrow" />
         </div>
 
-        {/* HELP */}
         <div
           className="settings-item"
           onClick={() => navigate("/settings/help")}
@@ -166,7 +159,6 @@ useEffect(() => {
           <IoChevronForward className="item-arrow" />
         </div>
 
-        {/* ABOUT */}
         <div
           className="settings-item"
           onClick={() => navigate("/settings/about")}
