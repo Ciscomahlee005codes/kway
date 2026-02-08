@@ -16,19 +16,13 @@ const Profile = () => {
   const { session, loading } = UserAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
-  const [localPhoto, setLocalPhoto] = useState(null);
   const { t } = useLanguage();
 
-useEffect(() => {
-  const savedPhoto = localStorage.getItem("profile_photo");
-  if (savedPhoto) {
-    setLocalPhoto(savedPhoto);
-  }
-}, []);
-
-
+  // =============================
+  // 🔐 AUTH + FETCH PROFILE
+  // =============================
   useEffect(() => {
-    if (loading) return; // wait for auth to restore
+    if (loading) return;
 
     if (!session?.user) {
       navigate("/", { replace: true });
@@ -53,24 +47,43 @@ useEffect(() => {
     fetchProfile();
   }, [session, loading, navigate]);
 
-  const handleEditPhoto = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  // =============================
+  // 🖼️ UPDATE PROFILE PHOTO
+  // =============================
+  const handleEditPhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !session?.user) return;
 
-  const reader = new FileReader();
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${session.user.id}/${Date.now()}.${fileExt}`;
 
-  reader.onloadend = () => {
-    const base64Image = reader.result;
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
 
-    localStorage.setItem("profile_photo", base64Image);
-    setLocalPhoto(base64Image);
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      await supabase
+        .from("profiles")
+        .update({ photo: data.publicUrl })
+        .eq("id", session.user.id);
+
+      // 🔥 Instant UI update
+      setProfile((prev) => ({
+        ...prev,
+        photo: data.publicUrl,
+      }));
+    } catch (err) {
+      console.error("Photo update error:", err);
+    }
   };
 
-  reader.readAsDataURL(file);
-};
-
-
-  // 🔥 No loading screen — just render nothing until ready
+  // ⛔ Prevent early render
   if (!profile) return null;
 
   return (
@@ -83,22 +96,22 @@ useEffect(() => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        {/* HEADER */}
+        {/* ================= HEADER ================= */}
         <div className="profile-header-refined">
           <div className="profile-avatar-refined">
             <label className="edit-avatar-btn">
-  ✏️
-  <input
-    type="file"
-    accept="image/*"
-    hidden
-    onChange={handleEditPhoto}
-  />
-</label>
+              ✏️
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleEditPhoto}
+              />
+            </label>
 
-            {localPhoto || profile.photo ? (
-  <img src={localPhoto || profile.photo} alt="Profile" />
-) : (
+            {profile.photo ? (
+              <img src={profile.photo} alt="Profile" />
+            ) : (
               <div className="avatar-fallback">
                 {profile.username?.charAt(0).toUpperCase()}
               </div>
@@ -106,21 +119,20 @@ useEffect(() => {
           </div>
 
           <h2 className="profile-name">
-  {profile.name || t("profileName")}
-</h2>
+            {profile.name || t("profileName")}
+          </h2>
 
           <p className="profile-handle">@{profile.username}</p>
           <p className="profile-role">{profile.chat_mode}</p>
         </div>
 
-        {/* ABOUT */}
-<div className="profile-section-refined">
-  <h4>{t("about")}</h4>
-  <p>{profile.about || t("bioPlaceholder")}</p>
-</div>
+        {/* ================= ABOUT ================= */}
+        <div className="profile-section-refined">
+          <h4>{t("about")}</h4>
+          <p>{profile.about || t("bioPlaceholder")}</p>
+        </div>
 
-
-        {/* DETAILS */}
+        {/* ================= DETAILS ================= */}
         <div className="profile-details-refined">
           <div className="profile-detail-item">
             <FaEnvelope className="detail-icon" />
@@ -129,12 +141,11 @@ useEffect(() => {
 
           <div className="profile-detail-item">
             <FaBirthdayCake className="detail-icon" />
-           <span className="user-info">
-  {profile.dob
-    ? new Date(profile.dob).toLocaleDateString()
-    : t("notSet")}
-</span>
-
+            <span className="user-info">
+              {profile.dob
+                ? new Date(profile.dob).toLocaleDateString()
+                : t("notSet")}
+            </span>
           </div>
 
           <div className="profile-detail-item">
@@ -146,7 +157,7 @@ useEffect(() => {
 
           <div className="profile-detail-item">
             <FaPalette className="detail-icon" />
-           <span className="user-info">{t("theme")}</span>
+            <span className="user-info">{t("theme")}</span>
             <div
               className="theme-preview"
               style={{ background: profile.theme }}
@@ -154,6 +165,7 @@ useEffect(() => {
           </div>
         </div>
 
+        {/* ================= FOOTER ================= */}
         <div className="profile-footer-refined">
           {t("joined")}{" "}
           {profile.created_at

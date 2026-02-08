@@ -25,12 +25,7 @@ const ProfileSetup = () => {
   const [gender, setGender] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   
-  useEffect(() => {
-  const savedPhoto = localStorage.getItem("profile_photo");
-  if (savedPhoto) {
-    setPhoto(savedPhoto);
-  }
-}, []);
+ 
 
   // 🔥 GET AUTH USER DIRECTLY FROM SUPABASE
    useEffect(() => {
@@ -65,31 +60,60 @@ const ProfileSetup = () => {
 
   if (loadingUser) return <p>Loading...</p>;
 
-  const handlePhotoChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+ const handlePhotoChange = async (e) => {
+  try {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
 
-  const reader = new FileReader();
+    // ✅ Validate file
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
 
-  reader.onloadend = () => {
-    const base64Image = reader.result;
+    // ✅ Limit size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
 
-    // save ONLY image to localStorage
-    localStorage.setItem("profile_photo", base64Image);
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+    const filePath = `private/${user.id}/${user.id}-${Date.now()}.jpeg`;
 
-    setPhoto(base64Image); // update UI
-  };
 
-  reader.readAsDataURL(file);
+    // ✅ Upload
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    // ✅ Get public URL
+    const { data } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
+
+    // ✅ Cache busting to force reload
+    const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+
+    setPhoto(publicUrl);
+    toast.success("Photo uploaded successfully ✅");
+
+  } catch (err) {
+    console.error("Upload error:", err);
+    toast.error("Failed to upload image ❌");
+  }
 };
-
-
+console.log("Photo URL:", photo);
 
   const generateAvatar = () => {
   const random = Math.floor(Math.random() * 1000);
   const avatarUrl = `https://api.dicebear.com/7.x/thumbs/svg?seed=${random}`;
 
-  localStorage.setItem("profile_photo", avatarUrl);
   setPhoto(avatarUrl);
 };
 
