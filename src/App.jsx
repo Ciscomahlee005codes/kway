@@ -26,6 +26,7 @@ import UsersProfile from "./Components/Chats/UsersProfile";
 import { Toaster } from "react-hot-toast";
 import ForgotPassword from "./Components/Auth/ForgotPassword";
 import EditProfileModal from "./Components/Chats/EditProfileModal";
+import ProfileView from "./Components/ContactList/ProfileView";
 
 function App() {
   const location = useLocation();
@@ -48,6 +49,7 @@ function App() {
         <Route path="/channels" element={<ChannelPage />} />
         <Route path="/communities" element={<CommunityPage />} />
         <Route path="/contactlist" element={<ContactPage />} />
+        <Route path="/profile/:id" element={<ProfileView/>} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/account" element={<AccountPage />} />

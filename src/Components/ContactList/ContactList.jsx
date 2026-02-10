@@ -1,47 +1,55 @@
-import React, { useState, useMemo } from "react";
-import "./ContactList.css";
+import React, { useState, useMemo, useEffect } from "react";
+import "./ProfileView.css";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
 import { FiSearch } from "react-icons/fi";
 import { IoMdAdd } from "react-icons/io";
-import { FaTimes } from "react-icons/fa";
-
-// Dummy contacts (can be replaced with real API)
-const dummyContacts = [
-  { id: 1, full_name: "Alice Johnson", username: "alice_j", avatar_url: "", bio: "Frontend Dev 🚀" },
-  { id: 2, full_name: "Bob Smith", username: "bobcodes", avatar_url: "", bio: "Building cool stuff" },
-  { id: 3, full_name: "Charlie Brown", username: "charlie_b", avatar_url: "", bio: "Coffee + Code" },
-  { id: 4, full_name: "Alex Dibe", username: "alex_tony", avatar_url: "", bio: "Accounting Student" },
-];
+import { FaTimes, FaPhone, FaCommentDots } from "react-icons/fa";
 
 const ContactList = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [showChatPopup, setShowChatPopup] = useState(false);
-  const [showGroupPopup, setShowGroupPopup] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProfile, setSelectedProfile] = useState(null); // Selected user for bottom modal
+
+  const { session } = UserAuth();
+
+  // Fetch all profiles except current user
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, username, photo, about")
+        .neq("id", session?.user?.id)
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setContacts(data);
+      setLoading(false);
+    };
+
+    if (session) fetchUsers();
+  }, [session]);
 
   const filteredContacts = useMemo(() => {
-    return dummyContacts
-      .filter(contact =>
-        contact.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.username.toLowerCase().includes(searchTerm.toLowerCase())
+    return contacts
+      .filter(
+        (contact) =>
+          contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          contact.username.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      .sort((a, b) => a.full_name.localeCompare(b.full_name));
-  }, [searchTerm]);
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [contacts, searchTerm]);
 
   return (
     <div className="contact-list-wrapper">
       {/* Header */}
       <div className="contact-header">
         <h2>Contacts</h2>
-
-        <div className="contact-actions">
-          <button className="btn" onClick={() => setShowChatPopup(true)}>
-            <IoMdAdd /> New Chat
-          </button>
-
-          <button className="btn secondary" onClick={() => setShowGroupPopup(true)}>
-            <IoMdAdd /> New Group
-          </button>
-        </div>
-
         <div className="contact-search">
           <FiSearch className="search-icon" />
           <input
@@ -56,40 +64,68 @@ const ContactList = () => {
       {/* Contacts List */}
       <div className="contacts">
         {filteredContacts.length > 0 ? (
-          filteredContacts.map(contact => (
-            <div key={contact.id} className="contact-item">
+          filteredContacts.map((contact) => (
+            <div
+              key={contact.id}
+              className="contact-item"
+              onClick={() => setSelectedProfile(contact)}
+            >
               <div className="contact-avatar">
-                {contact.avatar_url ? <img src={contact.avatar_url} alt="avatar" /> : contact.full_name[0].toUpperCase()}
+                {contact.photo ? (
+                  <img src={contact.photo} alt="avatar" />
+                ) : (
+                  contact.name[0].toUpperCase()
+                )}
               </div>
               <div className="contact-info">
-                <h4>{contact.full_name}</h4>
+                <h4>{contact.name}</h4>
                 <p>@{contact.username}</p>
-                <span className="contact-bio">{contact.bio}</span>
+                <span className="contact-bio">{contact.about}</span>
               </div>
             </div>
           ))
         ) : (
-          <p className="no-contacts">No users found 😕</p>
+          <p className="no-contacts">{loading ? "Loading..." : "No users found 😕"}</p>
         )}
       </div>
 
-      {/* Popups */}
-      {showChatPopup && (
-        <div className="popup-overlay" onClick={() => setShowChatPopup(false)}>
-          <div className="popup" onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setShowChatPopup(false)}><FaTimes /></button>
-            <h3>Start a New Chat</h3>
-            <p>Select a user to start chatting with.</p>
-          </div>
-        </div>
-      )}
+      {/* Bottom Profile Modal */}
+      {selectedProfile && (
+        <div
+          className="profile-modal-overlay"
+          onClick={() => setSelectedProfile(null)}
+        >
+          <div
+            className="profile-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="close-btn"
+              onClick={() => setSelectedProfile(null)}
+            >
+              <FaTimes />
+            </button>
+            <div className="profile-modal-header">
+              <div className="profile-avatar-large">
+                {selectedProfile.photo ? (
+                  <img src={selectedProfile.photo} alt="avatar" />
+                ) : (
+                  selectedProfile.name[0].toUpperCase()
+                )}
+              </div>
+              <h3>{selectedProfile.name}</h3>
+              <p className="username">@{selectedProfile.username}</p>
+            </div>
+            <p className="profile-about">{selectedProfile.about}</p>
 
-      {showGroupPopup && (
-        <div className="popup-overlay" onClick={() => setShowGroupPopup(false)}>
-          <div className="popup" onClick={(e) => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setShowGroupPopup(false)}><FaTimes /></button>
-            <h3>Create New Group</h3>
-            <p>Add members and set group name.</p>
+            <div className="profile-actions">
+              <button className="action-btn">
+                <FaPhone /> Call
+              </button>
+              <button className="action-btn">
+                <FaCommentDots /> Chat
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -18,7 +18,7 @@ export const AuthContextProvider = ({ children }) => {
     email,
     password,
     options: {
-      emailRedirectTo: "http://localhost:5173/#/profile-setup", // 🔥 IMPORTANT
+      emailRedirectTo: "http://localhost:5173/", // 🔥 IMPORTANT
     },
   });
 
