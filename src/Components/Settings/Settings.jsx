@@ -84,7 +84,7 @@ const Settings = () => {
         <div className="profile-info">
           <h3>{profile.name || t("profileName")}</h3>
           <p className="profile-bio">
-            {profile.about || t("bioPlaceholder")}
+            {profile.username || t("bioPlaceholder")}
           </p>
         </div>
 
