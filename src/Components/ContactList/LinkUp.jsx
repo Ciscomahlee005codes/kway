@@ -5,12 +5,16 @@ import { UserAuth } from "../../Context/AuthContext";
 import { FiSearch } from "react-icons/fi";
 import { IoMdAdd } from "react-icons/io";
 import { FaTimes, FaPhone, FaCommentDots } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
-const ContactList = () => {
+
+const LinkUp = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState(null); // Selected user for bottom modal
+  const navigate = useNavigate();
+
 
   const { session } = UserAuth();
 
@@ -122,9 +126,14 @@ const ContactList = () => {
               <button className="action-btn">
                 <FaPhone /> Call
               </button>
-              <button className="action-btn">
-                <FaCommentDots /> Chat
-              </button>
+               <button
+  className="action-btn"
+  onClick={() => {
+    navigate(`/chat/${selectedProfile.id}`);
+  }}
+>
+  <FaCommentDots /> Chat
+</button>
             </div>
           </div>
         </div>
@@ -133,4 +142,4 @@ const ContactList = () => {
   );
 };
 
-export default ContactList;
+export default LinkUp;

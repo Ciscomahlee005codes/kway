@@ -14,7 +14,7 @@ const Sidebar = () => {
     { icon: <HiOutlineStatusOnline />, label: "Status", link: "/status" },
     { icon: <MdLiveTv />, label: "Channels", link: "/channels" },
     { icon: <FaUsers />, label: "Groups", link: "/communities" },
-    { icon: <GiThreeFriends />, label: "LinkUp", link: "/contactlist" }, // ✅ updated
+    { icon: <GiThreeFriends />, label: "LinkUp", link: "/linkup" }, // ✅ updated
   ];
 
   const bottomLinks = [

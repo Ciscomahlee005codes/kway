@@ -1,98 +1,206 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Chats.css";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
 import CallModal from "./CallModal";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
-import ChatImg1 from "../../assets/chatImg-1.jpg";
-import ChatImg2 from "../../assets/chatImg-2.jpg";
-import ChatImg3 from "../../assets/chatImg-3.jpg";
-import ChatImg4 from "../../assets/chatImg-4.jpg";
-
-const initialChats = [
-  { id: 1, name: "John Doe", avatar: ChatImg1, lastMessage: "Hey, how are you?", time: "10:30 AM", active: true,  unreadCount: 3, messages: [] },
-  { id: 2, name: "Jane Smith", avatar: ChatImg2, lastMessage: "Meeting at 5?", time: "09:45 AM", active: false, messages: [] },
-  { id: 3, name: "Dev Group", lastMessage: "Push your code pls 🚀", time: "Yesterday", active: true, messages: [] },
-  { id: 4, name: "Samuel", avatar: ChatImg4, lastMessage: "Check this out!", time: "Monday", active: false, messages: [] },
-  { id: 5, name: "Tochukwu", avatar: ChatImg3, lastMessage: "Afa Kosi", time: "Monday", active: false, messages: [] },
-  { id: 6, name: "Chekwube", lastMessage: "I've Sent it", time: "Monday", active: false, messages: [] },
-  { id: 7, name: "My Mummy", lastMessage: "Asa Nwam", time: "Yesterday", active: false, messages: [] },
-];
+import { useParams } from "react-router-dom";
 
 const Chats = () => {
-  const [chats, setChats] = useState(initialChats);
+  const { session } = UserAuth();
+  const user = session?.user;
+
+  const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [newMessage, setNewMessage] = useState("");
   const [recording, setRecording] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newContact, setNewContact] = useState({ name: "", lastMessage: "", phone: "" });
   const [showSidebarDropdown, setShowSidebarDropdown] = useState(false);
   const [showChatDropdown, setShowChatDropdown] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [callType, setCallType] = useState("voice");
-  const [reactionPicker, setReactionPicker] = useState({ open: false, msgIndex: null, x: 0, y: 0 });
+  const [reactionPicker, setReactionPicker] = useState({
+    open: false,
+    msgIndex: null,
+    x: 0,
+    y: 0,
+  });
 
   const reactions = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+  const { id } = useParams();
+
+  // =========================================
+  // ✅ LOAD USER FROM URL
+  // =========================================
+  useEffect(() => {
+    if (!id || !user) return;
+
+    const loadUser = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, username, photo")
+        .eq("id", id)
+        .single();
+
+      if (!error && data) {
+        const newChat = {
+          id: data.id,
+          name: data.name,
+          avatar: data.photo,
+          messages: [],
+        };
+
+        setActiveChat(newChat);
+
+        setChats((prev) => {
+          const exists = prev.find((c) => c.id === data.id);
+          if (exists) return prev;
+          return [...prev, newChat];
+        });
+      }
+    };
+
+    loadUser();
+  }, [id, user]);
+
+  // =========================================
+  // ✅ LOAD MESSAGES
+  // =========================================
+  useEffect(() => {
+    if (!activeChat || !user) return;
+
+    const fetchMessages = async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .or(
+          `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
+        )
+        .order("created_at", { ascending: true });
+
+      if (error || !data) return;
+
+      setActiveChat((prev) => ({
+        ...prev,
+        messages: data.map((msg) => ({
+          text: msg.content, // ✅ FIXED
+          sender: msg.sender_id === user.id ? "you" : "them",
+          time: new Date(msg.created_at).toLocaleTimeString(),
+        })),
+      }));
+    };
+
+    fetchMessages();
+  }, [activeChat?.id, user?.id]);
+
+  // =========================================
+  // ✅ LOAD ALL CONVERSATIONS
+  // =========================================
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchChats = async () => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("sender_id, receiver_id");
+
+      if (error || !data) return;
+
+      const userIds = new Set();
+
+      data.forEach((msg) => {
+        if (msg.sender_id === user.id)
+          userIds.add(msg.receiver_id);
+        else if (msg.receiver_id === user.id)
+          userIds.add(msg.sender_id);
+      });
+
+      if (userIds.size === 0) {
+        setChats([]);
+        return;
+      }
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, name, photo")
+        .in("id", Array.from(userIds));
+
+      if (!profiles) return;
+
+      const formattedChats = profiles.map((profile) => ({
+        id: profile.id,
+        name: profile.name,
+        avatar: profile.photo,
+        messages: [],
+      }));
+
+      setChats(formattedChats);
+
+      if (!id && formattedChats.length > 0) {
+        setActiveChat(formattedChats[0]);
+      }
+    };
+
+    fetchChats();
+  }, [user]);
+
+  // =========================================
+  // ✅ SEND MESSAGE
+  // =========================================
+   const handleSendMessage = async () => {
+  if (!newMessage.trim() || !activeChat) return;
+
+  const messageText = newMessage;
+
+  const { data, error } = await supabase
+    .from("messages")
+    .insert({
+      sender_id: user.id,
+      receiver_id: activeChat.id,
+      content: messageText,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  const newMsgObject = {
+    text: messageText,
+    sender: "you",
+    time: new Date(data.created_at).toLocaleTimeString(),
+  };
+
+  // ✅ Update active chat messages instantly
+  setActiveChat((prev) => ({
+    ...prev,
+    messages: [...(prev.messages || []), newMsgObject],
+  }));
+
+  // ✅ Update chat list preview (last message)
+  setChats((prevChats) =>
+    prevChats.map((chat) =>
+      chat.id === activeChat.id
+        ? {
+            ...chat,
+            lastMessage: messageText,
+            time: newMsgObject.time,
+          }
+        : chat
+    )
+  );
+
+  setNewMessage("");
+};
+
 
   const handleVoiceClick = () => {
     setRecording(true);
     setTimeout(() => setRecording(false), 3000);
   };
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-
-    const updatedChats = chats.map(chat =>
-      chat.id === activeChat.id
-        ? {
-            ...chat,
-            messages: [...(chat.messages || []), { sender: "you", text: newMessage, time: "Now", reaction: null }],
-            lastMessage: newMessage,
-            time: "Now",
-          }
-        : chat
-    );
-
-    setChats(updatedChats);
-    setActiveChat({
-      ...activeChat,
-      messages: [...(activeChat.messages || []), { sender: "you", text: newMessage, time: "Now", reaction: null }],
-    });
-    setNewMessage("");
-  };
-
-  const handleReactionClick = (emoji, index) => {
-    const updatedMessages = [...activeChat.messages];
-    updatedMessages[index].reaction = emoji;
-
-    setActiveChat({ ...activeChat, messages: updatedMessages });
-    setChats(chats.map(chat => chat.id === activeChat.id ? { ...chat, messages: updatedMessages } : chat));
-    setReactionPicker({ open: false, msgIndex: null, x: 0, y: 0 });
-  };
-
-  const handleAddContact = (e) => {
-  e.preventDefault();
-
-  if (!newContact.name || !newContact.phone) return;
-
-  setChats([
-    ...chats,
-    {
-      id: chats.length + 1,
-      name: newContact.name,
-      phone: newContact.phone,
-      lastMessage: newContact.lastMessage || "New contact added",
-      time: "Now",
-      active: true,
-      unreadCount: 0,
-      messages: [],
-    },
-  ]);
-
-  setShowAddModal(false);
-  setNewContact({ name: "", phone: "", lastMessage: "" });
-};
-
 
   return (
     <div className="chat-wrapper">
@@ -100,13 +208,10 @@ const Chats = () => {
         chats={chats}
         activeChat={activeChat}
         setActiveChat={setActiveChat}
-        showSearch={showSearch}
-        setShowSearch={setShowSearch}
-        showAddModal={showAddModal}
-        setShowAddModal={setShowAddModal}
         showSidebarDropdown={showSidebarDropdown}
         setShowSidebarDropdown={setShowSidebarDropdown}
         setShowChatDropdown={setShowChatDropdown}
+        setShowAddModal={setShowAddModal}
       />
 
       <ChatWindow
@@ -125,7 +230,6 @@ const Chats = () => {
         reactionPicker={reactionPicker}
         setReactionPicker={setReactionPicker}
         reactions={reactions}
-        handleReactionClick={handleReactionClick}
       />
 
       {showCallModal && (
@@ -135,64 +239,6 @@ const Chats = () => {
           onClose={() => setShowCallModal(false)}
         />
       )}
-
-      {showAddModal && (
-  <div
-    className="add-contact-modal"
-    onClick={() => setShowAddModal(false)}
-  >
-    <div
-      className="modal-content"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h3>Add New Contact</h3>
-
-      <form onSubmit={handleAddContact}>
-  <input
-    type="text"
-    placeholder="Full Name"
-    value={newContact.name}
-    onChange={(e) =>
-      setNewContact({ ...newContact, name: e.target.value })
-    }
-    required
-  />
-
-  <input
-    type="text"
-    placeholder="@username"
-    value={newContact.username}
-    onChange={(e) =>
-      setNewContact({ ...newContact, username: e.target.value })
-    }
-    required
-  />
-
-  <input
-    type="email"
-    placeholder="Email Address"
-    value={newContact.email}
-    onChange={(e) =>
-      setNewContact({ ...newContact, email: e.target.value })
-    }
-    required
-  />
-
-  <div className="modal-actions">
-    <button type="button" onClick={() => setShowAddModal(false)}>
-      Cancel
-    </button>
-
-    <button type="submit">
-      Add Contact
-    </button>
-  </div>
-</form>
-
-    </div>
-  </div>
-)}
-
     </div>
   );
 };

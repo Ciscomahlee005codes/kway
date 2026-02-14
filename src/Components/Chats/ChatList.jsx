@@ -4,8 +4,9 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdAdd } from "react-icons/io";
 import { NavLink } from "react-router-dom";
 
+
 const ChatList = ({
-  chats,
+  chats = [],
   activeChat,
   setActiveChat,
   setShowAddModal,
@@ -16,15 +17,18 @@ const ChatList = ({
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-
-  /* 🔍 Filter chats */
   const filteredChats = useMemo(() => {
     if (!searchTerm) return chats;
-    return chats.filter(
-      (chat) =>
-        chat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        chat.lastMessage?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
+    return chats.filter((chat) => {
+      const name = chat?.name?.toLowerCase() || "";
+      const lastMessage = chat?.lastMessage?.toLowerCase() || "";
+
+      return (
+        name.includes(searchTerm.toLowerCase()) ||
+        lastMessage.includes(searchTerm.toLowerCase())
+      );
+    });
   }, [searchTerm, chats]);
 
   return (
@@ -82,41 +86,46 @@ const ChatList = ({
 
       {/* CHAT LIST */}
       <div className="chat-list">
-        {filteredChats.length === 0 ? (
-          <div className="empty-chat">No chats found</div>
-        ) : (
-          filteredChats.map((chat) => (
-            <div
-              key={chat.id}
-              className={`chat-item ${
-                activeChat?.id === chat.id ? "active" : ""
-              }`}
-              onClick={() => setActiveChat(chat)}
-            >
-              <div className="chat-avatar">
-                {chat.avatar ? (
-                  <img
-                    className="chat-avatar-img"
-                    src={chat.avatar}
-                    alt=""
-                  />
-                ) : (
-                  chat.name[0]
-                )}
-              </div>
+         {filteredChats.length === 0 ? (
+  <div className="empty-chat">No chats found</div>
+) : (
+  filteredChats.map((chat) => {
+    return (
+      <div
+        key={chat.id}
+        className={`chat-item ${
+          activeChat?.id === chat.id ? "active" : ""
+        }`}
+        onClick={() => setActiveChat(chat)}
+      >
+        <div className="chat-avatar">
+          {chat?.avatar ? (
+            <img
+              className="chat-avatar-img"
+              src={chat.avatar}
+              alt=""
+            />
+          ) : (
+            chat?.name?.[0] || "?"
+          )}
+        </div>
 
-              <div className="chat-info">
-                <h4>{chat.name}</h4>
-                <p>{chat.lastMessage}</p>
-              </div>
+        <div className="chat-info">
+          <h4>{chat?.name || "Unknown"}</h4>
+          <p>{chat?.lastMessage || "No messages yet"}</p>
+        </div>
 
-              <span className="chat-time">{chat.time}</span>
-            </div>
-          ))
-        )}
+        <span className="chat-time">
+          {chat?.time || ""}
+        </span>
+      </div>
+    );
+  })
+)}
+
       </div>
 
-      {/* FLOATING ADD CHAT (WHATSAPP STYLE) */}
+      {/* FLOATING ADD CHAT */}
       <button
         className="floating-add-btn"
         onClick={() => setShowAddModal(true)}

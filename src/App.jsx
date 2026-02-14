@@ -4,7 +4,7 @@ import StatusPage from "./Pages/StatusPage/StatusPage";
 import ChatPage from "./Pages/ChatPage/ChatPage";
 import ChannelPage from "./Pages/ChannelPage/ChannelPage";
 import CommunityPage from "./Pages/CommunityPage/CommunityPage";
-import ContactPage from "./Pages/ContactPage/ContactPage";
+import LinkUp from "./Components/ContactList/LinkUp";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
 import SettingsPage from "./Pages/SettingsPage/SettingsPage";
 import Auth from "./Components/Auth/Auth";
@@ -27,6 +27,7 @@ import { Toaster } from "react-hot-toast";
 import ForgotPassword from "./Components/Auth/ForgotPassword";
 import EditProfileModal from "./Components/Chats/EditProfileModal";
 import ProfileView from "./Components/ContactList/ProfileView";
+import Chats from "./Components/Chats/Chats";
 
 function App() {
   const location = useLocation();
@@ -45,10 +46,11 @@ function App() {
       <Routes>
         <Route path="/" element={<Auth />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/chat/:id" element={<Chats />} />
         <Route path="/status" element={<StatusPage />} />
         <Route path="/channels" element={<ChannelPage />} />
         <Route path="/communities" element={<CommunityPage />} />
-        <Route path="/contactlist" element={<ContactPage />} />
+        <Route path="/linkup" element={<LinkUp />} />
         <Route path="/profile/:id" element={<ProfileView/>} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />

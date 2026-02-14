@@ -86,7 +86,9 @@
   .sidebar {
     display: none;
   }
-
+ body.chat-open .bottom-nav {
+    display: none !important;
+  }
   .bottom-nav {
     display: flex;
     justify-content: space-around;

@@ -36,6 +36,20 @@ useEffect(() => {
   setShowChatDropdown(false);
 }, [activeChat]);
 
+useEffect(() => {
+  if (activeChat) {
+    document.body.classList.add("chat-open");
+  } else {
+    document.body.classList.remove("chat-open");
+  }
+
+  return () => document.body.classList.remove("chat-open");
+}, [activeChat]);
+const endRef = useRef(null);
+
+useEffect(() => {
+  endRef.current?.scrollIntoView({ behavior: "smooth" });
+}, [activeChat?.messages]);
 
 
 useEffect(() => {
@@ -51,14 +65,34 @@ useEffect(() => {
   document.addEventListener("mousedown", handleClickOutside);
   return () => document.removeEventListener("mousedown", handleClickOutside);
 }, []);
+   if (!activeChat) {
+  return (
+    <div className="chat-window empty-state">
+      <div className="empty-chat-container">
+        <h2>Welcome to Kway 💬</h2>
 
-  if (!activeChat) {
-    return (
-      <div className="chat-window">
-        <div className="empty-chat">👈 Select a chat</div>
+        <p>
+          Connect with friends using usernames,  
+          not just phone numbers.
+        </p>
+
+        <div className="empty-actions">
+          <button onClick={() => navigate("/linkup")}>
+            🔍 Find People
+          </button>
+
+          <button onClick={() => navigate("/profile")}>
+            👤 Update Profile
+          </button>
+        </div>
+
+        <small>
+          Your messages are private & secure.
+        </small>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   
 
@@ -122,7 +156,7 @@ useEffect(() => {
 
       {/* ================= MESSAGES ================= */}
       <div className="chat-messages">
-        {activeChat.messages.map((msg, i) => (
+        {activeChat?.messages?.map((msg, i) => (
           <div
   key={i}
   className={`message-wrapper ${msg.sender === "you" ? "sent" : "received"}`}
@@ -193,6 +227,7 @@ useEffect(() => {
         </div>
 
         <FiSend className="chat-send-icon" onClick={handleSendMessage} />
+<div ref={endRef} />
 
         <div
   className={`chat-voice-btn ${
