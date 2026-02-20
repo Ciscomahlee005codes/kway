@@ -2,40 +2,17 @@ import React, { useState, useEffect } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { FiPlus } from "react-icons/fi";
 import { IoChevronBack, IoChevronForward, IoClose } from "react-icons/io5";
+import { FiCamera } from "react-icons/fi";
+import { MdEdit } from "react-icons/md";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
+import toast from "react-hot-toast";
 import "./Status.css";
 
-const initialStatuses = [
-  {
-    id: 1,
-    name: "John Doe",
-    time: "Today, 10:30 AM",
-    stories: [
-      { type: "text", caption: "Good vibes only 🌞", bgColor: "#25d366" },
-      { type: "media", img: "https://i.pravatar.cc/600?img=11", caption: "Check this out!" },
-    ],
-  },
-  {
-    id: 2,
-    name: "Sarah Smith",
-    time: "Today, 9:15 AM",
-    stories: [
-      { type: "media", img: "https://i.pravatar.cc/600?img=2", caption: "Morning walk 🚶‍♀️" },
-    ],
-  },
-  {
-    id: 3,
-    name: "Michael Scott",
-    time: "Yesterday, 6:20 PM",
-    stories: [
-      { type: "text", caption: "That's what she said!", bgColor: "#ffeb3b" },
-    ],
-  },
-];
-
-const bgColors = ["#25d366", "#34b7f1", "#ffeb3b", "#f44336", "#9c27b0"];
+const bg_color = ["#25d366", "#34b7f1", "#ffeb3b", "#f44336", "#9c27b0"];
 
 const Status = () => {
-  const [statuses, setStatuses] = useState(initialStatuses);
+  const [statuses, setStatuses] = useState([]);
   const [activeUserIndex, setActiveUserIndex] = useState(null);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -44,7 +21,11 @@ const Status = () => {
   const [postType, setPostType] = useState(null);
   const [postContent, setPostContent] = useState("");
   const [preview, setPreview] = useState(null);
-  const [selectedBg, setSelectedBg] = useState(bgColors[0]);
+  const [selectedBg, setSelectedBg] = useState(bg_color[0]);
+   const [profile, setProfile] = useState(null);
+  const [file, setFile] = useState(null);
+  const [reply, setReply] = useState("");
+  const { session } = UserAuth();
 
   useEffect(() => {
     if (activeUserIndex !== null) {
@@ -61,11 +42,153 @@ const Status = () => {
     }
   }, [activeUserIndex, activeStoryIndex]);
 
+  useEffect(() => {
+  fetchStatuses();
+}, []);
+
+useEffect(() => {
+    if (!session?.user) return;
+
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*") // get photo too
+        .eq("id", session.user.id)
+        .single();
+
+      if (!error) {
+        setProfile(data);
+      } else {
+        console.error("Profile fetch error:", error);
+      }
+    };
+
+    fetchProfile();
+  }, [session]);
+
+
+  useEffect(() => {
+  const channel = supabase
+    .channel("status-changes")
+    .on("postgres_changes",
+      { event: "INSERT", schema: "public", table: "status" },
+      fetchStatuses
+    )
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, []);
+
+ const fetchStatuses = async () => {
+  try {
+    const yesterday = new Date();
+    yesterday.setHours(yesterday.getHours() - 24);
+
+    // 1️⃣ GET STATUS
+    const { data: statusData, error: statusError } = await supabase
+      .from("status")
+      .select("*")
+      .gt("created_at", yesterday.toISOString())
+      .order("created_at", { ascending: false });
+
+    if (statusError) {
+      console.log("Status fetch error:", statusError);
+      return;
+    }
+
+    if (!statusData || statusData.length === 0) {
+      setStatuses([]);
+      return;
+    }
+
+    // 2️⃣ GET PROFILE DATA
+    const userIds = [...new Set(statusData.map(s => s.user_id))];
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, name, photo")
+      .in("id", userIds);
+
+    const profileMap = {};
+    profiles?.forEach(p => profileMap[p.id] = p);
+
+    // 3️⃣ GROUP STATUS BY USER
+    const grouped = Object.values(
+      statusData.reduce((acc, s) => {
+        if (!acc[s.user_id]) {
+          acc[s.user_id] = {
+            id: s.user_id,
+            name: profileMap[s.user_id]?.name || "Unknown",
+            photo: profileMap[s.user_id]?.photo,
+            stories: [],
+          };
+        }
+        acc[s.user_id].stories.push(s);
+        return acc;
+      }, {})
+    );
+
+    setStatuses(grouped);
+
+  } catch (err) {
+    console.log("Fetch crash:", err);
+  }
+};
+const sendReply = async () => {
+  if (!reply) return;
+
+  const story =
+    statuses[activeUserIndex]?.stories?.[activeStoryIndex]
+
+  await supabase.from("status_replies").insert({
+    status_id: story.id,
+    user_id: session.user.id,
+    message: reply,
+  });
+
+  toast.success("Reply sent");
+  setReply("");
+};
+
+const react = async (emoji) => {
+  const story =
+    statuses[activeUserIndex]?.stories?.[activeStoryIndex]
+
+  await supabase.from("status_reactions").upsert({
+    status_id: story.id,
+    user_id: session.user.id,
+    emoji,
+  });
+
+  toast.success("Reacted " + emoji);
+};
+
   const openStatus = (index) => {
     setActiveUserIndex(index);
     setActiveStoryIndex(0);
     setProgress(0);
   };
+   const markSeen = async (storyId) => {
+  if (!session?.user) return;
+
+  await supabase.from("status_views").upsert({
+    status_id: storyId,
+    viewer_id: session.user.id,
+  });
+};
+
+  useEffect(() => {
+  if (
+    activeUserIndex !== null &&
+    statuses[activeUserIndex]?.stories?.[activeStoryIndex]
+  ) {
+    const story =
+      statuses[activeUserIndex]?.stories?.[activeStoryIndex];
+
+    markSeen(story.id);
+  }
+}, [activeStoryIndex]);
+
 
   const closeStatus = () => {
     setActiveUserIndex(null);
@@ -97,46 +220,72 @@ const Status = () => {
     setActiveStoryIndex(statuses[activeUserIndex - 1].stories.length - 1);
     setProgress(0);
   };
+const handlePost = async () => {
+  if (!session?.user) {
+    toast.error("Login first");
+    return;
+  }
 
-  const handlePost = () => {
-    if (!postContent && !preview) return;
+  // ✅ CLOSE MODAL INSTANTLY
+  setShowPostModal(false);
+  setPostType(null);
+  setPostContent("");
+  setPreview(null);
+  setFile(null);
 
-    const newStory = postType === "text"
-      ? { type: "text", caption: postContent, bgColor: selectedBg }
-      : { type: "media", caption: postContent, img: preview };
+  toast.loading("Posting...", { id: "post" });
 
-    const existingMyStatusIndex = statuses.findIndex(s => s.name === "My Status");
-    if (existingMyStatusIndex !== -1) {
-      // Add to existing My Status
-      const updatedStatuses = [...statuses];
-      updatedStatuses[existingMyStatusIndex].stories.push(newStory);
-      updatedStatuses[existingMyStatusIndex].time = "Just now";
-      setStatuses(updatedStatuses);
-    } else {
-      const newStatus = {
-        id: Date.now(),
-        name: "My Status",
-        time: "Just now",
-        stories: [newStory],
-      };
-      setStatuses([newStatus, ...statuses]);
-    }
+  try {
+    let mediaUrl = null;
 
-    setPostType(null);
-    setPostContent("");
-    setPreview(null);
-    setShowPostModal(false);
-    setSelectedBg(bgColors[0]);
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result);
-      reader.readAsDataURL(file);
+      const filePath = `${session.user.id}/${Date.now()}-${file.name}`;
+
+      const { error } = await supabase.storage
+        .from("status-media")
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from("status-media")
+        .getPublicUrl(filePath);
+
+      mediaUrl = data.publicUrl;
     }
-  };
+
+    const { error } = await supabase.from("status").insert({
+      user_id: session.user.id,
+      type: postType,
+      media_url: mediaUrl,
+      text: postContent,
+      bg_color: selectedBg,
+    });
+
+    if (error) throw error;
+
+    toast.success("Status Posted ✅", { id: "post" });
+    fetchStatuses();
+
+  } catch (err) {
+    console.log(err);
+    toast.error("Failed to post", { id: "post" });
+  }
+};
+
+
+ 
+  const handleFileChange = (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+
+  setFile(f);   // SAVE REAL FILE
+
+  const reader = new FileReader();
+  reader.onloadend = () => setPreview(reader.result);
+  reader.readAsDataURL(f);
+};
+
 
   return (
     <div className="status-page">
@@ -148,12 +297,20 @@ const Status = () => {
       <h3>Create Status</h3>
 
       {/* Post Type Selection */}
-      {!postType && (
-        <div className="post-type-selection">
-          <button className="post-btn" onClick={() => setPostType("text")}>Text Post</button>
-          <button className="post-btn" onClick={() => setPostType("media")}>Media Post</button>
-        </div>
-      )}
+{!postType && (
+  <div className="type-grid">
+    <div className="type-card" onClick={() => setPostType("text")}>
+      <h3>📝 Text Status</h3>
+      <p>Share thoughts with colors</p>
+    </div>
+
+    <div className="type-card" onClick={() => setPostType("media")}>
+      <h3>📸 Photo / Video</h3>
+      <p>Share moments instantly</p>
+    </div>
+  </div>
+)}
+
 
       {/* Text Post */}
       {postType === "text" && (
@@ -165,7 +322,7 @@ const Status = () => {
             onChange={(e) => setPostContent(e.target.value)}
           />
           <div className="bg-picker">
-            {bgColors.map(color => (
+            {bg_color.map(color => (
               <span
                 key={color}
                 className={`color-circle ${selectedBg === color ? "selected" : ""}`}
@@ -234,7 +391,7 @@ const Status = () => {
       {/* My Status */}
       <div className="my-status" onClick={() => setShowPostModal(true)}>
         <div className="status-avatar">
-          <img src="https://i.pravatar.cc/100?img=10" alt="My Profile" className="avatar" />
+          <img  src={profile?.photo} alt="My Profile" className="avatar" />
           <FiPlus className="add-icon" />
         </div>
         <div className="status-text">
@@ -250,14 +407,17 @@ const Status = () => {
           <div className="status-item" key={s.id} onClick={() => openStatus(index)}>
             <div className="status-avatar ring">
               {s.stories[0].type === "text" ? (
-                <div style={{ backgroundColor: s.stories[0].bgColor }} className="text-avatar">{s.stories[0].caption}</div>
+                <div style={{ backgroundColor: s.stories[0].bg_color }} className="text-avatar">{s.stories[0].text}</div>
               ) : (
-                <img src={s.stories[0].img || "https://i.pravatar.cc/100"} alt={s.name} className="avatar" />
+                <img src={s.stories[0].media_url || s.photo || "https://i.pravatar.cc/100"} alt={s.name} className="avatar" />
               )}
             </div>
             <div className="status-text">
               <h3>{s.name}</h3>
-              <p>{s.time}</p>
+                <p>
+  {new Date(s.stories[0].created_at).toLocaleTimeString()}
+</p>
+
             </div>
           </div>
         ))}
@@ -268,43 +428,102 @@ const Status = () => {
         <div className="status-modal">
           <div className="status-modal-content">
             <div className="progress-container">
-              {statuses[activeUserIndex].stories.map((_, i) => (
+              {statuses[activeUserIndex]?.stories?.[activeStoryIndex] && statuses[activeUserIndex]?.stories?.map((_, i) => (
                 <div key={i} className={`progress-bar ${i < activeStoryIndex ? "filled" : ""}`}>
                   {i === activeStoryIndex && <div className="progress-fill" style={{ width: `${progress}%` }} />}
                 </div>
               ))}
             </div>
 
-            {statuses[activeUserIndex].stories[activeStoryIndex].type === "text" ? (
-              <div className="status-text-full" style={{ backgroundColor: statuses[activeUserIndex].stories[activeStoryIndex].bgColor }}>
-                <p>{statuses[activeUserIndex].stories[activeStoryIndex].caption}</p>
+            {statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.type === "text" ? (
+              <div className="status-text-full" style={{ backgroundColor: statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.bg_color }}>
+                <p>{statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}</p>
               </div>
             ) : (
-              <img src={statuses[activeUserIndex].stories[activeStoryIndex].img} alt="status" className="status-modal-img" />
+              <img src={statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.media_url} alt="status" className="status-modal-img" />
             )}
 
             <div className="status-top-overlay">
               <div className="status-user-info">
                 <img
-                  src={statuses[activeUserIndex].stories[0].img || "https://i.pravatar.cc/100"}
+                   src={statuses[activeUserIndex]?.photo || "https://i.pravatar.cc/100"}
                   alt="profile"
                   className="status-profile-pic"
                 />
                 <div>
-                  <h3>{statuses[activeUserIndex].name}</h3>
-                  <p>{statuses[activeUserIndex].time}</p>
+                  <h3>{statuses[activeUserIndex]?.name}</h3>
+                  <p>
+ {new Date(
+   statuses[activeUserIndex]
+     ?.stories?.[activeStoryIndex]
+     ?.created_at
+ ).toLocaleTimeString()}
+</p>
+
                 </div>
               </div>
             </div>
             <div className="status-bottom-overlay">
-              <p className="status-caption">{statuses[activeUserIndex].stories[activeStoryIndex].caption}</p>
+              <p className="status-caption">{statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}</p>
             </div>
             <IoClose className="close-btn" onClick={closeStatus} />
             <IoChevronBack className="nav-btn left" onClick={prevStory} />
             <IoChevronForward className="nav-btn right" onClick={nextStory} />
           </div>
+  
+  <div className="status-bottom-ui">
+     <div className="reply-box">
+  <input
+    placeholder="Reply..."
+    value={reply}
+    onChange={e => setReply(e.target.value)}
+  />
+  <button onClick={sendReply}>Send</button>
+           </div>
+
+           <p className="seen-count">
+ 👀 {statuses[activeUserIndex]
+   .stories[activeStoryIndex]
+   .views_count || 0} seen
+</p>
+
+<div className="emoji-bar">
+  {["❤️","🔥","😂"].map(e => (
+    <span key={e} onClick={() => react(e)}>{e}</span>
+  ))}
+</div>
+  </div>
         </div>
+
       )}
+     
+
+
+     <div className="fab-group">
+
+  <button
+    className="fab camera"
+    onClick={() => {
+      setPostType("media");
+      setShowPostModal(true);
+    }}
+  >
+    <FiCamera />
+  </button>
+
+  <button
+    className="fab text"
+    onClick={() => {
+      setPostType("text");
+      setShowPostModal(true);
+    }}
+  >
+    <MdEdit />
+  </button>
+
+</div>
+
+
     </div>
   );
 };

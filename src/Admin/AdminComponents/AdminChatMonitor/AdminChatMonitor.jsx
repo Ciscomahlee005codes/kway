@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import "./AdminChatMonitor.css";
 
+const dummy = "https://i.pravatar.cc/100";
+
 const AdminChatMonitor = () => {
   const [selectedChat, setSelectedChat] = useState(null);
+  const [filter, setFilter] = useState("all");
 
   const chatList = [
-    { id: 1, users: ["John Doe", "Admin"], lastMsg: "User: I need help", flagged: false },
-    { id: 2, users: ["Sarah", "Support"], lastMsg: "Support: Issue resolved ✔", flagged: true },
-    { id: 3, users: ["Emeka", "Admin"], lastMsg: "User: Thank you!", flagged: false },
+    { id: 1, users: ["John Doe", "Admin"], lastMsg: "I need help", flagged: false, active: true },
+    { id: 2, users: ["Sarah", "Support"], lastMsg: "Issue resolved ✔", flagged: true, active: false },
+    { id: 3, users: ["Emeka", "Admin"], lastMsg: "Thank you!", flagged: false, active: true },
   ];
 
   const monitoredMessages = [
@@ -16,77 +19,93 @@ const AdminChatMonitor = () => {
     { from: "user", text: "I forgot my password", time: "10:45 AM" },
   ];
 
+  const filteredChats = chatList.filter((c) => {
+    if (filter === "flagged") return c.flagged;
+    if (filter === "active") return c.active;
+    return true;
+  });
+
+  const currentChat = chatList.find((c) => c.id === selectedChat);
+
   return (
-    <div className="admin-monitor-container">
+    <div className="monitor-container">
+
       {/* LEFT PANEL */}
-      <div
-        className={`admin-monitor-left ${
-          selectedChat ? "hide-mobile" : ""
-        }`}
-      >
-        <h3 className="admin-monitor-title">Chat Monitoring</h3>
+      <div className={`monitor-left ${selectedChat ? "hide-mobile" : ""}`}>
+        <div className="left-header">
+          <h2>Chat Monitor</h2>
+          <p>Moderate user conversations</p>
+        </div>
 
-        <input
-          type="text"
-          placeholder="Search chats..."
-          className="admin-monitor-search"
-        />
+        {/* Stats */}
+        <div className="monitor-stats">
+          <div>
+            <b>{chatList.length}</b>
+            <span>Total</span>
+          </div>
+          <div>
+            <b>{chatList.filter((c) => c.active).length}</b>
+            <span>Active</span>
+          </div>
+          <div>
+            <b>{chatList.filter((c) => c.flagged).length}</b>
+            <span>Flagged</span>
+          </div>
+        </div>
 
-        <div className="admin-monitor-chatlist">
-          {chatList.map((chat) => (
+        {/* Filter */}
+        <div className="monitor-filter">
+          {["all", "active", "flagged"].map((type) => (
+            <button
+              key={type}
+              className={filter === type ? "active" : ""}
+              onClick={() => setFilter(type)}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+
+        {/* Chat List */}
+        <div className="chat-list">
+          {filteredChats.map((chat) => (
             <div
               key={chat.id}
-              className={`admin-monitor-chatitem ${
-                selectedChat === chat.id ? "active" : ""
-              }`}
+              className={`chat-item ${selectedChat === chat.id ? "active" : ""}`}
               onClick={() => setSelectedChat(chat.id)}
             >
-              <div className="admin-monitor-chat-users">
-                <strong>{chat.users[0]}</strong> ↔ {chat.users[1]}
-              </div>
-              <p className="admin-monitor-lastmsg">{chat.lastMsg}</p>
+              <img src={dummy} className="chat-avatar" alt="avatar" />
 
-              {chat.flagged && (
-                <span className="admin-monitor-flag">⚠ Flagged</span>
-              )}
+              <div className="chat-info">
+                <h4>{chat.users[0]} ↔ {chat.users[1]}</h4>
+                <p>{chat.lastMsg}</p>
+              </div>
+
+              {chat.flagged && <span className="flag">⚠</span>}
             </div>
           ))}
         </div>
       </div>
 
       {/* RIGHT PANEL */}
-      <div
-        className={`admin-monitor-right ${
-          selectedChat ? "show-mobile" : ""
-        }`}
-      >
+      <div className={`monitor-right ${selectedChat ? "show-mobile" : ""}`}>
         {selectedChat ? (
           <>
-            <div className="admin-monitor-header">
-              <button
-                className="admin-monitor-back"
-                onClick={() => setSelectedChat(null)}
-              >
-                ← Back
-              </button>
+            <div className="monitor-header">
+              <button className="back" onClick={() => setSelectedChat(null)}>←</button>
 
-              <h4>
-                {chatList
-                  .find((c) => c.id === selectedChat)
-                  ?.users.join(" & ")}
-              </h4>
+              <h3>{currentChat?.users.join(" & ")}</h3>
+
+              <div className="actions">
+                <button className="mute">Mute</button>
+                <button className="warn">Flag</button>
+                <button className="danger">Delete</button>
+              </div>
             </div>
 
-            <div className="admin-monitor-messages">
-              {monitoredMessages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`admin-monitor-message ${
-                    msg.from === "admin"
-                      ? "admin-monitor-adminmsg"
-                      : "admin-monitor-usermsg"
-                  }`}
-                >
+            <div className="messages">
+              {monitoredMessages.map((msg, i) => (
+                <div key={i} className={`msg ${msg.from}`}>
                   <p>{msg.text}</p>
                   <small>{msg.time}</small>
                 </div>
@@ -94,7 +113,7 @@ const AdminChatMonitor = () => {
             </div>
           </>
         ) : (
-          <div className="admin-monitor-empty">
+          <div className="empty">
             <p>Select a chat to monitor</p>
           </div>
         )}

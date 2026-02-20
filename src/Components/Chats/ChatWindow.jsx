@@ -5,6 +5,9 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
 import { useEffect, useRef } from "react";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
+import KwayLogo from "../../assets/kway-logo-1.png";
 
 
 const ChatWindow = ({
@@ -28,13 +31,18 @@ const ChatWindow = ({
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pressTimer, setPressTimer] = useState(null);
+   const [isTyping, setIsTyping] = useState(false);
   const emojiRef = useRef(null);
   const dropdownRef = useRef(null);
+
+  const { session } = UserAuth();
+
 
 useEffect(() => {
   // Close dropdown when chat changes
   setShowChatDropdown(false);
 }, [activeChat]);
+
 
 useEffect(() => {
   if (activeChat) {
@@ -61,18 +69,26 @@ useEffect(() => {
       setShowChatDropdown(false);
     }
   };
+console.log("Active Chat:", activeChat);
 
   document.addEventListener("mousedown", handleClickOutside);
   return () => document.removeEventListener("mousedown", handleClickOutside);
 }, []);
-   if (!activeChat) {
+     if (!activeChat) {
   return (
     <div className="chat-window empty-state">
       <div className="empty-chat-container">
-        <h2>Welcome to Kway 💬</h2>
 
-        <p>
-          Connect with friends using usernames,  
+        <div className="empty-logo">
+           <img src={KwayLogo} alt="Kway Logo" className="logo-img" />
+        </div>
+
+        <h2 className="empty-title">
+          Welcome to <span>Kway</span>
+        </h2>
+
+        <p className="empty-desc">
+          Connect with friends using usernames,
           not just phone numbers.
         </p>
 
@@ -86,13 +102,15 @@ useEffect(() => {
           </button>
         </div>
 
-        <small>
-          Your messages are private & secure.
+        <small className="empty-footer">
+          Your messages are private & secure 🔒
         </small>
+
       </div>
     </div>
   );
 }
+
 
   
 
@@ -107,7 +125,7 @@ useEffect(() => {
 
         <div
           className="chat-header-left"
-          onClick={() => navigate("/user-profile", { state: activeChat })}
+           onClick={() => navigate(`/user-profile/${activeChat.id}`)}
         >
           <img
             src={activeChat.avatar}
@@ -144,7 +162,7 @@ useEffect(() => {
 
             {showChatDropdown && (
               <div className="chat-dropdown-menu animated-dropdown">
-                <p onClick={() => navigate("/user-profile", { state: activeChat })}>View contact</p>
+                <p onClick={() => navigate(`/user-profile/${activeChat.id}`)}>View contact</p>
                 <p>Search</p>
                 <p>Mute notifications</p>
                 <p className="danger">Block</p>
@@ -214,16 +232,26 @@ useEffect(() => {
           />
 
           <input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-          />
+  value={newMessage}
+  onChange={e => {
+    setNewMessage(e.target.value);
+
+    supabase.from("typing").upsert({
+      user_id: session.user.id,
+      chat_id: activeChat.id,
+      typing: true,
+    });
+
+    setTimeout(() => {
+      supabase.from("typing").upsert({
+        user_id: session.user.id,
+        chat_id: activeChat.id,
+        typing: false,
+      });
+    }, 1500);
+  }}
+/>
+
         </div>
 
         <FiSend className="chat-send-icon" onClick={handleSendMessage} />
@@ -305,6 +333,12 @@ useEffect(() => {
           {emoji}
         </span>
       ))}
+      {isTyping && (
+  <p className="typing-indicator">
+    {activeChat.name} is typing...
+  </p>
+)}
+
     </div>
   </>
 )}

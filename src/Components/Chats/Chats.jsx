@@ -20,6 +20,53 @@ const Chats = () => {
   const [showChatDropdown, setShowChatDropdown] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [callType, setCallType] = useState("voice");
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isTyping, setIsTyping] = useState(false);
+
+
+useEffect(() => {
+  const handleResize = () =>
+    setIsMobile(window.innerWidth <= 768);
+
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
+const startChat = (user) => {
+  const newChat = {
+    id: Date.now(),
+    name: user.name,
+    avatar: user.avatar || "",
+    lastMessage: "",
+    unread: 0,
+  };
+
+  setChats((prev) => [newChat, ...prev]);
+};
+useEffect(() => {
+  if (!activeChat || !user) return;
+
+  const channel = supabase
+    .channel("typing-status")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "typing",
+        filter: `chat_id=eq.${activeChat.id}`,
+      },
+      payload => {
+        if (payload.new.user_id !== user.id) {
+          setIsTyping(payload.new.typing);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, [activeChat, user]);
+
+
   const [reactionPicker, setReactionPicker] = useState({
     open: false,
     msgIndex: null,
@@ -51,7 +98,9 @@ const Chats = () => {
           messages: [],
         };
 
-        setActiveChat(newChat);
+        if (!isMobile) {
+  setActiveChat(newChat);
+}
 
         setChats((prev) => {
           const exists = prev.find((c) => c.id === data.id);
@@ -70,26 +119,41 @@ const Chats = () => {
   useEffect(() => {
     if (!activeChat || !user) return;
 
-    const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .or(
-          `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
-        )
-        .order("created_at", { ascending: true });
+   const fetchMessages = async () => {
+  if (!activeChat || !user) return;
 
-      if (error || !data) return;
+  const { data } = await supabase
+    .from("messages")
+    .select("*")
+    .or(
+      `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
+    )
+    .order("created_at");
 
-      setActiveChat((prev) => ({
-        ...prev,
-        messages: data.map((msg) => ({
-          text: msg.content, // ✅ FIXED
-          sender: msg.sender_id === user.id ? "you" : "them",
-          time: new Date(msg.created_at).toLocaleTimeString(),
-        })),
-      }));
-    };
+  if (!data) return;
+
+  // mark seen
+  await supabase
+    .from("messages")
+    .update({ seen: true })
+    .eq("sender_id", activeChat.id)
+    .eq("receiver_id", user.id);
+
+  setActiveChat(prev => ({
+    ...prev,
+    messages: data.map(msg => ({
+      text: msg.content,
+      sender: msg.sender_id === user.id ? "you" : "them",
+      time: new Date(msg.created_at).toLocaleTimeString(),
+      status: msg.seen
+        ? "seen"
+        : msg.delivered
+        ? "delivered"
+        : "sent",
+    })),
+  }));
+};
+
 
     fetchMessages();
   }, [activeChat?.id, user?.id]);
@@ -97,53 +161,72 @@ const Chats = () => {
   // =========================================
   // ✅ LOAD ALL CONVERSATIONS
   // =========================================
-  useEffect(() => {
-    if (!user) return;
+   useEffect(() => {
+  if (!user) return;
 
-    const fetchChats = async () => {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("sender_id, receiver_id");
+  const fetchChats = async () => {
+  if (!user) return;
 
-      if (error || !data) return;
+  const { data: messages } = await supabase
+    .from("messages")
+    .select("*")
+    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+    .order("created_at", { ascending: false });
 
-      const userIds = new Set();
+  if (!messages) return;
 
-      data.forEach((msg) => {
-        if (msg.sender_id === user.id)
-          userIds.add(msg.receiver_id);
-        else if (msg.receiver_id === user.id)
-          userIds.add(msg.sender_id);
-      });
+  const chatMap = {};
+  const unreadMap = {};
 
-      if (userIds.size === 0) {
-        setChats([]);
-        return;
-      }
+  messages.forEach(msg => {
+    const other =
+      msg.sender_id === user.id
+        ? msg.receiver_id
+        : msg.sender_id;
 
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, name, photo")
-        .in("id", Array.from(userIds));
+    if (!chatMap[other]) {
+      chatMap[other] = {
+        lastMessage: msg.content,
+        time: new Date(msg.created_at).toLocaleTimeString(),
+      };
+    }
 
-      if (!profiles) return;
+    if (
+      msg.receiver_id === user.id &&
+      msg.seen === false
+    ) {
+      unreadMap[other] =
+        (unreadMap[other] || 0) + 1;
+    }
+  });
 
-      const formattedChats = profiles.map((profile) => ({
-        id: profile.id,
-        name: profile.name,
-        avatar: profile.photo,
-        messages: [],
-      }));
+  const ids = Object.keys(chatMap);
 
-      setChats(formattedChats);
+  if (ids.length === 0) return setChats([]);
 
-      if (!id && formattedChats.length > 0) {
-        setActiveChat(formattedChats[0]);
-      }
-    };
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id,name,photo")
+    .in("id", ids);
 
-    fetchChats();
-  }, [user]);
+  const formatted = profiles.map(p => ({
+    id: p.id,
+    name: p.name,
+    avatar: p.photo,
+    lastMessage: chatMap[p.id]?.lastMessage,
+    time: chatMap[p.id]?.time,
+    unread: unreadMap[p.id] || 0,
+    messages: [],
+  }));
+
+  setChats(formatted);
+};
+
+
+  fetchChats();
+}, [user]);
+  
+
 
   // =========================================
   // ✅ SEND MESSAGE
@@ -159,6 +242,8 @@ const Chats = () => {
       sender_id: user.id,
       receiver_id: activeChat.id,
       content: messageText,
+      delivered: false,
+  seen: false,
     })
     .select()
     .single();
@@ -230,6 +315,7 @@ const Chats = () => {
         reactionPicker={reactionPicker}
         setReactionPicker={setReactionPicker}
         reactions={reactions}
+        isTyping={isTyping}
       />
 
       {showCallModal && (
@@ -239,6 +325,8 @@ const Chats = () => {
           onClose={() => setShowCallModal(false)}
         />
       )}
+
+      
     </div>
   );
 };

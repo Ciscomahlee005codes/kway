@@ -12,7 +12,7 @@ const LinkUp = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProfile, setSelectedProfile] = useState(null); // Selected user for bottom modal
+  const [selectedProfile, setSelectedProfile] = useState(null); 
   const navigate = useNavigate();
 
 
@@ -53,7 +53,7 @@ const LinkUp = () => {
     <div className="contact-list-wrapper">
       {/* Header */}
       <div className="contact-header">
-        <h2>Contacts</h2>
+        <h2>Link Ups</h2>
         <div className="contact-search">
           <FiSearch className="search-icon" />
           <input

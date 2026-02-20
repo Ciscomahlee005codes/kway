@@ -20,6 +20,13 @@ const Settings = () => {
   const { session } = UserAuth();
 
   const [profile, setProfile] = useState(null);
+  const [showLogout, setShowLogout] = useState(false);
+
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  navigate("/"); // back to login
+};
+
 
   // 🔥 SAME FETCH LOGIC AS PROFILE PAGE
   useEffect(() => {
@@ -172,6 +179,40 @@ const Settings = () => {
         </div>
 
       </div>
+      {/* ================= LOGOUT BUTTON ================= */}
+<div className="logout-section">
+  <button
+    className="logout-btn"
+    onClick={() => setShowLogout(true)}
+  >
+    Logout
+  </button>
+</div>
+{showLogout && (
+  <div className="logout-modal-overlay">
+    <div className="logout-modal">
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to logout from Kway?</p>
+
+      <div className="logout-actions">
+        <button
+          className="cancel-btn"
+          onClick={() => setShowLogout(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="confirm-btn"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

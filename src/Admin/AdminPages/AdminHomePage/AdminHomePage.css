@@ -8,14 +8,24 @@
 
 /* Main content area */
 .adminDash-content {
-  margin-left: 250px; /* sidebar width */
+  margin-left: 250px;
   padding: 20px;
   width: calc(100% - 250px);
-  transition: margin-left 0.3s ease, width 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-/* When sidebar is collapsed */
-.adminDash-sidebar.collapsed ~ .adminDash-content {
-  margin-left: 0px;
+.adminDash-content.collapsed {
+  margin-left: 70px;
   width: calc(100% - 70px);
 }
+@media (max-width: 768px) {
+  .adminDash-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .adminDash-sidebar {
+    z-index: 2000;
+  }
+}
+

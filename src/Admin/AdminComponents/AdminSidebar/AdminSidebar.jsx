@@ -11,9 +11,8 @@ import {
 } from "react-icons/fa";
 import "./AdminSidebar.css";
 
-const AdminSidebar = () => {
-  const [collapsed, setCollapsed] = useState(true);
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+const AdminSidebar = ({ collapsed, setCollapsed }) => {
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const toggleSidebar = () => setCollapsed(!collapsed);
 

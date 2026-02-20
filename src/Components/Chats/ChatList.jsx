@@ -2,8 +2,8 @@ import React, { useMemo, useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdAdd } from "react-icons/io";
-import { NavLink } from "react-router-dom";
-
+import { NavLink, useNavigate } from "react-router-dom";
+import KwayLogo from "../../assets/kway-logo-1.png";
 
 const ChatList = ({
   chats = [],
@@ -16,6 +16,8 @@ const ChatList = ({
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const navigate = useNavigate();
 
   const filteredChats = useMemo(() => {
     if (!searchTerm) return chats;
@@ -30,6 +32,7 @@ const ChatList = ({
       );
     });
   }, [searchTerm, chats]);
+  
 
   return (
     <div className={`chat-list-section ${activeChat ? "hide-on-mobile" : ""}`}>
@@ -86,9 +89,41 @@ const ChatList = ({
 
       {/* CHAT LIST */}
       <div className="chat-list">
-         {filteredChats.length === 0 ? (
-  <div className="empty-chat">No chats found</div>
+        {filteredChats.length === 0 ? (
+  <div className="empty-chat-mobile">
+
+    <div className="empty-chat-card">
+
+      <div className="empty-icon"><img src={KwayLogo} alt="Kway Logo" className="logo-img" /></div>
+
+      <h3>
+        Welcome to <span>Kway</span>
+      </h3>
+
+      <p>
+        No chats yet. Link up with friends using
+        usernames, not just phone numbers.
+      </p>
+
+      <div className="empty-actions">
+        <button onClick={() => setShowAddModal(true)}>
+          🔍 Find People
+        </button>
+
+        <NavLink to="/profile">
+          <button>👤 Setup Profile</button>
+        </NavLink>
+      </div>
+
+      <small>
+        Your messages are private & secure 🔒
+      </small>
+
+    </div>
+
+  </div>
 ) : (
+
   filteredChats.map((chat) => {
     return (
       <div
@@ -112,12 +147,27 @@ const ChatList = ({
 
         <div className="chat-info">
           <h4>{chat?.name || "Unknown"}</h4>
-          <p>{chat?.lastMessage || "No messages yet"}</p>
-        </div>
+          <p>
+  {chat?.lastMessage
+    ? chat.lastMessage.slice(0, 30)
+    : "No messages yet"}
+</p>
 
-        <span className="chat-time">
-          {chat?.time || ""}
-        </span>
+        </div>
+        <div className="chat-meta">
+  <span className="chat-time">
+    {chat?.time || ""}
+  </span>
+
+  {chat.unread > 0 && (
+    <span className="unread-badge">
+      {chat.unread}
+    </span>
+  )}
+</div>
+
+
+        
       </div>
     );
   })
@@ -128,7 +178,10 @@ const ChatList = ({
       {/* FLOATING ADD CHAT */}
       <button
         className="floating-add-btn"
-        onClick={() => setShowAddModal(true)}
+        onClick={() => {
+          setShowAddModal(true);
+          navigate("/linkup");
+        }}
       >
         <IoMdAdd />
       </button>

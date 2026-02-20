@@ -61,7 +61,7 @@ function App() {
           <Route path="/settings/about" element={<About />} /> 
           <Route path="/phonenumber/verification" element={<PhoneVerification />} /> 
           <Route path="/profile-setup" element={<ProfileSetup />} /> 
-          <Route path="/user-profile" element={<UsersProfile />} />
+         <Route path="/user-profile/:id" element={<UsersProfile />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Admin Panel */}

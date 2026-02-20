@@ -4,6 +4,7 @@ import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../Context/LanguageContext";
+import { MdEdit } from "react-icons/md";
 import {
   FaEnvelope,
   FaBirthdayCake,
@@ -100,7 +101,7 @@ const Profile = () => {
         <div className="profile-header-refined">
           <div className="profile-avatar-refined">
             <label className="edit-avatar-btn">
-              ✏️
+              <MdEdit className="edit-icon" />
               <input
                 type="file"
                 accept="image/*"

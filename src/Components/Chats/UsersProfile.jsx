@@ -1,96 +1,88 @@
-import React, { useRef, useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { IoArrowBack, IoEllipsisVertical } from "react-icons/io5";
 import { FiPhone, FiVideo, FiMail } from "react-icons/fi";
 import CallModal from "./CallModal";
 import EditProfileModal from "./EditProfileModal";
 import "./UsersProfile.css";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
 
 const UsersProfile = () => {
   const navigate = useNavigate();
-  const { state: user } = useLocation();
+  const { id } = useParams();
+  const { session } = UserAuth();
 
-  const sheetRef = useRef(null);
-  const dropdownRef = useRef(null);
-
-  const startY = useRef(0);
-  const [translateY, setTranslateY] = useState(0);
-  const [callModal, setCallModal] = useState({ open: false, type: "voice" });
-
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [callModal, setCallModal] = useState({ open: false, type: "voice" });
 
-  if (!user) return <div className="profile-error">User not found</div>;
+  const dropdownRef = useRef(null);
 
+  // =========================================
+  // ✅ FETCH USER LIKE LINKUP PAGE
+  // =========================================
+  useEffect(() => {
+    if (!id) return;
 
-  /* ================= MOBILE DRAG ================= */
-  const handleTouchStart = (e) => {
-    startY.current = e.touches[0].clientY;
-  };
+    const fetchUser = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, username, photo, about")
+        .eq("id", id)
+        .single();
 
-  const handleTouchMove = (e) => {
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - startY.current;
-    if (diff > 0) setTranslateY(diff);
-  };
+      if (error) {
+        console.log(error);
+        setLoading(false);
+        return;
+      }
 
-  const handleTouchEnd = () => {
-    if (translateY > 120) navigate("/chat");
-    else setTranslateY(0);
-  };
-
-  
-  /* ================= SHARE CONTACT ================= */
-  const handleShare = () => {
-    const shareData = {
-      title: "Kway Contact",
-      text: `Connect with ${user.name} on Kway`,
-      url: `${window.location.origin}/user/${user.username}`,
+      setUser(data);
+      setLoading(false);
     };
 
-    if (navigator.share) {
-      navigator.share(shareData);
-    } else {
-      navigator.clipboard.writeText(shareData.url);
-      alert("Profile link copied!");
-    }
+    fetchUser();
+  }, [id]);
 
-    setDropdownOpen(false);
-  };
-
-  /* ================= OUTSIDE CLICK CLOSE ================= */
+  // =========================================
+  // CLOSE DROPDOWN ON OUTSIDE CLICK
+  // =========================================
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handleClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  if (loading) return <div className="profile-error">Loading profile...</div>;
+  if (!user) return <div className="profile-error">User not found</div>;
+
+  // =========================================
+  // SHARE CONTACT
+  // =========================================
+  const handleShare = () => {
+    const url = `${window.location.origin}/user-profile/${user.id}`;
+
+    navigator.clipboard.writeText(url);
+    alert("Profile link copied!");
+  };
 
   return (
     <div className="profile-overlay">
-      <div
-        ref={sheetRef}
-        className="profile-sheet"
-        style={{ transform: `translateY(${translateY}px)` }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="drag-handle" />
+      <div className="profile-sheet">
 
         {/* HEADER */}
         <div className="profile-header">
-          <IoArrowBack
-            className="back-icon"
-            onClick={() => navigate("/chat")}
-          />
+          <IoArrowBack className="back-icon" onClick={() => navigate(-1)} />
           <h3>Profile</h3>
 
-          {/* THREE DOT MENU */}
           <div className="menu-wrapper" ref={dropdownRef}>
             <IoEllipsisVertical
               className="menu-icon"
@@ -99,42 +91,28 @@ const UsersProfile = () => {
 
             {dropdownOpen && (
               <div className="dropdown-menu">
-                <div className="dropdown-item" onClick={handleShare}>
-                  Share Contact
-                </div>
-                <div
-                  className="dropdown-item"
-                  onClick={() => {
-                    setEditOpen(true);
-                    setDropdownOpen(false);
-                  }}
-                >
-                  Edit Contact
-                </div>
+                <div onClick={handleShare}>Share Contact</div>
+                {session?.user?.id === user.id && (
+                  <div onClick={() => setEditOpen(true)}>Edit Profile</div>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* AVATAR SECTION */}
+        {/* AVATAR */}
         <div className="profile-avatar-section">
-          <div className="avatar-wrapper">
-            <img
-              src={
-                user.avatar ||
-                `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`
-              }
-              alt={user.name}
-              className="profile-avatar2"
-            />
-          </div>
+          <img
+            src={
+              user.photo ||
+              `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`
+            }
+            alt={user.name}
+            className="profile-avatar2"
+          />
 
           <h2>{user.name}</h2>
           <p className="username">@{user.username}</p>
-
-          <span className={`status ${user.active ? "online" : "offline"}`}>
-            {user.active ? "Online" : "Offline"}
-          </span>
         </div>
 
         {/* ACTIONS */}
@@ -163,22 +141,14 @@ const UsersProfile = () => {
             <p className="value">@{user.username}</p>
           </div>
 
-          <div className="info-row">
-            <p className="label">Email</p>
-            <p className="value">
-              <FiMail style={{ marginRight: "6px" }} />
-              {user.email}
-            </p>
-          </div>
+          
 
           <div className="info-row">
             <p className="label">About</p>
             <p className="value">
-              {user.bio || "Hey there! I'm using Kway 💬"}
+              {user.about || "Hey there! I'm using Kway 💬"}
             </p>
           </div>
-
-          <div className="info-row danger">Block User</div>
         </div>
       </div>
 
@@ -196,8 +166,8 @@ const UsersProfile = () => {
         <EditProfileModal
           user={user}
           onClose={() => setEditOpen(false)}
-          onSave={(updatedData) => {
-            console.log("Updated:", updatedData);
+          onSave={(data) => {
+            setUser(data);
             setEditOpen(false);
           }}
         />

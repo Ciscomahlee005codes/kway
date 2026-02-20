@@ -1,14 +1,15 @@
-import React from 'react'
+import React, { useState } from 'react'
 import AdminSidebar from '../../AdminComponents/AdminSidebar/AdminSidebar'
 import AdminSettings from '../../AdminComponents/AdminSettings/AdminSettings'
 import "../AdminHomePage/AdminHomePage.css"
 
 const AdminSettingsPage = () => {
+  const [collapsed, setCollapsed] = useState(true);
   return (
      <div className='adminDash-layout'>
-        <AdminSidebar />
-      <div className="adminDash-content">
-        <AdminSettings />
+        <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      <div className={`adminDash-content ${collapsed ? "collapsed" : ""}`}>
+        <AdminSettings collapsed={collapsed} />
       </div>
     </div>
   )

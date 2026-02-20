@@ -52,11 +52,7 @@ const AdminAuth = () => {
           <h1>Admin Portal</h1>
           <p>Manage users, monitor chats, and control your entire system securely.</p>
 
-          <img 
-            src="/admin-secure.png" 
-            alt="Admin illustration" 
-            className="banner-img" 
-          />
+         
         </div>
       </div>
 

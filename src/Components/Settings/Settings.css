@@ -210,11 +210,76 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(22px);
 }
+/* Logout Section */
+.logout-section {
+  padding: 20px;
+  border-top: 10px solid var(--secondary-bg);
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 14px;
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.logout-btn:hover {
+  background: #c62828;
+}
+
+/* Logout Modal */
+.logout-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.logout-modal {
+  background: var(--bg-color);
+  padding: 25px;
+  border-radius: 15px;
+  width: 300px;
+  text-align: center;
+}
+
+.logout-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid gray;
+  background: transparent;
+  cursor: pointer;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #e53935;
+  color: white;
+  cursor: pointer;
+}
 
 /* ================= MOBILE OPTIMIZATION ================= */
 
 @media (max-width: 768px) {
-
   .settings-page {
     margin-left: 0;
     padding-bottom: 70px; /* space for bottom nav if any */

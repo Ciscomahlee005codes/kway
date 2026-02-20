@@ -185,6 +185,41 @@
   height: 100%;
   object-fit: cover;
 }
+/* Floating Buttons */
+.fab-group{
+  position: fixed;
+  right: 18px;
+  bottom: 90px; /* PUSH ABOVE NAVBAR */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 999;
+}
+
+.fab{
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: none;
+  background: #25d366;
+  color: white;
+  font-size: 22px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.fab.camera{
+  background:#075e54;
+}
+
+.fab.text{
+  background:#25d366;
+}
+.status-avatar.ring{
+  padding:3px;
+  border-radius:50%;
+  background:linear-gradient(45deg,#25d366,#128c7e,#25d366);
+}
 
 /* Top overlay */
 .status-top-overlay {
@@ -367,6 +402,65 @@
 .color-circle.selected {
   border: 2px solid #000;
 }
+/* Bottom UI Container */
+.status-bottom-ui{
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Emoji Bar */
+.emoji-bar{
+  display: flex;
+  gap: 12px;
+  font-size: 22px;
+}
+
+.emoji-bar span{
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.emoji-bar span:hover{
+  transform: scale(1.2);
+}
+
+/* Reply Box */
+.reply-box{
+  display: flex;
+  gap: 8px;
+}
+
+.reply-box input{
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 25px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+.reply-box button{
+  padding: 10px 16px;
+  border-radius: 25px;
+  border: none;
+  background: #25d366;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Seen count */
+.seen-count{
+  font-size: 12px;
+  color: #ccc;
+}
+
 
 /* Status preview */
 .status-preview {
@@ -387,6 +481,28 @@
   object-fit: cover;
   border-radius: 8px;
 }
+.type-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin:20px 0;
+}
+
+.type-card{
+  padding:20px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#0d6329,#25d366);
+  color:white;
+  cursor:pointer;
+  transition:.2s;
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+  text-align:center;
+}
+
+.type-card:hover{
+  transform:translateY(-3px);
+}
+
 @media (max-width: 768px) {
   .status-page {
   flex: 1;
@@ -398,4 +514,7 @@
   overflow-y: auto;
   font-family: Arial, sans-serif;
 }
+ .fab-group{
+    bottom: 110px; /* extra space for mobile navbar */
+  }
 }
