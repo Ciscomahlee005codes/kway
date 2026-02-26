@@ -1,9 +1,13 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoMdAdd } from "react-icons/io";
 import { NavLink, useNavigate } from "react-router-dom";
 import KwayLogo from "../../assets/kway-logo-1.png";
+import { FaSmile } from "react-icons/fa";
+import TestimonialModal from "../TestimonialModal/TestimonialModal";
+import "../TestimonialModal/TestimonialModal.css";
+import { supabase } from "../../supabase";
 
 const ChatList = ({
   chats = [],
@@ -16,6 +20,20 @@ const ChatList = ({
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showTestimonial, setShowTestimonial] = useState(false);
+ const [hideButton, setHideButton] = useState(
+  localStorage.getItem("kway_reviewed") === "true"
+);
+
+const [user, setUser] = useState(null);
+
+useEffect(() => {
+  const getUser = async () => {
+    const { data } = await supabase.auth.getUser();
+    setUser(data?.user);
+  };
+  getUser();
+}, []);
 
   const navigate = useNavigate();
 
@@ -106,9 +124,9 @@ const ChatList = ({
       </p>
 
       <div className="empty-actions">
-        <button onClick={() => setShowAddModal(true)}>
-          🔍 Find People
-        </button>
+        <NavLink to="/linkup">
+          <button>  🔍 Find People </button>
+        </NavLink>
 
         <NavLink to="/profile">
           <button>👤 Setup Profile</button>
@@ -185,6 +203,24 @@ const ChatList = ({
       >
         <IoMdAdd />
       </button>
+
+      {/* FLOATING TESTIMONIAL */}
+{!hideButton && (
+  <button
+    className="floating-testimonial-btn"
+    onClick={() => setShowTestimonial(true)}
+  >
+    <FaSmile />
+  </button>
+)}
+
+{showTestimonial && user && (
+  <TestimonialModal
+    user={user}
+    onClose={() => setShowTestimonial(false)}
+    onSubmitted={() => setHideButton(true)}
+  />
+)}
     </div>
   );
 };

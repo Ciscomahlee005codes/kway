@@ -133,11 +133,31 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        // ===== LOGIN =====
-        const result = await signIn(email, password);
-        if (!result.success) return;
-          navigate("/profile-setup");
-      } else {
+  const result = await signIn(email, password);
+  if (!result.success) return;
+
+  const user = result.data.user;
+
+// ✅ ADMIN EMAIL CHECK
+if (user.email === "vraphael261@gmail.com") {
+  navigate("/admin/home");
+  return;
+}
+
+  // 🔍 check profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile) {
+    navigate("/profile-setup");
+  } else {
+    navigate("/chat");
+  }
+}
+      else {
         // ===== SIGN UP =====
         const result = await signUp(email, password);
         if (!result.success) return;

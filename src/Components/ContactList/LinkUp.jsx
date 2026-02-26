@@ -4,8 +4,9 @@ import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
 import { FiSearch } from "react-icons/fi";
 import { IoMdAdd } from "react-icons/io";
-import { FaTimes, FaPhone, FaCommentDots } from "react-icons/fa";
+import { FaTimes, FaCommentDots } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { PiEyesFill } from "react-icons/pi";
 
 
 const LinkUp = () => {
@@ -123,8 +124,8 @@ const LinkUp = () => {
             <p className="profile-about">{selectedProfile.about}</p>
 
             <div className="profile-actions">
-              <button className="action-btn">
-                <FaPhone /> Call
+              <button className="action-btn" onClick={() => navigate(`/user-profile/${selectedProfile.id}`)}>
+                <PiEyesFill /> View Profile
               </button>
                <button
   className="action-btn"

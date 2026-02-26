@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { IoArrowBack } from "react-icons/io5";
-import { FiMic, FiPhone, FiVideo, FiSend, FiSmile } from "react-icons/fi";
+import { FiPhone, FiVideo, FiSend, FiSmile } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
@@ -16,8 +16,6 @@ const ChatWindow = ({
   newMessage,
   setNewMessage,
   handleSendMessage,
-  handleVoiceClick,
-  recording,
   showChatDropdown,
   setShowChatDropdown,
   setShowSidebarDropdown,
@@ -127,11 +125,17 @@ console.log("Active Chat:", activeChat);
           className="chat-header-left"
            onClick={() => navigate(`/user-profile/${activeChat.id}`)}
         >
-          <img
-            src={activeChat.avatar}
-            alt={activeChat.name}
-            className="chat-header-avatar"
-          />
+          {activeChat.avatar ? (
+  <img
+    src={activeChat.avatar}
+    alt={activeChat.name}
+    className="chat-header-avatar"
+  />
+) : (
+  <div className="chat-header-avatar fallback-avatar">
+    {activeChat.name?.charAt(0).toUpperCase()}
+  </div>
+)}
           <h3>{activeChat.name}</h3>
         </div>
 
@@ -224,66 +228,34 @@ console.log("Active Chat:", activeChat);
       </div>
 
       {/* ================= INPUT ================= */}
-      <div className="chat-input-wrapper">
-        <div className="chat-input-box">
-          <FiSmile
-            className="emoji-btn"
-            onClick={() => setShowEmojiPicker(prev => !prev)}
-          />
+      {/* ================= INPUT ================= */}
+<div className="chat-input-wrapper">
 
-          <input
-  value={newMessage}
-  onChange={e => {
-    setNewMessage(e.target.value);
+  <div className="chat-input-box">
+    <FiSmile
+      className="emoji-btn"
+      onClick={() => setShowEmojiPicker(prev => !prev)}
+    />
 
-    supabase.from("typing").upsert({
-      user_id: session.user.id,
-      chat_id: activeChat.id,
-      typing: true,
-    });
-
-    setTimeout(() => {
-      supabase.from("typing").upsert({
-        user_id: session.user.id,
-        chat_id: activeChat.id,
-        typing: false,
-      });
-    }, 1500);
-  }}
-/>
-
-        </div>
-
-        <FiSend className="chat-send-icon" onClick={handleSendMessage} />
-<div ref={endRef} />
-
-        <div
-  className={`chat-voice-btn ${
-    recording ? "chat-voice-recording" : ""
-  }`}
-  onClick={handleVoiceClick}
->
-  <FiMic />
-
-  {recording && (
-    <div className="voice-wave">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i}></span>
-      ))}
-    </div>
-  )}
-</div>
-
-        <div className="voice-note">
-  <div className="waveform">
-    {Array.from({ length: 20 }).map((_, i) => (
-      <span key={i}></span>
-    ))}
+    <textarea
+      rows={1}
+      placeholder="Type a message..."
+      value={newMessage}
+      onChange={(e) => setNewMessage(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
+        }
+      }}
+    />
   </div>
-  <span className="duration">0:12</span>
-</div>
 
-      </div>
+  <button className="chat-send-btn" onClick={handleSendMessage}>
+    <FiSend />
+  </button>
+
+</div>
 
       {/* ================= EMOJI PICKER ================= */}
       {showEmojiPicker && (

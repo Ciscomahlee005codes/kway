@@ -1,89 +1,134 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./AdminChatMonitor.css";
+import { supabase } from "../../../supabase";
+import Avatar from "../../../assets/avatar.png";
 
-const dummy = "https://i.pravatar.cc/100";
+const dummy = Avatar;
 
 const AdminChatMonitor = () => {
+  const [conversations, setConversations] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [messages, setMessages] = useState([]);
+  const [profiles, setProfiles] = useState({});
 
-  const chatList = [
-    { id: 1, users: ["John Doe", "Admin"], lastMsg: "I need help", flagged: false, active: true },
-    { id: 2, users: ["Sarah", "Support"], lastMsg: "Issue resolved ✔", flagged: true, active: false },
-    { id: 3, users: ["Emeka", "Admin"], lastMsg: "Thank you!", flagged: false, active: true },
-  ];
+  // ================= LOAD PROFILES =================
+  const loadProfiles = async () => {
+    const { data } = await supabase.from("profiles").select("id,name,photo");
 
-  const monitoredMessages = [
-    { from: "user", text: "Hello Admin", time: "10:43 AM" },
-    { from: "admin", text: "Hi, how may I assist?", time: "10:44 AM" },
-    { from: "user", text: "I forgot my password", time: "10:45 AM" },
-  ];
+    const map = {};
+    data?.forEach((p) => (map[p.id] = p));
+    setProfiles(map);
+  };
 
-  const filteredChats = chatList.filter((c) => {
-    if (filter === "flagged") return c.flagged;
-    if (filter === "active") return c.active;
-    return true;
+  // ================= FETCH CONVERSATIONS =================
+  const fetchConversations = async () => {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("id, sender_id, receiver_id, content, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.log("Error fetching messages:", error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    console.log("No messages found");
+    setConversations([]);
+    return;
+  }
+
+  const conversationMap = {};
+
+  data.forEach((msg) => {
+    const key =
+      msg.sender_id < msg.receiver_id
+        ? `${msg.sender_id}-${msg.receiver_id}`
+        : `${msg.receiver_id}-${msg.sender_id}`;
+
+    if (!conversationMap[key]) {
+      conversationMap[key] = [];
+    }
+
+    conversationMap[key].push(msg);
   });
 
-  const currentChat = chatList.find((c) => c.id === selectedChat);
+  const formattedConversations = Object.values(conversationMap).map(
+    (msgs) => {
+      const sorted = msgs.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      return {
+        lastMessage: sorted[0],
+        allMessages: sorted,
+      };
+    }
+  );
+
+  setConversations(formattedConversations);
+};
+
+  // ================= OPEN CHAT =================
+  const openChat = (chat) => {
+    setSelectedChat(chat);
+    setMessages(
+      chat.allMessages.sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      )
+    );
+  };
+
+  useEffect(() => {
+    loadProfiles();
+    fetchConversations();
+  }, []);
 
   return (
     <div className="monitor-container">
 
       {/* LEFT PANEL */}
       <div className={`monitor-left ${selectedChat ? "hide-mobile" : ""}`}>
+
         <div className="left-header">
           <h2>Chat Monitor</h2>
-          <p>Moderate user conversations</p>
+          <p>Moderate Kway conversations</p>
         </div>
 
-        {/* Stats */}
         <div className="monitor-stats">
           <div>
-            <b>{chatList.length}</b>
-            <span>Total</span>
-          </div>
-          <div>
-            <b>{chatList.filter((c) => c.active).length}</b>
-            <span>Active</span>
-          </div>
-          <div>
-            <b>{chatList.filter((c) => c.flagged).length}</b>
-            <span>Flagged</span>
+            <b>{conversations.length}</b>
+            <span>Total Chats</span>
           </div>
         </div>
 
-        {/* Filter */}
-        <div className="monitor-filter">
-          {["all", "active", "flagged"].map((type) => (
-            <button
-              key={type}
-              className={filter === type ? "active" : ""}
-              onClick={() => setFilter(type)}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
-
-        {/* Chat List */}
         <div className="chat-list">
-          {filteredChats.map((chat) => (
-            <div
-              key={chat.id}
-              className={`chat-item ${selectedChat === chat.id ? "active" : ""}`}
-              onClick={() => setSelectedChat(chat.id)}
-            >
-              <img src={dummy} className="chat-avatar" alt="avatar" />
+          {conversations.map((chat, i) => {
+            const msg = chat.lastMessage;
+            const sender = profiles[msg.sender_id];
+            const receiver = profiles[msg.receiver_id];
 
-              <div className="chat-info">
-                <h4>{chat.users[0]} ↔ {chat.users[1]}</h4>
-                <p>{chat.lastMsg}</p>
+            return (
+              <div
+                key={i}
+                className="chat-item"
+                onClick={() => openChat(chat)}
+              >
+                <img
+                  src={sender?.photo || dummy}
+                  className="chat-avatar"
+                  alt=""
+                />
+
+                <div className="chat-info">
+                  <h4>
+                    {sender?.name || "User"} ↔ {receiver?.name || "User"}
+                  </h4>
+                  <p>{msg.content}</p>
+                </div>
               </div>
-
-              {chat.flagged && <span className="flag">⚠</span>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -92,24 +137,28 @@ const AdminChatMonitor = () => {
         {selectedChat ? (
           <>
             <div className="monitor-header">
-              <button className="back" onClick={() => setSelectedChat(null)}>←</button>
+              <button onClick={() => setSelectedChat(null)}>←</button>
 
-              <h3>{currentChat?.users.join(" & ")}</h3>
-
-              <div className="actions">
-                <button className="mute">Mute</button>
-                <button className="warn">Flag</button>
-                <button className="danger">Delete</button>
-              </div>
+              <h3>
+                {profiles[selectedChat.lastMessage.sender_id]?.name} &{" "}
+                {profiles[selectedChat.lastMessage.receiver_id]?.name}
+              </h3>
             </div>
 
             <div className="messages">
-              {monitoredMessages.map((msg, i) => (
-                <div key={i} className={`msg ${msg.from}`}>
-                  <p>{msg.text}</p>
-                  <small>{msg.time}</small>
-                </div>
-              ))}
+              {messages.map((msg) => {
+                const sender = profiles[msg.sender_id];
+
+                return (
+                  <div key={msg.id} className="msg">
+                    <b>{sender?.name || "User"}:</b>
+                    <p>{msg.content}</p>
+                    <small>
+                      {new Date(msg.created_at).toLocaleString()}
+                    </small>
+                  </div>
+                );
+              })}
             </div>
           </>
         ) : (

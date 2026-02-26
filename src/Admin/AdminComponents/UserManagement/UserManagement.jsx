@@ -1,82 +1,150 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./UserManagement.css";
+import { supabase } from "../../../supabase";
+import Avatar from "../../../assets/avatar.png";
 
-const dummyImg = "https://i.pravatar.cc/150?img=12";
+const dummyImg = Avatar;
 
 const UserManagement = () => {
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const users = [
-    { id: 1, name: "Chidera", username: "@chidera_dev", status: "online", email: "chi@mail.com", role: "Tenant" },
-    { id: 2, name: "Kelvin", username: "@kelvin_codes", status: "offline", email: "kel@mail.com", role: "Agent" },
-    { id: 3, name: "Oluchi", username: "@oluchi_design", status: "online", email: "olu@mail.com", role: "Landlord" },
-    { id: 4, name: "Blessing", username: "@blessing_ui", status: "blocked", email: "bles@mail.com", role: "Admin" },
-  ];
+  // ================= FETCH USERS =================
+  const fetchUsers = async () => {
+    setLoading(true);
 
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      setUsers(data);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // ================= SEARCH =================
   const filteredUsers = users.filter((u) =>
-    u.name.toLowerCase().includes(search.toLowerCase())
+    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.username?.toLowerCase().includes(search.toLowerCase())
   );
+
+  // ================= DELETE USER =================
+  const deleteUser = async (id) => {
+    if (!window.confirm("Delete this user permanently?")) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", id);
+
+    if (error) alert(error.message);
+    else {
+      alert("User deleted");
+      fetchUsers();
+      setSelectedUser(null);
+    }
+  };
+
+  // ================= CHANGE ROLE =================
+  const changeRole = async (id, role) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role })
+      .eq("id", id);
+
+    if (error) alert(error.message);
+    else fetchUsers();
+  };
+
+  // ================= CHANGE GENDER =================
+  const changeGender = async (id, gender) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ gender })
+      .eq("id", id);
+
+    if (error) alert(error.message);
+    else fetchUsers();
+  };
 
   return (
     <div className="user-page">
+
       <div className="user-header">
         <h1>User Management</h1>
         <p>Manage all Kway users efficiently</p>
       </div>
 
+      {/* SEARCH */}
       <div className="search-wrapper">
         <input
           type="text"
-          placeholder="Search by name..."
+          placeholder="Search by name or username..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
+      {/* TABLE */}
       <div className="table-wrapper">
         <table className="user-table">
           <thead>
             <tr>
               <th>User</th>
               <th>Username</th>
-              <th>Status</th>
+              <th>DOB</th>
+              <th>Gender</th>
               <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredUsers.length ? (
+            {loading ? (
+              <tr><td colSpan="6">Loading...</td></tr>
+            ) : filteredUsers.length ? (
               filteredUsers.map((user) => (
                 <tr key={user.id}>
-                  <td data-label="User" className="user-cell">
-                    <img src={dummyImg} alt="profile" />
+
+                  <td className="user-cell">
+                    <img src={user.photo || dummyImg} alt="profile" />
                     <span>{user.name}</span>
                   </td>
 
-                  <td data-label="Username">{user.username}</td>
-
-                  <td data-label="Status">
-                    <span className={`status ${user.status}`}>
-                      {user.status}
-                    </span>
-                  </td>
-
-                  <td data-label="Actions" className="actions">
+                  <td>@{user.username}</td>
+                  <td>{user.dob || "—"}</td>
+                  <td>{user.gender || "—"}</td>
+                  <td className="actions">
                     <button
                       className="btn view"
                       onClick={() => setSelectedUser(user)}
                     >
                       View
                     </button>
-                    <button className="btn block">Block</button>
-                    <button className="btn delete">Delete</button>
+
+                    <button
+                      className="btn delete"
+                      onClick={() => deleteUser(user.id)}
+                    >
+                      Delete
+                    </button>
                   </td>
+
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="empty">
+                <td colSpan="6" className="empty">
                   No users found
                 </td>
               </tr>
@@ -86,23 +154,53 @@ const UserManagement = () => {
       </div>
 
       {/* MODAL */}
-      {selectedUser && (
-        <div className="modal">
-          <div className="modal-box">
-            <button className="close" onClick={() => setSelectedUser(null)}>×</button>
+{selectedUser && (
+  <div className="modal">
+    <div className="modal-box">
 
-            <img src={dummyImg} alt="profile" className="modal-avatar" />
+      <button className="close" onClick={() => setSelectedUser(null)}>×</button>
 
-            <h2>{selectedUser.name}</h2>
-            <p><b>Username:</b> {selectedUser.username}</p>
-            <p><b>Email:</b> {selectedUser.email}</p>
-            <p><b>Role:</b> {selectedUser.role}</p>
-            <p><b>Status:</b> {selectedUser.status}</p>
+      <div className="modal-header">
+        <img
+          src={selectedUser.photo || dummyImg}
+          alt="profile"
+          className="modal-avatar"
+        />
+        <h2>{selectedUser.name}</h2>
+        <span className="username">@{selectedUser.username}</span>
+      </div>
 
-            <button className="btn block full">Block User</button>
-          </div>
+      <div className="modal-info">
+
+        <div className="info-row">
+          <span className="label">Date of Birth</span>
+          <span className="value">{selectedUser.dob || "—"}</span>
         </div>
-      )}
+
+        <div className="info-row">
+          <span className="label">Gender</span>
+          <span className="value">{selectedUser.gender || "—"}</span>
+        </div>
+
+        <div className="info-row">
+          <span className="label">Bio</span>
+          <span className="value bio">
+            {selectedUser.about || "No bio yet"}
+          </span>
+        </div>
+
+      </div>
+
+      <button
+        className="btn delete full"
+        onClick={() => deleteUser(selectedUser.id)}
+      >
+        Delete User
+      </button>
+
+    </div>
+  </div>
+)}
     </div>
   );
 };

@@ -378,7 +378,7 @@ console.log("Photo URL:", photo);
             }}
             style={{ color: theme }}
           >
-            Welcome @{username?.toLowerCase() || "friend"} 👋
+            Kwayyy @{username?.toLowerCase() || "friend"} 👋
           </motion.h2>
 
           <p style={{ marginTop: "8px", opacity: 0.7 }}>

@@ -9,6 +9,8 @@ import {
   FaSignOutAlt,
   FaBars,
 } from "react-icons/fa";
+import { TfiCommentsSmiley } from "react-icons/tfi";
+import { IoBarChartSharp } from "react-icons/io5";
 import "./AdminSidebar.css";
 
 const AdminSidebar = ({ collapsed, setCollapsed }) => {
@@ -54,14 +56,24 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
             <span className="adminDash-navText">Users</span>
           </NavLink>
 
-          <NavLink to="/admin/chatMonitor" className="adminDash-navItem">
+          {/* <NavLink to="/admin/chatMonitor" className="adminDash-navItem">
             <FaComments className="adminDash-navIcon" />
             <span className="adminDash-navText">Chats</span>
+          </NavLink> */}
+
+           <NavLink to="/admin/chatStats" className="adminDash-navItem">
+            <IoBarChartSharp className="adminDash-navIcon" />
+            <span className="adminDash-navText">Chat Stats</span>
           </NavLink>
 
           <NavLink to="/admin/notifications" className="adminDash-navItem">
             <FaBell className="adminDash-navIcon" />
             <span className="adminDash-navText">Notifications</span>
+          </NavLink>
+
+          <NavLink to="/admin/testimonials" className="adminDash-navItem">
+            <TfiCommentsSmiley className="adminDash-navIcon" />
+            <span className="adminDash-navText">Testimonials</span>
           </NavLink>
 
           <NavLink to="/admin/settings" className="adminDash-navItem">

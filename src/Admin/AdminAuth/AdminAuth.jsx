@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import KwayLogo from "../../assets/kway-logo-1.png";
+import { supabase } from "../../supabase";
 import "./AdminAuth.css";
 
 const AdminAuth = () => {
@@ -26,9 +27,39 @@ const AdminAuth = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    setShowDevModal(true);
-  };
+  const handleSubmit = async () => {
+  setIsLoading(true);
+
+  const { email, password } = formData;
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    alert(error.message);
+    setIsLoading(false);
+    return;
+  }
+
+  // 🔥 CHECK ROLE
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .single();
+
+  if (profileError || profile.role !== "admin") {
+    alert("Access denied. Not an admin.");
+    await supabase.auth.signOut();
+    setIsLoading(false);
+    return;
+  }
+
+  setIsLoading(false);
+  navigate("/admin/home");
+};
 
   const handleGotIt = () => {
     setShowDevModal(false);
@@ -94,9 +125,9 @@ const AdminAuth = () => {
                 {isLoading ? "Verifying..." : "Login"}
               </button>
 
-              <p className="switch-text">
+              {/* <p className="switch-text">
                 New Admin? <span onClick={toggleForm}>Create Admin</span>
-              </p>
+              </p> */}
             </motion.div>
           ) : (
             <motion.div

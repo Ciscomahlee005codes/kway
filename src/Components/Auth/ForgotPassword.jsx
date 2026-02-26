@@ -1,31 +1,36 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import toast from "react-hot-toast";
+import { supabase } from "../../supabase";
 
 import KwayLogo from "../../assets/kway-logo-1.png";
 import "./ForgotPassword.css";
 
 const ForgotPassword = () => {
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!phone) {
-      toast.error("Phone number is required");
+    if (!email) {
+      toast.error("Email is required");
       return;
     }
 
     setIsLoading(true);
 
-    // For now just simulate
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Reset link sent (UI demo)");
-    }, 1200);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Reset link sent to your email 📩");
+    }
   };
 
   return (
@@ -37,19 +42,16 @@ const ForgotPassword = () => {
 
         <h2>Forgot Password 🔐</h2>
         <p className="forgot-subtitle">
-          Enter your registered phone number and we’ll help you reset your password.
+          Enter your registered email to reset your password.
         </p>
 
         <form onSubmit={handleSubmit}>
-          <PhoneInput
-            country="ng"
-            value={phone}
-            onChange={(value) => setPhone(value)}
-            countryCodeEditable={false}
-            enableAreaCodes={true}
-            inputProps={{ name: "phone", required: true }}
-            containerClass="phone-container"
-            inputClass="phone-input"
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="forgot-input"
           />
 
           <button
@@ -57,13 +59,12 @@ const ForgotPassword = () => {
             className="forgot-btn"
             disabled={isLoading}
           >
-            {isLoading ? "Sending..." : "Send Reset Code"}
+            {isLoading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
 
         <p className="back-login">
-          Remember your password?{" "}
-          <Link to="/">Back to Login</Link>
+          Remember your password? <Link to="/">Back to Login</Link>
         </p>
       </div>
     </div>

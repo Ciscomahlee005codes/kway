@@ -1,0 +1,142 @@
+.admin-testimonial {
+  padding: 25px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.admin-heading {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #065f46;
+  font-weight: 700;
+}
+
+/* ============================= */
+/* SEARCH BAR */
+/* ============================= */
+.admin-testimonial-search {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.admin-testimonial-search input {
+  flex: 1;
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: 1px solid #d1fae5;
+  background: #f0fdf4;
+  outline: none;
+  font-size: 14px;
+}
+
+.admin-testimonial-search input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px #a7f3d0;
+}
+
+/* ============================= */
+/* GRID */
+/* ============================= */
+.admin-testimonial {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* ============================= */
+/* CARD */
+/* ============================= */
+.testimonial-card-admin {
+  background: white;
+  padding: 18px;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  border-top: 4px solid #10b981;
+  transition: 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.testimonial-card-admin:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+/* ============================= */
+/* TOP USER */
+/* ============================= */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.top img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #10b981;
+}
+
+.top h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #064e3b;
+}
+
+.top span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ============================= */
+/* STARS */
+/* ============================= */
+.stars {
+  margin: 10px 0;
+  font-size: 18px;
+  color: #facc15;
+}
+
+/* ============================= */
+/* MESSAGE */
+/* ============================= */
+.testimonial-card-admin p {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+  background: #f0fdf4;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+/* ============================= */
+/* EMPTY STATE */
+/* ============================= */
+.admin-testimonial-empty {
+  text-align: center;
+  padding: 50px;
+  color: gray;
+}
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+@media (max-width: 600px) {
+  .admin-testimonial {
+    padding: 15px;
+    grid-template-columns: 1fr;
+  }
+
+  .testimonial-card-admin {
+    padding: 15px;
+  }
+
+  .admin-testimonial h2 {
+    font-size: 1.4rem;
+  }
+}

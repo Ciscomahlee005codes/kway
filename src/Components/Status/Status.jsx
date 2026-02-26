@@ -150,18 +150,18 @@ const sendReply = async () => {
   setReply("");
 };
 
-const react = async (emoji) => {
-  const story =
-    statuses[activeUserIndex]?.stories?.[activeStoryIndex]
+// const react = async (emoji) => {
+//   const story =
+//     statuses[activeUserIndex]?.stories?.[activeStoryIndex]
 
-  await supabase.from("status_reactions").upsert({
-    status_id: story.id,
-    user_id: session.user.id,
-    emoji,
-  });
+//   await supabase.from("status_reactions").upsert({
+//     status_id: story.id,
+//     user_id: session.user.id,
+//     emoji,
+//   });
 
-  toast.success("Reacted " + emoji);
-};
+//   toast.success("Reacted " + emoji);
+// };
 
   const openStatus = (index) => {
     setActiveUserIndex(index);
@@ -462,16 +462,11 @@ const handlePost = async () => {
 
                 </div>
               </div>
+
+              
             </div>
             <div className="status-bottom-overlay">
-              <p className="status-caption">{statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}</p>
-            </div>
-            <IoClose className="close-btn" onClick={closeStatus} />
-            <IoChevronBack className="nav-btn left" onClick={prevStory} />
-            <IoChevronForward className="nav-btn right" onClick={nextStory} />
-          </div>
-  
-  <div className="status-bottom-ui">
+              <div className="status-bottom-ui">
      <div className="reply-box">
   <input
     placeholder="Reply..."
@@ -487,12 +482,19 @@ const handlePost = async () => {
    .views_count || 0} seen
 </p>
 
-<div className="emoji-bar">
+{/* <div className="emoji-bar">
   {["❤️","🔥","😂"].map(e => (
     <span key={e} onClick={() => react(e)}>{e}</span>
   ))}
-</div>
+</div> */}
   </div>
+              <p className="status-caption">{statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}</p>
+            </div>
+            <IoClose className="close-btn2" onClick={closeStatus} />
+            <IoChevronBack className="nav-btn left" onClick={prevStory} />
+            <IoChevronForward className="nav-btn right" onClick={nextStory} />
+          </div>
+  
         </div>
 
       )}
