@@ -50,7 +50,8 @@ function App() {
     location.pathname.startsWith("/admin") ||
     location.pathname === "/phonenumber/verification" ||
     location.pathname === "/profile-setup" ||
-    location.pathname === "/forgot-password";
+    location.pathname === "/forgot-password" ||
+    location.pathname === "/reset-password";
 
   return (
     <div className="app">
@@ -208,15 +209,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-         <Route
-          path="/reset-password"
-          element={
-            <ProtectedRoute>
-              <ResetPassword />
-            </ProtectedRoute>
-          }
-        />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/phonenumber/verification"

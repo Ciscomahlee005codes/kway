@@ -4,14 +4,16 @@ import { UserAuth } from "../../Context/AuthContext";
 export default function ProtectedRoute({ children }) {
   const { session, loading } = UserAuth();
 
-  // Wait until Supabase checks session
   if (loading) return null;
 
-  // If NOT logged in → go to Auth page
-  if (!session) {
+  // ✅ Allow reset-password page even if not logged in
+  const isRecovery =
+    window.location.hash.includes("type=recovery") ||
+    window.location.pathname === "/reset-password";
+
+  if (!session && !isRecovery) {
     return <Navigate to="/" replace />;
   }
 
-  // If logged in → show page
   return children;
 }
