@@ -29,7 +29,7 @@ const AdminSidebar = ({ collapsed, setCollapsed }) => {
     setShowLogoutModal(false);
 
     // Example redirect:
-    window.location.href = "/admin/auth";
+    window.location.href = "/";
   };
 
   return (

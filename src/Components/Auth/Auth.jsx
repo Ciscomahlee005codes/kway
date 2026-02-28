@@ -28,7 +28,7 @@ const Auth = () => {
   });
 
   // ==========================================
-  // 🔥 AUTO REDIRECT AFTER EMAIL CONFIRMATION
+  //  AUTO REDIRECT AFTER EMAIL CONFIRMATION
   // ==========================================
 //   useEffect(() => {
 //   if (!session?.user) return;
@@ -56,7 +56,7 @@ const Auth = () => {
 
 
   // ==========================================
-  // 🔐 PASSWORD STRENGTH
+  //  PASSWORD STRENGTH
   // ==========================================
   const passwordStrength = useMemo(() => {
     const password = formData.password;
@@ -84,9 +84,7 @@ const Auth = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ==========================================
-  // ✅ VALIDATION
-  // ==========================================
+  //  VALIDATION
   const validateForm = () => {
     const { name, email, password, confirmPassword } = formData;
 
@@ -121,7 +119,7 @@ const Auth = () => {
   };
 
   // ==========================================
-  // 🚀 SUBMIT
+  // SUBMIT
   // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -222,7 +220,7 @@ if (user.email === "vraphael261@gmail.com") {
 
 
   // ==========================================
-  // 🧾 NORMAL AUTH FORM
+  //  NORMAL AUTH FORM
   // ==========================================
   return (
     <div className="auth-container">
@@ -251,7 +249,7 @@ if (user.email === "vraphael261@gmail.com") {
             transition={{ duration: 0.3 }}
           >
             <h2>
-              {isLogin ? "Welcome Back 👋" : "Create Your Account 🚀"}
+              {isLogin ? "Welcome Back 👋" : "Create Your Account "}
             </h2>
 
             {!isLogin && (
