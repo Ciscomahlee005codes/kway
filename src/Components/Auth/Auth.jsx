@@ -227,14 +227,17 @@ if (user.email === "vraphael261@gmail.com") {
   return (
     <div className="auth-container">
       <div className="auth-banner">
-        <div className="banner-content">
-          <div className="logo-circle">
-            <img src={KwayLogo} alt="Kway Logo" className="logo-img" />
-          </div>
-          <h1>Kway</h1>
-          <p>Secure messaging starts here 🔐</p>
-        </div>
-      </div>
+  <div className="banner-content">
+    <div className="logo-circle">
+      <img src={KwayLogo} alt="Kway Logo" className="logo-img" />
+    </div>
+    <h1>Kway</h1>
+    <p>
+      Connect freely. Chat privately.  
+      Your conversations, your control.
+    </p>
+  </div>
+</div>
 
       <div className="auth-card">
         <AnimatePresence mode="wait">

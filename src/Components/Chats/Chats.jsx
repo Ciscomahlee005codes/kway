@@ -98,9 +98,7 @@ useEffect(() => {
           messages: [],
         };
 
-        if (!isMobile) {
-  setActiveChat(newChat);
-}
+        setActiveChat(newChat);
 
         setChats((prev) => {
           const exists = prev.find((c) => c.id === data.id);

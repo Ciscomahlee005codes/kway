@@ -226,7 +226,7 @@ const handlePost = async () => {
     return;
   }
 
-  // ✅ CLOSE MODAL INSTANTLY
+  // CLOSE MODAL INSTANTLY
   setShowPostModal(false);
   setPostType(null);
   setPostContent("");
@@ -264,7 +264,7 @@ const handlePost = async () => {
 
     if (error) throw error;
 
-    toast.success("Status Posted ✅", { id: "post" });
+    toast.success("Status Posted", { id: "post" });
     fetchStatuses();
 
   } catch (err) {
@@ -300,12 +300,12 @@ const handlePost = async () => {
 {!postType && (
   <div className="type-grid">
     <div className="type-card" onClick={() => setPostType("text")}>
-      <h3>📝 Text Status</h3>
+      <h3> Text Status</h3>
       <p>Share thoughts with colors</p>
     </div>
 
     <div className="type-card" onClick={() => setPostType("media")}>
-      <h3>📸 Photo / Video</h3>
+      <h3> Photo / Video</h3>
       <p>Share moments instantly</p>
     </div>
   </div>
