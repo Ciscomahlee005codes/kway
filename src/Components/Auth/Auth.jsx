@@ -188,33 +188,31 @@ if (user.email === "vraphael261@gmail.com") {
   // ==========================================
    if (showEmailSent) {
   return (
-    <div className="auth-container email-screen">
-      <div className="auth-card email-sent-card">
-        <div className="email-icon">📩</div>
+    <div className="auth-container success-screen">
+  <div className="auth-card success-card">
+    <div className="success-icon">🎉</div>
 
-        <h2>Check Your Email</h2>
+    <h2>Welcome to Kway!</h2>
 
-        <p className="email-text">
-          We sent a confirmation link to
-        </p>
+    <p className="success-text">
+      Your account has been created successfully.
+    </p>
 
-        <p className="email-address">{registeredEmail}</p>
+    <p className="success-sub">
+      You can start chatting immediately. No email verification needed.
+    </p>
 
-        <p className="email-sub">
-          Please verify your email to continue.
-        </p>
-
-        <button
-          className="login-btn"
-          onClick={() => {
-            setShowEmailSent(false);
-            setIsLogin(true);
-          }}
-        >
-          Back to Login
-        </button>
-      </div>
-    </div>
+    <button
+      className="login-btn"
+      onClick={() => {
+        setShowEmailSent(false);
+        setIsLogin(true);
+      }}
+    >
+      Continue to Login
+    </button>
+  </div>
+</div>
   );
 }
 
