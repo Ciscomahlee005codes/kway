@@ -13,72 +13,77 @@ import {
 const KwayChatStats = () => {
   const [stats, setStats] = useState({
     users: 0,
-    chats: 0,
+    messages: 0,
     status: 0,
-    activeToday: 0,
   });
 
   const [chartData, setChartData] = useState([]);
 
   // ================= FETCH STATS =================
   const fetchStats = async () => {
-    // TOTAL USERS
-    const { count: users } = await supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true });
+    try {
+      // TOTAL USERS
+      const { count: users } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
 
-    // TOTAL CHATS
-    const { count: chats } = await supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true });
+      // TOTAL MESSAGES
+      const { count: messages } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true });
 
-    // TOTAL STATUS
-    const { count: status } = await supabase
-      .from("status")
-      .select("*", { count: "exact", head: true });
+      // TOTAL STATUS
+      const { count: status } = await supabase
+        .from("status")
+        .select("*", { count: "exact", head: true });
 
-    // ACTIVE TODAY
-    const today = new Date().toISOString().split("T")[0];
-
-    const { count: activeToday } = await supabase
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", today);
-
-    setStats({
-      users: users || 0,
-      chats: chats || 0,
-      status: status || 0,
-      activeToday: activeToday || 0,
-    });
+      setStats({
+        users: users || 0,
+        messages: messages || 0,
+        status: status || 0,
+      });
+    } catch (err) {
+      console.error("Stats error:", err);
+    }
   };
 
   // ================= FETCH CHART =================
   const fetchChart = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("messages")
       .select("created_at");
 
-    if (!data) return;
+    if (error || !data) return;
 
     const map = {};
 
     data.forEach((msg) => {
-      const day = msg.created_at.split("T")[0];
+      const day = new Date(msg.created_at).toLocaleDateString();
+
       map[day] = (map[day] || 0) + 1;
     });
 
-    const formatted = Object.keys(map).map((day) => ({
-      day,
-      messages: map[day],
-    }));
+    const formatted = Object.keys(map)
+      .sort((a, b) => new Date(a) - new Date(b))
+      .map((day) => ({
+        day,
+        messages: map[day],
+      }));
 
     setChartData(formatted);
   };
 
+  // ================= LIVE REFRESH =================
   useEffect(() => {
     fetchStats();
     fetchChart();
+
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchChart();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -92,25 +97,21 @@ const KwayChatStats = () => {
           <p>Total Users</p>
         </div>
 
-        <div className="stat-card">
-          <h3>{stats.chats}</h3>
-          <p>Total Chats</p>
+        <div className="stat-card highlight">
+          <h3>{stats.messages}</h3>
+          <p>Total Messages Sent</p>
         </div>
 
         <div className="stat-card">
           <h3>{stats.status}</h3>
           <p>Status Posts</p>
         </div>
-
-        <div className="stat-card">
-          <h3>{stats.activeToday}</h3>
-          <p>Messages Today</p>
-        </div>
       </div>
 
       {/* CHART */}
       <div className="chart-box">
-        <h3>Messages Per Day</h3>
+        <h3>Messages Growth Over Time</h3>
+
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <XAxis dataKey="day" />

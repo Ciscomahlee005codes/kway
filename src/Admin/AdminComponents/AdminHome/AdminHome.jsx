@@ -5,7 +5,7 @@ import { supabase } from "../../../supabase";
 const AdminHome = () => {
   const [stats, setStats] = useState({
     users: 0,
-    messagesToday: 0,
+    totalMessages: 0,
     activeChats: 0,
     statusPosts: 0,
   });
@@ -22,15 +22,10 @@ const AdminHome = () => {
       const { count: users } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true });
-
-      // ================= MESSAGES TODAY =================
-      const today = new Date().toISOString().split("T")[0];
-
-      const { count: messagesToday } = await supabase
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", today);
-
+     // ================= TOTAL MESSAGES =================
+const { count: totalMessages } = await supabase
+  .from("messages")
+  .select("*", { count: "exact", head: true });
       // ================= ACTIVE STATUS =================
       const { count: statusPosts } = await supabase
         .from("status")
@@ -52,7 +47,7 @@ const AdminHome = () => {
 
       setStats({
         users: users || 0,
-        messagesToday: messagesToday || 0,
+        totalMessages: totalMessages || 0,
         activeChats: uniqueChats.size || 0,
         statusPosts: statusPosts || 0,
       });
@@ -97,8 +92,8 @@ const AdminHome = () => {
         </div>
 
         <div className="admin-card">
-          <h3>Messages Today</h3>
-          <p className="admin-number">{stats.messagesToday}</p>
+          <h3>Total Messages</h3>
+          <p className="admin-number">{stats.totalMessages}</p>
         </div>
 
       </div>
