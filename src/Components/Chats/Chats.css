@@ -8,7 +8,6 @@
   background: var(--bg-color);
   color: var(--text-color);
   transition: background 0.3s, color 0.3s;
-  padding-bottom: 70px; 
 }
 
 /* Left - Chat List */
@@ -19,6 +18,7 @@
   border-right: 1px solid rgba(0,0,0,0.1);
   background: var(--bg-color);
   transition: background 0.3s ease, color 0.3s ease;
+  padding-bottom: 70px; 
 }
 
 .chat-header {
@@ -29,6 +29,7 @@
   padding: 0.5rem 1rem;
   border-bottom: 1px solid rgba(0,0,0,0.1);
   height: 60px;
+
 }
 .special{
   color: green;
