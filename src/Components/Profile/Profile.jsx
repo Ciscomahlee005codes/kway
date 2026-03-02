@@ -5,6 +5,7 @@ import { UserAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../Context/LanguageContext";
 import { MdEdit } from "react-icons/md";
+import toast from "react-hot-toast";
 import {
   FaEnvelope,
   FaBirthdayCake,
@@ -14,75 +15,68 @@ import {
 import "./Profile.css";
 
 const Profile = () => {
-  const { session, loading } = UserAuth();
+  const { session, profile, setProfile, refreshProfile } = UserAuth();
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
   const { t } = useLanguage();
 
   // =============================
   // 🔐 AUTH + FETCH PROFILE
   // =============================
-  useEffect(() => {
-    if (loading) return;
 
-    if (!session?.user) {
-      navigate("/", { replace: true });
-      return;
-    }
-
-    const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-
-      if (error) {
-        console.error("Profile fetch error:", error);
-        return;
-      }
-
-      setProfile(data);
-    };
-
-    fetchProfile();
-  }, [session, loading, navigate]);
 
   // =============================
   // 🖼️ UPDATE PROFILE PHOTO
   // =============================
-  const handleEditPhoto = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !session?.user) return;
+ const handleEditPhoto = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !session?.user) return;
 
-    const fileExt = file.name.split(".").pop();
-    const filePath = `${session.user.id}/${Date.now()}.${fileExt}`;
+  const fileExt = file.name.split(".").pop();
+  const filePath = `${session.user.id}/avatar.${fileExt}`; // overwrite old avatar
 
-    try {
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
+  try {
+    // 1️⃣ Upload
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+    if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+    // 2️⃣ Get public URL
+    const { data } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
 
-      await supabase
-        .from("profiles")
-        .update({ photo: data.publicUrl })
-        .eq("id", session.user.id);
+    // 👉 cache buster
+    const newPhotoUrl = `${data.publicUrl}?t=${Date.now()}`;
 
-      // 🔥 Instant UI update
-      setProfile((prev) => ({
-        ...prev,
-        photo: data.publicUrl,
-      }));
-    } catch (err) {
-      console.error("Photo update error:", err);
-    }
-  };
+    // 3️⃣ Update DB
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ photo: newPhotoUrl })
+      .eq("id", session.user.id);
+
+    if (updateError) throw updateError;
+await refreshProfile(session.user.id);
+    // 4️⃣ Update UI instantly
+    setProfile((prev) => ({
+      ...prev,
+      photo: newPhotoUrl,
+    }));
+
+    // 👉 save to localStorage so sidebar/chat use new photo
+    setProfile(prev => ({
+  ...prev,
+  photo: newPhotoUrl
+}));
+
+    toast.success("Profile picture updated 🎉");
+  } catch (err) {
+    console.error("Photo update error:", err);
+    toast.error("Failed to update photo");
+  }
+};
 
   // ⛔ Prevent early render
   if (!profile) return null;
@@ -111,7 +105,7 @@ const Profile = () => {
             </label>
 
             {profile.photo ? (
-              <img src={profile.photo} alt="Profile" />
+              <img src={`${profile.photo}?t=${Date.now()}`} alt="profile" />
             ) : (
               <div className="avatar-fallback">
                 {profile.username?.charAt(0).toUpperCase()}

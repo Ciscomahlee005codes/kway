@@ -4,7 +4,6 @@ import Sidebar from "./Components/Sidebar/Sidebar";
 import StatusPage from "./Pages/StatusPage/StatusPage";
 import ChatPage from "./Pages/ChatPage/ChatPage";
 import ChannelPage from "./Pages/ChannelPage/ChannelPage";
-import CommunityPage from "./Pages/CommunityPage/CommunityPage";
 import LinkUp from "./Components/ContactList/LinkUp";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
 import SettingsPage from "./Pages/SettingsPage/SettingsPage";
@@ -34,6 +33,7 @@ import KwayChatStats from "./Admin/AdminChart/KwayChatStats";
 import AdminChartPage from "./Admin/AdminPages/AdminChartPage/AdminChartPage";
 import AdminTestPage from "./Admin/AdminPages/AdminTestPage/AdminTestPage";
 import ResetPassword from "./Components/Auth/ResetPassword";
+import GroupPage from "./Pages/GroupPage/GroupPage";
 
 function App() {
   const location = useLocation();
@@ -103,10 +103,10 @@ function App() {
         />
 
         <Route
-          path="/communities"
+          path="/groups"
           element={
             <ProtectedRoute>
-              <CommunityPage />
+              <GroupPage />
             </ProtectedRoute>
           }
         />

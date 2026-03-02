@@ -29,7 +29,8 @@ body {
 .settings-page {
   display: flex;
   flex-direction: column;
-  height: 110vh;
+  height: 112vh;
+  
   margin-left: 70px;
   background: var(--bg-color);
 }

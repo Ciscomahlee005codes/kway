@@ -6,49 +6,90 @@ const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
   const [session, setSession] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-  supabase.auth.getSession().then(({ data }) => {
-    setSession(data.session);
-    setLoading(false);
-  });
-
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
-      setSession(session);
-    }
-  );
-
-  return () => listener.subscription.unsubscribe();
-}, []);
   // ============================================
-  // ✅ SIGN UP (Email + Password)
+  // ✅ FETCH PROFILE
+  // ============================================
+  const refreshProfile = async (userId) => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+
+      setProfile(data);
+    } catch (err) {
+      console.error("Profile fetch error:", err.message);
+    }
+  };
+
+  // ============================================
+  // ✅ SESSION HANDLING (ONLY ONE useEffect)
+  // ============================================
+  useEffect(() => {
+    const getInitialSession = async () => {
+      const { data } = await supabase.auth.getSession();
+
+      setSession(data.session);
+
+      if (data.session?.user) {
+        await refreshProfile(data.session.user.id);
+      } else {
+        setProfile(null);
+      }
+
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+
+      if (newSession?.user) {
+        refreshProfile(newSession.user.id);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ============================================
+  // ✅ SIGN UP
   // ============================================
   const signUp = async (email, password) => {
-  const toastId = toast.loading("Creating account...");
+    const toastId = toast.loading("Creating account...");
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: "http://localhost:5173/auth/callback", // redirect after email confirmation
-    },
-  });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: "http://localhost:5173/auth/callback",
+      },
+    });
 
-  if (error) {
-    toast.error(error.message, { id: toastId });
-    return { success: false };
-  }
+    if (error) {
+      toast.error(error.message, { id: toastId });
+      return { success: false };
+    }
 
-  toast.success("Verification email sent 📩", { id: toastId });
-
-  return { success: true, data };
-};
-
+    toast.success("Verification email sent 📩", { id: toastId });
+    return { success: true, data };
+  };
 
   // ============================================
-  // ✅ SIGN IN (Email + Password)
+  // ✅ SIGN IN
   // ============================================
   const signIn = async (email, password) => {
     const toastId = toast.loading("Signing you in...");
@@ -64,12 +105,11 @@ export const AuthContextProvider = ({ children }) => {
     }
 
     toast.success("Welcome back 🚀", { id: toastId });
-
     return { success: true, data };
   };
 
   // ============================================
-  // ✅ FORGOT PASSWORD
+  // ✅ PASSWORD RESET
   // ============================================
   const sendPasswordReset = async (email) => {
     const toastId = toast.loading("Sending reset link...");
@@ -111,43 +151,29 @@ export const AuthContextProvider = ({ children }) => {
   // ============================================
   const signOut = async () => {
     await supabase.auth.signOut();
-    toast.success("Signed out");
+    setProfile(null);
+    toast.success("Signed out 👋");
   };
 
   // ============================================
-  // ✅ SESSION HANDLING
+  // ✅ CONTEXT VALUE
   // ============================================
-  useEffect(() => {
-    const getInitialSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const value = {
+    session,
+    profile,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+    sendPasswordReset,
+    updatePassword,
+    refreshProfile,
+    setProfile, // for instant UI updates after edit
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        session,
-        loading,
-        signUp,
-        signIn,
-        sendPasswordReset,
-        updatePassword,
-        signOut,
-      }}
-    >
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

@@ -1,0 +1,133 @@
+/* ================= CSS ================= */
+
+/* Groups.css */
+.groups-page {
+  padding: 20px;
+  margin-left: 70px;
+  background: var(--bg-color);
+  min-height: 100vh;
+  color: var(--text-color);
+}
+
+.groups-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.groups-header h2 {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.create-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--theme-color);
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.groups-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--secondary-bg);
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.groups-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+  color: var(--text-color);
+}
+
+.groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.group-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--secondary-bg);
+  cursor: pointer;
+  position: relative;
+}
+
+.group-card img {
+  width: 55px;
+  height: 55px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.group-info h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.group-info p {
+  margin: 3px 0;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.group-meta {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.unread-badge {
+  background: var(--theme-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+}
+
+.arrow {
+  margin-left: auto;
+}
+
+.groups-empty {
+  text-align: center;
+  margin-top: 40px;
+  opacity: 0.7;
+}
+
+.groups-empty svg {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.fab-create {
+  position: fixed;
+  bottom: 30px;
+  right: 25px;
+  background: var(--theme-color);
+  color: white;
+  border: none;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+@media(max-width:768px){
+  .groups-page{margin-left:0;margin-bottom:70px}
+}

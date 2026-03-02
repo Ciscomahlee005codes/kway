@@ -22,49 +22,96 @@ const Status = () => {
   const [postContent, setPostContent] = useState("");
   const [preview, setPreview] = useState(null);
   const [selectedBg, setSelectedBg] = useState(bg_color[0]);
-   const [profile, setProfile] = useState(null);
   const [file, setFile] = useState(null);
   const [reply, setReply] = useState("");
-  const { session } = UserAuth();
+  const { session, profile } = UserAuth();
+  const media = statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.media_url;
+  const [videoPoster, setVideoPoster] = useState(null);
+  const [paused, setPaused] = useState(false);
+  const videoRef = React.useRef();
+  const [storyDuration, setStoryDuration] = useState(5000); // default 8s
 
+ useEffect(() => {
+  if (activeUserIndex !== null && !paused) {
+    const step = 100 / (storyDuration / 100);
+
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          nextStory();
+          return 0;
+        }
+        return prev + step;
+      });
+    }, 100);
+
+    return () => clearInterval(timer);
+  }
+}, [activeUserIndex, activeStoryIndex, paused, storyDuration]);
+
+  // Video Length
   useEffect(() => {
-    if (activeUserIndex !== null) {
-      const timer = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            nextStory();
-            return 0;
-          }
-          return prev + 2.5;
-        });
-      }, 100);
-      return () => clearInterval(timer);
-    }
-  }, [activeUserIndex, activeStoryIndex]);
+  if (!media) return;
 
+  if (media.match(/\.(mp4|webm|ogg)$/i)) {
+    const vid = document.createElement("video");
+    vid.src = media;
+
+    vid.onloadedmetadata = () => {
+      const seconds = vid.duration;
+
+      // limit max duration (WhatsApp style)
+      const duration = Math.min(seconds * 1000, 50000); // max 30s
+
+      setStoryDuration(duration);
+    };
+  } else {
+    setStoryDuration(5000); // text & images = 5 seconds
+  }
+}, [media]);
+  // Video poster generation
+  const generateVideoPoster = (url) => {
+  try {
+    const video = document.createElement("video");
+    video.src = url;
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
+
+    video.addEventListener("loadedmetadata", () => {
+      video.currentTime = Math.min(1, video.duration / 2);
+    });
+
+    video.addEventListener("seeked", () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+
+      setVideoPoster(canvas.toDataURL("image/jpeg"));
+    });
+
+    video.addEventListener("error", () => {
+      console.log("Poster generation failed");
+      setVideoPoster(null);
+    });
+
+  } catch (err) {
+    console.log("Poster crash:", err);
+  }
+}; 
+useEffect(() => {
+  if (media?.match(/\.(mp4|webm|ogg)$/i)) {
+    generateVideoPoster(media);
+  } else {
+    setVideoPoster(null);
+  }
+}, [media]);
   useEffect(() => {
   fetchStatuses();
 }, []);
-
-useEffect(() => {
-    if (!session?.user) return;
-
-    const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*") // get photo too
-        .eq("id", session.user.id)
-        .single();
-
-      if (!error) {
-        setProfile(data);
-      } else {
-        console.error("Profile fetch error:", error);
-      }
-    };
-
-    fetchProfile();
-  }, [session]);
 
 
   useEffect(() => {
@@ -119,7 +166,9 @@ useEffect(() => {
           acc[s.user_id] = {
             id: s.user_id,
             name: profileMap[s.user_id]?.name || "Unknown",
-            photo: profileMap[s.user_id]?.photo,
+            photo: profileMap[s.user_id]?.photo
+  ? profileMap[s.user_id].photo + `&cb=${Date.now()}`
+  : null,
             stories: [],
           };
         }
@@ -426,7 +475,25 @@ const handlePost = async () => {
       {/* Status Modal */}
       {activeUserIndex !== null && (
         <div className="status-modal">
-          <div className="status-modal-content">
+          <div
+  className="status-modal-content"
+  onMouseDown={() => {
+    setPaused(true);
+    videoRef.current?.pause();
+  }}
+  onMouseUp={() => {
+    setPaused(false);
+    videoRef.current?.play();
+  }}
+  onTouchStart={() => {
+    setPaused(true);
+    videoRef.current?.pause();
+  }}
+  onTouchEnd={() => {
+    setPaused(false);
+    videoRef.current?.play();
+  }}
+>
             <div className="progress-container">
               {statuses[activeUserIndex]?.stories?.[activeStoryIndex] && statuses[activeUserIndex]?.stories?.map((_, i) => (
                 <div key={i} className={`progress-bar ${i < activeStoryIndex ? "filled" : ""}`}>
@@ -436,12 +503,33 @@ const handlePost = async () => {
             </div>
 
             {statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.type === "text" ? (
-              <div className="status-text-full" style={{ backgroundColor: statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.bg_color }}>
-                <p>{statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}</p>
-              </div>
-            ) : (
-              <img src={statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.media_url} alt="status" className="status-modal-img" />
-            )}
+  <div
+    className="status-text-full"
+    style={{
+      backgroundColor:
+        statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.bg_color,
+    }}
+  >
+    <p>
+      {statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}
+    </p>
+  </div>
+) : media?.match(/\.(mp4|webm|ogg)$/i) ? (
+  <video
+    ref={videoRef}
+  src={media}
+  poster={videoPoster}
+  autoPlay
+  controls
+  className="status-modal-img"
+/>
+) : (
+  <img
+    src={media}
+    alt="status"
+    className="status-modal-img"
+  />
+)}
 
             <div className="status-top-overlay">
               <div className="status-user-info">
@@ -490,7 +578,7 @@ const handlePost = async () => {
   </div>
               <p className="status-caption">{statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}</p>
             </div>
-            <IoClose className="close-btn2" onClick={closeStatus} />
+            <IoClose className="close-btn4" onClick={closeStatus} />
             <IoChevronBack className="nav-btn left" onClick={prevStory} />
             <IoChevronForward className="nav-btn right" onClick={nextStory} />
           </div>

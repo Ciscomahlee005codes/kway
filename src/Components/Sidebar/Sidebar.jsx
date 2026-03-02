@@ -13,7 +13,7 @@ const Sidebar = () => {
     { icon: <BsFillChatSquareTextFill />, label: "Chats", link: "/chat" },
     { icon: <HiOutlineStatusOnline />, label: "Status", link: "/status" },
     { icon: <MdLiveTv />, label: "Channels", link: "/channels" },
-    { icon: <FaUsers />, label: "Groups", link: "/communities" },
+    { icon: <FaUsers />, label: "Groups", link: "/groups" },
     { icon: <GiThreeFriends />, label: "LinkUp", link: "/linkup" }, // ✅ updated
   ];
 

@@ -17,9 +17,8 @@ import "./Settings.css";
 const Settings = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { session } = UserAuth();
-
-  const [profile, setProfile] = useState(null);
+  const { session, profile } = UserAuth();
+  
   const [showLogout, setShowLogout] = useState(false);
 
 const handleLogout = async () => {
@@ -27,27 +26,6 @@ const handleLogout = async () => {
   navigate("/"); // back to login
 };
 
-
-  // 🔥 SAME FETCH LOGIC AS PROFILE PAGE
-  useEffect(() => {
-    if (!session?.user) return;
-
-    const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*") // get photo too
-        .eq("id", session.user.id)
-        .single();
-
-      if (!error) {
-        setProfile(data);
-      } else {
-        console.error("Profile fetch error:", error);
-      }
-    };
-
-    fetchProfile();
-  }, [session]);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("app-theme") || "light";
