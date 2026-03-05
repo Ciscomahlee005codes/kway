@@ -146,7 +146,7 @@ const UsersProfile = () => {
           <div className="info-row">
             <p className="label">About</p>
             <p className="value">
-              {user.about || "Hey there! I'm using Kway 💬"}
+              {user.bio || "This user hasn't added an about section yet."}
             </p>
           </div>
         </div>
@@ -156,8 +156,11 @@ const UsersProfile = () => {
       {callModal.open && (
         <CallModal
           type={callModal.type}
-          participant={user}
-          onClose={() => setCallModal({ ...callModal, open: false })}
+          participant={{
+            name: user.name,
+            avatar: user.photo
+          }}
+          onClose={() => setCallModal({ ...callModal, open: false })}  
         />
       )}
 

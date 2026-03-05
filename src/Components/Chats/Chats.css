@@ -20,7 +20,6 @@
   transition: background 0.3s ease, color 0.3s ease;
   padding-bottom: 70px; 
 }
-
 .chat-header {
   display: flex;
   align-items: center;
@@ -294,7 +293,9 @@
 }
 
 .status .seen {
-  color: #34B7F1; /* WhatsApp blue */
+  color: #ffffff;
+  font-weight: 900;
+  letter-spacing: -2px;
 }
 
 /* Wrap message properly */

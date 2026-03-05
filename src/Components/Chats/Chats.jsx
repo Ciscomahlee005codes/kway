@@ -23,7 +23,56 @@ const Chats = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isTyping, setIsTyping] = useState(false);
 
+  const markMessagesAsSeen = async (chatId) => {
+  if (!user) return;
 
+  const { error } = await supabase
+    .from("messages")
+    .update({ seen: true })
+    .eq("sender_id", chatId)
+    .eq("receiver_id", user.id)
+    .eq("seen", false);
+
+  if (!error) {
+    // update UI instantly
+    setChats(prev =>
+      prev.map(c =>
+        c.id === chatId ? { ...c, unread: 0 } : c
+      )
+    );
+  }
+};
+useEffect(() => {
+  if (!activeChat || !user) return;
+
+  const loadChat = async () => {
+    // 🔥 mark seen FIRST
+    await markMessagesAsSeen(activeChat.id);
+
+    // 🔥 THEN fetch messages
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .or(
+        `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
+      )
+      .order("created_at");
+
+    if (!data) return;
+
+    setActiveChat(prev => ({
+      ...prev,
+      messages: data.map(msg => ({
+        text: msg.content,
+        sender: msg.sender_id === user.id ? "you" : "them",
+        time: new Date(msg.created_at).toLocaleTimeString(),
+        status: msg.seen ? "seen" : "sent",
+      })),
+    }));
+  };
+
+  loadChat();
+}, [activeChat?.id, user?.id]);
 useEffect(() => {
   const handleResize = () =>
     setIsMobile(window.innerWidth <= 768);
@@ -117,9 +166,25 @@ useEffect(() => {
   useEffect(() => {
     if (!activeChat || !user) return;
 
-   const fetchMessages = async () => {
+const fetchMessages = async () => {
   if (!activeChat || !user) return;
 
+  // ✅ FIRST mark unseen messages as seen
+  await supabase
+    .from("messages")
+    .update({ seen: true })
+    .eq("sender_id", activeChat.id)
+    .eq("receiver_id", user.id)
+    .eq("seen", false);
+// after update
+setChats(prev =>
+  prev.map(c =>
+    c.id === activeChat.id
+      ? { ...c, unread: 0 }
+      : c
+  )
+);
+  // ✅ THEN fetch fresh messages
   const { data } = await supabase
     .from("messages")
     .select("*")
@@ -129,13 +194,6 @@ useEffect(() => {
     .order("created_at");
 
   if (!data) return;
-
-  // mark seen
-  await supabase
-    .from("messages")
-    .update({ seen: true })
-    .eq("sender_id", activeChat.id)
-    .eq("receiver_id", user.id);
 
   setActiveChat(prev => ({
     ...prev,
@@ -151,7 +209,6 @@ useEffect(() => {
     })),
   }));
 };
-
 
     fetchMessages();
   }, [activeChat?.id, user?.id]);
@@ -189,10 +246,12 @@ useEffect(() => {
       };
     }
 
-    if (
-      msg.receiver_id === user.id &&
-      msg.seen === false
-    ) {
+   if (
+  msg.receiver_id === user.id &&
+  msg.seen === false &&
+  msg.sender_id !== activeChat?.id
+)
+ {
       unreadMap[other] =
         (unreadMap[other] || 0) + 1;
     }
@@ -207,15 +266,27 @@ useEffect(() => {
     .select("id,name,photo")
     .in("id", ids);
 
-  const formatted = profiles.map(p => ({
-    id: p.id,
-    name: p.name,
-    avatar: p.photo,
-    lastMessage: chatMap[p.id]?.lastMessage,
-    time: chatMap[p.id]?.time,
-    unread: unreadMap[p.id] || 0,
-    messages: [],
-  }));
+ const formatted = profiles.map(p => ({
+  id: p.id,
+  name: p.name,
+  avatar: p.photo,
+  lastMessage: chatMap[p.id]?.lastMessage,
+  time: chatMap[p.id]?.time,
+  unread: unreadMap[p.id] || 0,
+  messages: [],
+  lastMessageDate: messages.find(
+    m =>
+      (m.sender_id === user.id && m.receiver_id === p.id) ||
+      (m.sender_id === p.id && m.receiver_id === user.id)
+  )?.created_at,
+}));
+
+// 🔥 SORT BY MOST RECENT MESSAGE
+formatted.sort(
+  (a, b) =>
+    new Date(b.lastMessageDate) - new Date(a.lastMessageDate)
+);
+
 
   setChats(formatted);
 };
@@ -264,17 +335,24 @@ useEffect(() => {
   }));
 
   // ✅ Update chat list preview (last message)
-  setChats((prevChats) =>
-    prevChats.map((chat) =>
-      chat.id === activeChat.id
-        ? {
-            ...chat,
-            lastMessage: messageText,
-            time: newMsgObject.time,
-          }
-        : chat
-    )
+  setChats(prevChats => {
+  const updated = prevChats.map(chat =>
+    chat.id === activeChat.id
+      ? {
+          ...chat,
+          lastMessage: messageText,
+          time: newMsgObject.time,
+          lastMessageDate: new Date().toISOString(),
+        }
+      : chat
   );
+
+  // move active chat to top
+  const active = updated.find(c => c.id === activeChat.id);
+  const others = updated.filter(c => c.id !== activeChat.id);
+
+  return [active, ...others];
+});
 
   setNewMessage("");
 };
@@ -290,6 +368,7 @@ useEffect(() => {
       <ChatList
         chats={chats}
         activeChat={activeChat}
+         setChats={setChats} 
         setActiveChat={setActiveChat}
         showSidebarDropdown={showSidebarDropdown}
         setShowSidebarDropdown={setShowSidebarDropdown}
@@ -318,10 +397,13 @@ useEffect(() => {
 
       {showCallModal && (
         <CallModal
-          type={callType}
-          participant={activeChat}
-          onClose={() => setShowCallModal(false)}
-        />
+    type={callType}
+    participant={{
+      name: activeChat.name,
+      avatar: activeChat.avatar // make sure this is up-to-date
+    }}
+    onClose={() => setShowCallModal(false)}
+  />
       )}
 
       

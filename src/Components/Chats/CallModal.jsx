@@ -4,9 +4,12 @@ import "./CallModal.css";
 import { MdCallEnd } from "react-icons/md";
 import { IoMdClose } from "react-icons/io";
 import { FaPhoneAlt, FaVideo } from "react-icons/fa";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
 
-const CallModal = ({ type = "voice", participant, onClose }) => {
+const CallModal = ({ type = "voice", participant, onClose, }) => {
   const audioRef = useRef(null);
+  
 
   useEffect(() => {
     // Play ringtone
@@ -26,6 +29,34 @@ const CallModal = ({ type = "voice", participant, onClose }) => {
     };
   }, [onClose]);
 
+const renderCallAvatar = () => {
+  const name = participant?.name || "User";
+  const firstLetter = name.charAt(0).toUpperCase();
+
+  // Get avatar — if stored in Supabase storage, convert to public URL
+  let avatarUrl = participant?.avatar || "";
+  if (avatarUrl && !avatarUrl.startsWith("http")) {
+    // Assume it's a Supabase storage path
+    avatarUrl = supabase.storage
+      .from("avatars") // <- replace with your bucket name
+      .getPublicUrl(avatarUrl).data.publicUrl;
+  }
+
+  const colors = ["#1dbf73", "#34b7f1", "#ff9800", "#e91e63", "#9c27b0"];
+  const bgColor = colors[name.charCodeAt(0) % colors.length] || "#1dbf73";
+
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt={name} className="call-avatar" />;
+  }
+
+  // fallback: first letter
+  return (
+    <div className="call-avatar-letter" style={{ backgroundColor: bgColor }}>
+      {firstLetter}
+    </div>
+  );
+};
+
   return (
     <div className="call-overlay">
       <audio ref={audioRef} src="/ringtone.mp3" />
@@ -33,12 +64,8 @@ const CallModal = ({ type = "voice", participant, onClose }) => {
       <div className="call-container">
         {/* AVATAR */}
         <div className="call-avatar-wrapper animate-bounce">
-          <img
-            src={participant?.avatar || "/mnt/data/KwayChat.png"}
-            alt={participant?.name}
-            className="call-avatar"
-          />
-        </div>
+  {renderCallAvatar()}
+</div>
 
         {/* USER INFO */}
         <div className="call-info-text">

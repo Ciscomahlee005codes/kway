@@ -30,6 +30,8 @@ const Status = () => {
   const [paused, setPaused] = useState(false);
   const videoRef = React.useRef();
   const [storyDuration, setStoryDuration] = useState(5000); // default 8s
+  const colors = ["#25d366","#34b7f1","#ff9800","#e91e63","#9c27b0"];
+
 
  useEffect(() => {
   if (activeUserIndex !== null && !paused) {
@@ -199,19 +201,49 @@ const sendReply = async () => {
   setReply("");
 };
 
-// const react = async (emoji) => {
-//   const story =
-//     statuses[activeUserIndex]?.stories?.[activeStoryIndex]
+ const renderAvatar = (photo, name, size = 60) => {
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={name}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          objectFit: "cover"
+        }}
+      />
+    );
+  }
 
-//   await supabase.from("status_reactions").upsert({
-//     status_id: story.id,
-//     user_id: session.user.id,
-//     emoji,
-//   });
+  const firstLetter = name?.charAt(0)?.toUpperCase() || "?";
 
-//   toast.success("Reacted " + emoji);
-// };
+  const colors = ["#25d366","#34b7f1","#ff9800","#e91e63","#9c27b0"];
 
+  const bgColor =
+    colors[name?.charCodeAt(0) % colors.length] || "#25d366";
+
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        backgroundColor: bgColor,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontWeight: "600",
+        fontSize: size / 2.2,
+        textTransform: "uppercase"
+      }}
+    >
+      {firstLetter}
+    </div>
+  );
+};
   const openStatus = (index) => {
     setActiveUserIndex(index);
     setActiveStoryIndex(0);
@@ -339,7 +371,6 @@ const handlePost = async () => {
   return (
     <div className="status-page">
       {/* Post Modal */}
-      {/* Post Modal */}
 {showPostModal && (
   <div className="post-modal">
     <div className="post-box">
@@ -457,8 +488,14 @@ const handlePost = async () => {
             <div className="status-avatar ring">
               {s.stories[0].type === "text" ? (
                 <div style={{ backgroundColor: s.stories[0].bg_color }} className="text-avatar">{s.stories[0].text}</div>
+              ) : s.stories[0].media_url ? (
+                <img
+                  src={s.stories[0].media_url}
+                  alt={s.name}
+                  className="avatar"
+                />
               ) : (
-                <img src={s.stories[0].media_url || s.photo || "https://i.pravatar.cc/100"} alt={s.name} className="avatar" />
+                renderAvatar(s.photo, s.name, 55)
               )}
             </div>
             <div className="status-text">
@@ -533,11 +570,11 @@ const handlePost = async () => {
 
             <div className="status-top-overlay">
               <div className="status-user-info">
-                <img
-                   src={statuses[activeUserIndex]?.photo || "https://i.pravatar.cc/100"}
-                  alt="profile"
-                  className="status-profile-pic"
-                />
+                {renderAvatar(
+  statuses[activeUserIndex]?.photo,
+  statuses[activeUserIndex]?.name,
+  40
+)}
                 <div>
                   <h3>{statuses[activeUserIndex]?.name}</h3>
                   <p>

@@ -12,6 +12,7 @@ import { supabase } from "../../supabase";
 const ChatList = ({
   chats = [],
   activeChat,
+  setChats,
   setActiveChat,
   setShowAddModal,
   showSidebarDropdown,
@@ -149,7 +150,25 @@ useEffect(() => {
         className={`chat-item ${
           activeChat?.id === chat.id ? "active" : ""
         }`}
-        onClick={() => setActiveChat(chat)}
+      onClick={async () => {
+  // if (chat.unread > 0) {
+  //   await supabase
+  //     .from("messages")
+  //     .update({ seen: true })
+  //     .eq("sender_id", chat.id)
+  //     .eq("receiver_id", user.id);
+
+  //   setChats(prev =>
+  //     prev.map(c =>
+  //       c.id === chat.id
+  //         ? { ...c, unread: 0 }
+  //         : c
+  //     )
+  //   );
+  // }
+
+  setActiveChat(chat);
+}}
       >
         <div className="chat-avatar">
           {chat?.avatar ? (
