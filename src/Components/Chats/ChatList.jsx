@@ -18,6 +18,7 @@ const ChatList = ({
   showSidebarDropdown,
   setShowSidebarDropdown,
   setShowChatDropdown,
+  saveUnread,
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,7 +168,20 @@ useEffect(() => {
   //   );
   // }
 
-  setActiveChat(chat);
+  saveUnread(chat.id, 0);
+
+setChats(prev =>
+  prev.map(c =>
+    c.id === chat.id
+      ? { ...c, unread: 0 }
+      : c
+  )
+);
+
+setActiveChat(prev => ({
+  ...chat,
+  messages: prev?.messages || []
+}));
 }}
       >
         <div className="chat-avatar">

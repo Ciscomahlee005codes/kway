@@ -42,6 +42,24 @@ const Chats = () => {
     );
   }
 };
+const saveUnread = (chatId, count) => {
+  const unreadStore =
+    JSON.parse(localStorage.getItem("kway_unread")) || {};
+
+  unreadStore[chatId] = count;
+
+  localStorage.setItem(
+    "kway_unread",
+    JSON.stringify(unreadStore)
+  );
+};
+
+const getUnread = (chatId) => {
+  const unreadStore =
+    JSON.parse(localStorage.getItem("kway_unread")) || {};
+
+  return unreadStore[chatId] || 0;
+};
 useEffect(() => {
   if (!activeChat || !user) return;
 
@@ -272,7 +290,8 @@ setChats(prev =>
   avatar: p.photo,
   lastMessage: chatMap[p.id]?.lastMessage,
   time: chatMap[p.id]?.time,
-  unread: unreadMap[p.id] || 0,
+  unread:
+  getUnread(p.id) || unreadMap[p.id] || 0,
   messages: [],
   lastMessageDate: messages.find(
     m =>
@@ -295,7 +314,50 @@ formatted.sort(
   fetchChats();
 }, [user]);
   
+useEffect(() => {
+  if (!user) return;
 
+  const channel = supabase
+    .channel("messages-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+      },
+      payload => {
+        const msg = payload.new;
+
+        if (msg.receiver_id !== user.id) return;
+
+        const sender = msg.sender_id;
+
+        // ignore if chat is currently open
+        if (activeChat?.id === sender) return;
+
+        setChats(prev =>
+          prev.map(chat => {
+            if (chat.id === sender) {
+              const newCount = (chat.unread || 0) + 1;
+
+              saveUnread(sender, newCount);
+
+              return {
+                ...chat,
+                unread: newCount,
+                lastMessage: msg.content,
+              };
+            }
+            return chat;
+          })
+        );
+      }
+    )
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, [user, activeChat]);
 
   // =========================================
   // ✅ SEND MESSAGE
@@ -374,6 +436,7 @@ formatted.sort(
         setShowSidebarDropdown={setShowSidebarDropdown}
         setShowChatDropdown={setShowChatDropdown}
         setShowAddModal={setShowAddModal}
+        saveUnread={saveUnread}
       />
 
       <ChatWindow
@@ -393,6 +456,7 @@ formatted.sort(
         setReactionPicker={setReactionPicker}
         reactions={reactions}
         isTyping={isTyping}
+        saveUnread={saveUnread}
       />
 
       {showCallModal && (

@@ -551,22 +551,20 @@ const handlePost = async () => {
       {statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}
     </p>
   </div>
-) : media?.match(/\.(mp4|webm|ogg)$/i) ? (
-  <video
-    ref={videoRef}
-  src={media}
-  poster={videoPoster}
-  autoPlay
-  controls
-  className="status-modal-img"
-/>
-) : (
-  <img
-    src={media}
-    alt="status"
-    className="status-modal-img"
-  />
-)}
+) : <div className="status-media-wrapper">
+  {media?.match(/\.(mp4|webm|ogg)$/i) ? (
+    <video
+      ref={videoRef}
+      src={media}
+      poster={videoPoster}
+      autoPlay
+      controls
+      className="status-modal-img"
+    />
+  ) : (
+    <img src={media} alt="status" className="status-modal-img" />
+  )}
+</div>}
 
             <div className="status-top-overlay">
               <div className="status-user-info">

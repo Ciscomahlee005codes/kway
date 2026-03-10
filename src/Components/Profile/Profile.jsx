@@ -33,47 +33,41 @@ const Profile = () => {
   if (!file || !session?.user) return;
 
   const fileExt = file.name.split(".").pop();
-  const filePath = `${session.user.id}/avatar.${fileExt}`; // overwrite old avatar
+  const filePath = `${session.user.id}/avatar-${Date.now()}.${fileExt}`;
 
   try {
-    // 1️⃣ Upload
+    // upload new image
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(filePath, file, { upsert: true });
+      .upload(filePath, file);
 
     if (uploadError) throw uploadError;
 
-    // 2️⃣ Get public URL
+    // get public url
     const { data } = supabase.storage
       .from("avatars")
       .getPublicUrl(filePath);
 
-    // 👉 cache buster
-    const newPhotoUrl = `${data.publicUrl}?t=${Date.now()}`;
+    const newPhotoUrl = data.publicUrl;
 
-    // 3️⃣ Update DB
+    // update database
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ photo: newPhotoUrl })
       .eq("id", session.user.id);
 
     if (updateError) throw updateError;
-await refreshProfile(session.user.id);
-    // 4️⃣ Update UI instantly
+
+    // update UI instantly
     setProfile((prev) => ({
       ...prev,
       photo: newPhotoUrl,
     }));
 
-    // 👉 save to localStorage so sidebar/chat use new photo
-    setProfile(prev => ({
-  ...prev,
-  photo: newPhotoUrl
-}));
-
     toast.success("Profile picture updated 🎉");
+
   } catch (err) {
-    console.error("Photo update error:", err);
+    console.error(err);
     toast.error("Failed to update photo");
   }
 };
@@ -105,7 +99,7 @@ await refreshProfile(session.user.id);
             </label>
 
             {profile.photo ? (
-              <img src={`${profile.photo}?t=${Date.now()}`} alt="profile" />
+             <img src={profile.photo} alt="profile" />
             ) : (
               <div className="avatar-fallback">
                 {profile.username?.charAt(0).toUpperCase()}
