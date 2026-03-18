@@ -146,7 +146,7 @@ const UsersProfile = () => {
           <div className="info-row">
             <p className="label">About</p>
             <p className="value">
-              {user.bio || "This user hasn't added an about section yet."}
+              {user.about || "This user hasn't added an about section yet."}
             </p>
           </div>
         </div>

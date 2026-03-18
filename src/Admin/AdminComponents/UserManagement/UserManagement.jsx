@@ -116,15 +116,16 @@ const UserManagement = () => {
               filteredUsers.map((user) => (
                 <tr key={user.id}>
 
-                  <td className="user-cell">
-                    <img src={user.photo || dummyImg} alt="profile" />
-                    <span>{user.name}</span>
-                  </td>
+                  <td className="user-cell" data-label="User">
+  <img src={user.photo || dummyImg} alt="profile" />
+  <span>{user.name}</span>
+</td>
 
-                  <td>@{user.username}</td>
-                  <td>{user.dob || "—"}</td>
-                  <td>{user.gender || "—"}</td>
-                  <td className="actions">
+<td data-label="Username">@{user.username}</td>
+<td data-label="DOB">{user.dob || "—"}</td>
+<td data-label="Gender">{user.gender || "—"}</td>
+
+<td className="actions" data-label="Actions">
                     <button
                       className="btn view"
                       onClick={() => setSelectedUser(user)}
