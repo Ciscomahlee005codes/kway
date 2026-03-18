@@ -26,6 +26,13 @@ const ProfileSetup = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   
  
+  const nextStep = () => {
+  if (step < 3) setStep((prev) => prev + 1);
+};
+
+const prevStep = () => {
+  if (step > 1) setStep((prev) => prev - 1);
+};
 
   // 🔥 GET AUTH USER DIRECTLY FROM SUPABASE
    useEffect(() => {
@@ -167,12 +174,17 @@ console.log("Photo URL:", photo);
     >
       {/* STEP INDICATOR */}
       <div className="step-indicator">
-        {[1, 2, 3].map((s) => (
-          <span key={s} className={step === s ? "active" : ""}>
-            {s}
-          </span>
-        ))}
-      </div>
+  {[1, 2, 3].map((s) => (
+    <span
+      key={s}
+      className={step === s ? "active" : ""}
+      onClick={() => setStep(s)}
+      style={{ cursor: "pointer" }}
+    >
+      {s}
+    </span>
+  ))}
+</div>
 
       <AnimatePresence mode="wait">
         {/* ================= STEP 1 ================= */}
@@ -223,15 +235,15 @@ console.log("Photo URL:", photo);
               />
             </div>
 
-            <div className="step-actions single">
-              <button
-                className="save-btn"
-                style={{ backgroundColor: theme }}
-                onClick={() => setStep(2)}
-              >
-                Next →
-              </button>
-            </div>
+            <div className="step-actions">
+  <button
+    className="save-btn"
+    style={{ backgroundColor: theme }}
+    onClick={nextStep}
+  >
+    Next →
+  </button>
+</div>
           </motion.div>
         )}
 
@@ -286,18 +298,18 @@ console.log("Photo URL:", photo);
             </div>
 
             <div className="step-actions">
-              <button className="back-btn" onClick={() => setStep(1)}>
-                ← Previous
-              </button>
+  <button className="back-btn" onClick={prevStep}>
+    ← Previous
+  </button>
 
-              <button
-                className="save-btn"
-                style={{ backgroundColor: theme }}
-                onClick={() => setStep(3)}
-              >
-                Review Profile →
-              </button>
-            </div>
+  <button
+    className="save-btn"
+    style={{ backgroundColor: theme }}
+    onClick={nextStep}
+  >
+    Next →
+  </button>
+</div>
           </motion.div>
         )}
 
@@ -334,18 +346,18 @@ console.log("Photo URL:", photo);
             </div>
 
             <div className="step-actions">
-              <button className="back-btn" onClick={() => setStep(2)}>
-                ← Previous
-              </button>
+  <button className="back-btn" onClick={prevStep}>
+    ← Previous
+  </button>
 
-              <button
-                className="save-btn"
-                style={{ backgroundColor: theme }}
-                onClick={handleConfirm}
-              >
-                Confirm & Continue 🚀
-              </button>
-            </div>
+  <button
+    className="save-btn"
+    style={{ backgroundColor: theme }}
+    onClick={handleConfirm}
+  >
+    Confirm & Continue 🚀
+  </button>
+</div>
           </motion.div>
         )}
       </AnimatePresence>
