@@ -51,15 +51,18 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #f3f3f3;
+ background: var(--secondary-bg);
   padding: 0.4rem 0.7rem;
   border-radius: 10px;
 }
-
+.search-icon {
+  color: var(--text) !important;
+  font-size: 1.1rem;
+}
 .contact-search input {
   border: none;
   outline: none;
-  background: transparent;
+  background: var(--secondary-bg) !important;
   flex: 1;
   font-size: 0.9rem;
 }

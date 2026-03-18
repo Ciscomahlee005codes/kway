@@ -214,6 +214,7 @@ input:checked + .slider:before {
 /* Logout Section */
 .logout-section {
   padding: 20px;
+   background: var(--bg-color);
   border-top: 10px solid var(--secondary-bg);
 }
 

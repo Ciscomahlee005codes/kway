@@ -2,6 +2,7 @@
 .status-page {
   flex: 1;
   background: var(--bg-color, #f9f9f9);
+  height: 100vh;
   display: flex;
   flex-direction: column;
   margin-left: 70px;

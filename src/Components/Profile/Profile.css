@@ -103,10 +103,12 @@
   background: var(--border-color);
   padding: 12px 14px;
   border-radius: 12px;
+  background: var(--bg-color);
+  color: var(--text) !important;
   font-size: 0.9rem;
 }
 .user-info {
-  color: var(--text);
+  color: var(--text-color) !important;
   font-weight: 500;
 } 
 .detail-icon {

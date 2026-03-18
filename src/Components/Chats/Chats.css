@@ -89,7 +89,7 @@
   position: absolute;
   top: 120%;
   right: 0;
-  background: var(--bg-color);
+  background: var(--secondary-bg) !important;
   border: 1px solid rgba(0,0,0,0.1);
   border-radius: 6px;
   box-shadow: 0px 3px 6px rgba(0,0,0,0.1);
@@ -101,11 +101,13 @@
   margin: 0;
   padding: 0.5rem 1.5rem;
   cursor: pointer;
-  color: var(--text-color);
+  background: var(--secondary-bg) !important;
+  color: var(--text-color) !important;
 }
 
 .dropdown-menu a:hover {
-  background: rgba(0,0,0,0.05);
+  background: var(--card-bg)!important; 
+  color: var(--text) !important;
 }
 
 /* Filters */
@@ -150,7 +152,7 @@
 }
 
 .chat-item:hover {
-  background: var(--secondary-bg);
+  background: rgba(0,0,0,.35);
 }
 
 .chat-item.active {
@@ -555,10 +557,11 @@
 }
 
 .chat-dropdown-menu p:hover {
-  background: #bdbebf;
+  background: rgba(0,0,0,0.05);
 }
 
 .chat-dropdown-menu .danger {
+  background-color: aliceblue;
   color: #f11616;
   font-weight: 800;
 }

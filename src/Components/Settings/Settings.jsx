@@ -156,8 +156,10 @@ const handleLogout = async () => {
           <IoChevronForward className="item-arrow" />
         </div>
 
+        
+
       </div>
-      {/* ================= LOGOUT BUTTON ================= */}
+ {/* ================= LOGOUT BUTTON ================= */}
 <div className="logout-section">
   <button
     className="logout-btn"
@@ -190,7 +192,6 @@ const handleLogout = async () => {
     </div>
   </div>
 )}
-
     </div>
   );
 };
