@@ -27,7 +27,7 @@
   gap: 8px;
   padding: 8px 14px;
   border-radius: 10px;
-  background: var(--theme-color);
+  background: var(--accent-color);
   border: none;
   color: white;
   cursor: pointer;
@@ -61,20 +61,32 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  border-radius: 14px;
-  background: var(--secondary-bg);
-  cursor: pointer;
-  position: relative;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--bg-color) !important;
+  border: 1.5px solid var(--accent-color);
+  backdrop-filter: blur(10px);
+  transition: 0.25s ease;
+  /* border: 1px solid rgba(255,255,255,0.08); */
+}
+
+.group-card:hover {
+  transform: translateY(-3px);
+  background: rgba(32, 30, 30, 0.08);
 }
 
 .group-card img {
-  width: 55px;
-  height: 55px;
-  border-radius: 12px;
+  /* width: 55px;
+  height: 55px; */
+   border-radius: 50%;
+  border: 2px solid #25d366;
   object-fit: cover;
 }
-
+.group-meta {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
 .group-info h3 {
   margin: 0;
   font-size: 15px;
@@ -118,7 +130,7 @@
   position: fixed;
   bottom: 30px;
   right: 25px;
-  background: var(--theme-color);
+  background: var(--accent-color);
   color: white;
   border: none;
   width: 55px;
@@ -129,5 +141,19 @@
 }
 
 @media(max-width:768px){
+  
   .groups-page{margin-left:0;margin-bottom:70px}
+  .fab-create {
+  position: fixed;
+  bottom: 90px;
+  right: 25px;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+}
 }

@@ -10,7 +10,19 @@
   color: #065f46;
   font-weight: 700;
 }
-
+.avatar-fallback-admin {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  border: 2px solid #10b981;
+}
 /* ============================= */
 /* SEARCH BAR */
 /* ============================= */

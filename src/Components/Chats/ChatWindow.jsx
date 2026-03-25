@@ -30,6 +30,7 @@ const ChatWindow = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pressTimer, setPressTimer] = useState(null);
    const [isTyping, setIsTyping] = useState(false);
+   const channel = supabase.channel("typing-status");
   const emojiRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -41,7 +42,44 @@ useEffect(() => {
   setShowChatDropdown(false);
 }, [activeChat]);
 
+const typingTimeoutRef = useRef(null);
 
+const handleTyping = () => {
+  channel.send({
+    type: "broadcast",
+    event: "typing",
+    payload: {
+      sender: session.user.id,
+      receiver: activeChat.id,
+    },
+  });
+
+  clearTimeout(typingTimeoutRef.current);
+
+  typingTimeoutRef.current = setTimeout(() => {
+    channel.send({
+      type: "broadcast",
+      event: "stop_typing",
+      payload: {
+        sender: session.user.id,
+        receiver: activeChat.id,
+      },
+    });
+  }, 1500);
+};
+
+const openStatusPreview = async (msg) => {
+
+  const { data } = await supabase
+    .from("status")
+    .select("*")
+    .eq("id", msg.status_id)
+    .single();
+
+  if (!data) return;
+
+  navigate(`/status?story=${data.id}`);
+};
 useEffect(() => {
   if (activeChat) {
     document.body.classList.add("chat-open");
@@ -57,7 +95,37 @@ useEffect(() => {
   endRef.current?.scrollIntoView({ behavior: "smooth" });
 }, [activeChat?.messages]);
 
+useEffect(() => {
+  const typingChannel = supabase
+    .channel("typing-status")
 
+    .on("broadcast", { event: "typing" }, (payload) => {
+      if (payload.payload.sender === activeChat.id) {
+        setIsTyping(true);
+
+        setTimeout(() => {
+          setIsTyping(false);
+        }, 2000);
+      }
+    })
+
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(typingChannel);
+  };
+}, [activeChat]);
+
+useEffect(() => {
+  if (!activeChat) return;
+
+  supabase
+    .from("messages")
+    .update({ status: "seen" })
+    .eq("sender_id", activeChat.id)
+    .eq("receiver_id", session.user.id)
+    .eq("status", "sent");
+}, [activeChat]);
 useEffect(() => {
   const handleClickOutside = (e) => {
     if (
@@ -178,53 +246,102 @@ console.log("Active Chat:", activeChat);
 
       {/* ================= MESSAGES ================= */}
       <div className="chat-messages">
-        {activeChat?.messages?.map((msg, i) => (
+      { activeChat?.messages?.map((msg, i) => {
+
+  console.log("MESSAGE DEBUG:", msg);
+
+  const isStatusReply = msg?.type === "status_reply";
+
+  return (
+    <div
+      key={msg.id || i}
+      className={`message-wrapper ${
+        msg.sender === "you" ? "sent" : "received"
+      }`}
+    >
+      <div className="message-bubble">
+
+        {/* ================= STATUS PREVIEW ================= */}
+
+        {isStatusReply && (
           <div
-  key={i}
-  className={`message-wrapper ${msg.sender === "you" ? "sent" : "received"}`}
->
-  <div
-    className="message-bubble"
-    onContextMenu={(e) => {
-      e.preventDefault();
-      setReactionPicker({ open: true, msgIndex: i });
-    }}
-    onTouchStart={() => {
-      const timer = setTimeout(() => {
-        setReactionPicker({ open: true, msgIndex: i });
-      }, 500);
-      setPressTimer(timer);
-    }}
-    onTouchEnd={() => clearTimeout(pressTimer)}
-  >
-    {msg.replyTo && (
-      <div className="reply-preview">
-        <span>Replying to</span>
-        <p>{msg.replyTo}</p>
+            className="status-preview-bubble"
+            onClick={() => openStatusPreview(msg)}
+          >
+            {msg?.status_media ? (
+
+              <img
+                src={msg.status_media}
+                alt="status preview"
+              />
+
+            ) : (
+
+              <div
+                className="status-text-preview"
+                style={{
+                  background:
+                    msg?.status_bg || "#25d366"
+                }}
+              >
+                {msg?.status_text || "Status reply"}
+              </div>
+
+            )}
+          </div>
+        )}
+
+        {/* ================= MESSAGE TEXT ================= */}
+
+        <p className="message-text">
+          {msg?.content || msg?.text || ""}
+        </p>
+
+        {/* ================= META INFO ================= */}
+
+        <div className="message-meta">
+
+          <span className="time">
+            {msg?.time || "12:45"}
+          </span>
+
+          {msg.sender === "you" && (
+
+            <span
+              className={`status ${
+                msg?.status || ""
+              }`}
+            >
+              {msg?.status === "sent" && "✔"}
+
+              {msg?.status === "delivered" &&
+                "✔✔"}
+
+              {msg?.status === "seen" && (
+                <span className="seen">
+                  ✔✔
+                </span>
+              )}
+            </span>
+
+          )}
+        </div>
+
+        {/* ================= MESSAGE REACTION ================= */}
+
+        {msg?.reaction && (
+
+          <span className="message-reaction">
+            {msg.reaction}
+          </span>
+
+        )}
+
       </div>
-    )}
-
-    <p className="message-text">{msg.text}</p>
-
-    <div className="message-meta">
-      <span className="time">{msg.time || "12:45"}</span>
-
-      {msg.sender === "you" && (
-        <span className={`status ${msg.status}`}>
-          {msg.status === "sent" && "✔"}
-          {msg.status === "delivered" && "✔✔"}
-          {msg.status === "seen" && <span className="seen">✔✔</span>}
-        </span>
-      )}
     </div>
+  );
 
-    {msg.reaction && (
-      <span className="message-reaction">{msg.reaction}</span>
-    )}
-  </div>
-</div>
-
-        ))}
+})}
       </div>
 
       {/* ================= INPUT ================= */}
@@ -238,17 +355,20 @@ console.log("Active Chat:", activeChat);
     />
 
     <textarea
-      rows={1}
-      placeholder="Type a message..."
-      value={newMessage}
-      onChange={(e) => setNewMessage(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          handleSendMessage();
-        }
-      }}
-    />
+  rows={1}
+  placeholder="Type a message..."
+  value={newMessage}
+  onChange={(e) => {
+    setNewMessage(e.target.value);
+    handleTyping();
+  }}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }}
+/>
   </div>
 
   <button className="chat-send-btn" onClick={handleSendMessage}>

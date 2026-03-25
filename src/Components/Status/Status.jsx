@@ -186,20 +186,47 @@ useEffect(() => {
   }
 };
 const sendReply = async () => {
-  if (!reply) return;
+  if (!reply.trim()) return;
+
+  if (activeUserIndex === null) return;
 
   const story =
-    statuses[activeUserIndex]?.stories?.[activeStoryIndex]
+    statuses[activeUserIndex]?.stories?.[activeStoryIndex];
 
-  await supabase.from("status_replies").insert({
-    status_id: story.id,
-    user_id: session.user.id,
-    message: reply,
-  });
+  if (!story) {
+    console.log("No story found");
+    return;
+  }
 
-  toast.success("Reply sent");
+  const receiverId = story.user_id;
+
+  const { error } = await supabase
+    .from("messages")
+    .insert({
+      sender_id: session.user.id,
+      receiver_id: receiverId,
+
+      content: reply,
+
+      type: "status_reply",
+
+      status_id: story.id,
+      status_text: story.text,
+      status_media: story.media_url,
+      status_bg: story.bg_color
+    });
+
+  if (error) {
+    console.error("Reply failed:", error);
+    return;
+  }
+
+  console.log("STATUS REPLY SENT SUCCESSFULLY");
+
   setReply("");
 };
+
+
 
  const renderAvatar = (photo, name, size = 60) => {
   if (photo) {
@@ -370,38 +397,47 @@ const handlePost = async () => {
 
   return (
     <div className="status-page">
-      {/* Post Modal */}
-{showPostModal && (
+       {showPostModal && (
   <div className="post-modal">
-    <div className="post-box">
-      <h3>Create Status</h3>
+    <div className="post-box modern">
 
-      {/* Post Type Selection */}
-{!postType && (
-  <div className="type-grid">
-    <div className="type-card" onClick={() => setPostType("text")}>
-      <h3> Text Status</h3>
-      <p>Share thoughts with colors</p>
-    </div>
+      {/* HEADER */}
+      <div className="post-header">
+        <h3>Create Status</h3>
+        <IoClose onClick={() => {
+          setShowPostModal(false);
+          setPostType(null);
+        }} />
+      </div>
 
-    <div className="type-card" onClick={() => setPostType("media")}>
-      <h3> Photo / Video</h3>
-      <p>Share moments instantly</p>
-    </div>
-  </div>
-)}
+      {/* TYPE SELECTION */}
+      {!postType && (
+        <div className="type-grid modern">
+          <div className="type-card text" onClick={() => setPostType("text")}>
+            <MdEdit />
+            <h4>Text Status</h4>
+            <p>Share your thoughts</p>
+          </div>
 
+          <div className="type-card media" onClick={() => setPostType("media")}>
+            <FiCamera />
+            <h4>Photo / Video</h4>
+            <p>Share moments</p>
+          </div>
+        </div>
+      )}
 
-      {/* Text Post */}
+      {/* TEXT STATUS */}
       {postType === "text" && (
         <>
           <textarea
-            placeholder="Type your status…"
-            className="post-textarea"
+            placeholder="What's on your mind?"
+            className="post-textarea modern"
             value={postContent}
             onChange={(e) => setPostContent(e.target.value)}
           />
-          <div className="bg-picker">
+
+          <div className="bg-picker modern">
             {bg_color.map(color => (
               <span
                 key={color}
@@ -411,41 +447,60 @@ const handlePost = async () => {
               />
             ))}
           </div>
+
           {postContent && (
-            <div className="status-preview" style={{ backgroundColor: selectedBg }}>
+            <div
+              className="status-preview modern"
+              style={{ backgroundColor: selectedBg }}
+            >
               <p>{postContent}</p>
             </div>
           )}
         </>
       )}
 
-      {/* Media Post */}
+      {/* MEDIA STATUS */}
       {postType === "media" && (
         <>
-          <input type="file" accept="image/*,video/*" onChange={handleFileChange} className="file-input" />
+          <label className="upload-box">
+           <div className="cam-container">
+             <FiCamera className="cam-2"/>
+           </div>
+            <p>Tap to upload</p>
+            <input type="file" accept="image/*,video/*" onChange={handleFileChange} hidden />
+          </label>
+
           {preview && (
-            <div className="status-preview">
+            <div className="status-preview modern">
               {preview.startsWith("data:image") ? (
-                <img src={preview} alt="Preview" className="preview-img" />
+                <img src={preview} alt="" />
               ) : (
-                <video src={preview} controls className="preview-img" />
+                <video src={preview} controls />
               )}
             </div>
           )}
+
           <textarea
-            placeholder="Write a caption…"
-            className="post-textarea"
+            placeholder="Add a caption..."
+            className="post-textarea modern"
             value={postContent}
             onChange={(e) => setPostContent(e.target.value)}
           />
         </>
       )}
 
-      {/* Actions */}
-      <div className="post-actions">
-        <button onClick={() => { setShowPostModal(false); setPostType(null); setPostContent(""); setPreview(null); }}>Cancel</button>
-        <button className="send-btn" onClick={handlePost}>Post</button>
-      </div>
+      {/* ACTIONS */}
+      {postType && (
+        <div className="post-actions modern">
+          <button className="cancel" onClick={() => setPostType(null)}>
+            Back
+          </button>
+          <button className="send" onClick={handlePost}>
+            Post
+          </button>
+        </div>
+      )}
+
     </div>
   </div>
 )}
@@ -471,9 +526,9 @@ const handlePost = async () => {
       {/* My Status */}
       <div className="my-status" onClick={() => setShowPostModal(true)}>
         <div className="status-avatar">
-          <img  src={profile?.photo} alt="My Profile" className="avatar" />
-          <FiPlus className="add-icon" />
-        </div>
+  {renderAvatar(profile?.photo, profile?.name || "Me", 60)}
+  <FiPlus className="add-icon" />
+</div>
         <div className="status-text">
           <h3>My Status</h3>
           <p>Tap to add status update</p>
@@ -591,11 +646,25 @@ const handlePost = async () => {
             <div className="status-bottom-overlay">
               <div className="status-bottom-ui">
      <div className="reply-box">
-  <input
-    placeholder="Reply..."
-    value={reply}
-    onChange={e => setReply(e.target.value)}
-  />
+   <input
+  placeholder="Reply..."
+  value={reply}
+   onFocus={() => {
+  setPaused(true);
+
+  if (videoRef.current) {
+    videoRef.current.pause();
+  }
+}}
+  onBlur={() => {
+  setPaused(false);
+
+  if (videoRef.current) {
+    videoRef.current.play();
+  }
+}}
+  onChange={(e) => setReply(e.target.value)}
+/>
   <button onClick={sendReply}>Send</button>
            </div>
 

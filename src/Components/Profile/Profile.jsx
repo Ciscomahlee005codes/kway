@@ -28,29 +28,43 @@ const Profile = () => {
   // =============================
   // 🖼️ UPDATE PROFILE PHOTO
   // =============================
- const handleEditPhoto = async (e) => {
+  const handleEditPhoto = async (e) => {
   const file = e.target.files[0];
   if (!file || !session?.user) return;
 
   const fileExt = file.name.split(".").pop();
-  const filePath = `${session.user.id}/avatar-${Date.now()}.${fileExt}`;
+
+  const filePath =
+    `${session.user.id}/avatar-${Date.now()}.${fileExt}`;
 
   try {
-    // upload new image
+
+    /*
+    UPLOAD IMAGE
+    */
+
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        upsert: true,
+      });
 
     if (uploadError) throw uploadError;
 
-    // get public url
+    /*
+    GET PUBLIC URL
+    */
+
     const { data } = supabase.storage
       .from("avatars")
       .getPublicUrl(filePath);
 
-    const newPhotoUrl = data.publicUrl;
+    const newPhotoUrl = data.publicUrl + `?t=${Date.now()}`;
 
-    // update database
+    /*
+    UPDATE DATABASE
+    */
+
     const { error: updateError } = await supabase
       .from("profiles")
       .update({ photo: newPhotoUrl })
@@ -58,16 +72,25 @@ const Profile = () => {
 
     if (updateError) throw updateError;
 
-    // update UI instantly
-    setProfile((prev) => ({
+    /*
+    UPDATE LOCAL STATE
+    */
+
+    setProfile(prev => ({
       ...prev,
-      photo: newPhotoUrl,
+      photo: newPhotoUrl
     }));
+
+    /*
+    REFRESH GLOBAL PROFILE CACHE
+    */
+
+    await refreshProfile();
 
     toast.success("Profile picture updated 🎉");
 
   } catch (err) {
-    console.error(err);
+    console.error(err.message);
     toast.error("Failed to update photo");
   }
 };

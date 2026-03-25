@@ -198,8 +198,10 @@ setActiveChat(prev => ({
 
         <div className="chat-info">
           <h4>{chat?.name || "Unknown"}</h4>
-          <p>
-  {chat?.lastMessage
+         <p>
+  {chat?.lastMessageType === "status_reply"
+    ? "↩️ Replied to your status"
+    : chat?.lastMessage
     ? chat.lastMessage.slice(0, 30)
     : "No messages yet"}
 </p>

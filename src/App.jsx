@@ -34,6 +34,8 @@ import AdminChartPage from "./Admin/AdminPages/AdminChartPage/AdminChartPage";
 import AdminTestPage from "./Admin/AdminPages/AdminTestPage/AdminTestPage";
 import ResetPassword from "./Components/Auth/ResetPassword";
 import GroupPage from "./Pages/GroupPage/GroupPage";
+import GroupChat from "./Components/Groups/GroupChat";
+import GroupInfo from "./Components/Groups/GroupInfo";
 
 function App() {
   const location = useLocation();
@@ -51,6 +53,7 @@ function App() {
     location.pathname === "/phonenumber/verification" ||
     location.pathname === "/profile-setup" ||
     location.pathname === "/forgot-password" ||
+    location.pathname === "/group/:id" ||
     location.pathname === "/reset-password";
 
   return (
@@ -102,6 +105,10 @@ function App() {
           }
         />
 
+         <Route path="/group/:id" element={
+          <ProtectedRoute>
+            <GroupChat />
+         </ProtectedRoute>} />
         <Route
           path="/groups"
           element={
@@ -110,7 +117,10 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+       <Route path="/group-info/:id" element={
+        <ProtectedRoute>
+          <GroupInfo />
+       </ProtectedRoute>} />
         <Route
           path="/linkup"
           element={

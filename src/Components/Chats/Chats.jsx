@@ -60,6 +60,45 @@ const getUnread = (chatId) => {
 
   return unreadStore[chatId] || 0;
 };
+
+// Real Time Chats 
+useEffect(() => {
+  if (!session?.user) return;
+
+  const channel = supabase
+    .channel("messages-realtime")
+
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+      },
+      (payload) => {
+        const msg = payload.new;
+
+        console.log("Realtime message:", msg);
+
+        if (
+          msg.sender_id === activeChat?.id ||
+          msg.receiver_id === activeChat?.id
+        ) {
+          setActiveChat((prev) => ({
+            ...prev,
+            messages: [...prev.messages, msg],
+          }));
+        }
+      }
+    )
+
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [activeChat]);
+
 useEffect(() => {
   if (!activeChat || !user) return;
 
@@ -79,14 +118,36 @@ useEffect(() => {
     if (!data) return;
 
     setActiveChat(prev => ({
-      ...prev,
-      messages: data.map(msg => ({
-        text: msg.content,
-        sender: msg.sender_id === user.id ? "you" : "them",
-        time: new Date(msg.created_at).toLocaleTimeString(),
-        status: msg.seen ? "seen" : "sent",
-      })),
-    }));
+  ...prev,
+  messages: data.map(msg => ({
+    id: msg.id,
+
+    text: msg.content,
+
+    sender:
+      msg.sender_id === user.id
+        ? "you"
+        : "them",
+
+    time: new Date(
+      msg.created_at
+    ).toLocaleTimeString(),
+
+    status: msg.seen
+      ? "seen"
+      : "sent",
+
+    type: msg.type,
+
+    status_id: msg.status_id,
+
+    status_text: msg.status_text,
+
+    status_media: msg.status_media,
+
+    status_bg: msg.status_bg,
+  })),
+}));
   };
 
   loadChat();
@@ -214,18 +275,40 @@ setChats(prev =>
   if (!data) return;
 
   setActiveChat(prev => ({
-    ...prev,
-    messages: data.map(msg => ({
-      text: msg.content,
-      sender: msg.sender_id === user.id ? "you" : "them",
-      time: new Date(msg.created_at).toLocaleTimeString(),
-      status: msg.seen
-        ? "seen"
-        : msg.delivered
-        ? "delivered"
-        : "sent",
-    })),
-  }));
+  ...prev,
+  messages: data.map(msg => ({
+    id: msg.id,
+
+    text: msg.content,
+
+    sender:
+      msg.sender_id === user.id
+        ? "you"
+        : "them",
+
+    time: new Date(
+      msg.created_at
+    ).toLocaleTimeString(),
+
+    status: msg.seen
+      ? "seen"
+      : msg.delivered
+      ? "delivered"
+      : "sent",
+
+    // ✅ ADD THESE FIELDS (CRITICAL FIX)
+
+    type: msg.type,
+
+    status_id: msg.status_id,
+
+    status_text: msg.status_text,
+
+    status_media: msg.status_media,
+
+    status_bg: msg.status_bg,
+  })),
+}));
 };
 
     fetchMessages();
@@ -252,28 +335,28 @@ setChats(prev =>
   const unreadMap = {};
 
   messages.forEach(msg => {
-    const other =
-      msg.sender_id === user.id
-        ? msg.receiver_id
-        : msg.sender_id;
+  const other =
+    msg.sender_id === user.id
+      ? msg.receiver_id
+      : msg.sender_id;
 
-    if (!chatMap[other]) {
-      chatMap[other] = {
-        lastMessage: msg.content,
-        time: new Date(msg.created_at).toLocaleTimeString(),
-      };
-    }
+  if (!chatMap[other]) {
+    chatMap[other] = {
+      lastMessage: msg.content,
+      lastMessageType: msg.type,   // ✅ CRITICAL FIX
+      time: new Date(msg.created_at).toLocaleTimeString(),
+    };
+  }
 
-   if (
-  msg.receiver_id === user.id &&
-  msg.seen === false &&
-  msg.sender_id !== activeChat?.id
-)
- {
-      unreadMap[other] =
-        (unreadMap[other] || 0) + 1;
-    }
-  });
+  if (
+    msg.receiver_id === user.id &&
+    msg.seen === false &&
+    msg.sender_id !== activeChat?.id
+  ) {
+    unreadMap[other] =
+      (unreadMap[other] || 0) + 1;
+  }
+});
 
   const ids = Object.keys(chatMap);
 
@@ -288,15 +371,26 @@ setChats(prev =>
   id: p.id,
   name: p.name,
   avatar: p.photo,
+
   lastMessage: chatMap[p.id]?.lastMessage,
+
+  lastMessageType: chatMap[p.id]?.lastMessageType, // ✅ ADD THIS
+
   time: chatMap[p.id]?.time,
+
   unread:
-  getUnread(p.id) || unreadMap[p.id] || 0,
+    getUnread(p.id) ||
+    unreadMap[p.id] ||
+    0,
+
   messages: [],
+
   lastMessageDate: messages.find(
     m =>
-      (m.sender_id === user.id && m.receiver_id === p.id) ||
-      (m.sender_id === p.id && m.receiver_id === user.id)
+      (m.sender_id === user.id &&
+        m.receiver_id === p.id) ||
+      (m.sender_id === p.id &&
+        m.receiver_id === user.id)
   )?.created_at,
 }));
 
@@ -347,6 +441,7 @@ useEffect(() => {
                 ...chat,
                 unread: newCount,
                 lastMessage: msg.content,
+                lastMessageType: msg.type, 
               };
             }
             return chat;

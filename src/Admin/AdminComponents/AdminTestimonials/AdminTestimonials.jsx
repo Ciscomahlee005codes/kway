@@ -29,7 +29,13 @@ const AdminTestimonials = () => {
       {list.map((t) => (
         <div key={t.id} className="testimonial-card-admin">
           <div className="top">
-            <img src={t.profile?.photo || "/avatar.png"} alt="" />
+            {t.profile?.photo ? (
+  <img src={t.profile.photo} alt="avatar" />
+) : (
+  <div className="avatar-fallback-admin">
+    {(t.profile?.name || "U").charAt(0).toUpperCase()}
+  </div>
+)}
             <div>
               <h4>{t.profile?.name || "User"}</h4>
               <span>{new Date(t.created_at).toLocaleDateString()}</span>
