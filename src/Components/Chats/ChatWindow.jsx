@@ -33,6 +33,7 @@ const ChatWindow = ({
    const channel = supabase.channel("typing-status");
   const emojiRef = useRef(null);
   const dropdownRef = useRef(null);
+  const typingChannelRef = useRef(null);
 
   const { session } = UserAuth();
 
@@ -42,10 +43,35 @@ useEffect(() => {
   setShowChatDropdown(false);
 }, [activeChat]);
 
+// Real Time Chatting
+useEffect(() => {
+  if (!activeChat) return;
+
+  typingChannelRef.current = supabase
+    .channel("typing-status")
+    .on("broadcast", { event: "typing" }, ({ payload }) => {
+      if (payload.sender === activeChat.id) {
+        setIsTyping(true);
+      }
+    })
+    .on("broadcast", { event: "stop_typing" }, ({ payload }) => {
+      if (payload.sender === activeChat.id) {
+        setIsTyping(false);
+      }
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(typingChannelRef.current);
+  };
+}, [activeChat]);
+
 const typingTimeoutRef = useRef(null);
 
 const handleTyping = () => {
-  channel.send({
+  if (!typingChannelRef.current) return;
+
+  typingChannelRef.current.send({
     type: "broadcast",
     event: "typing",
     payload: {
@@ -57,7 +83,7 @@ const handleTyping = () => {
   clearTimeout(typingTimeoutRef.current);
 
   typingTimeoutRef.current = setTimeout(() => {
-    channel.send({
+    typingChannelRef.current.send({
       type: "broadcast",
       event: "stop_typing",
       payload: {
@@ -65,7 +91,7 @@ const handleTyping = () => {
         receiver: activeChat.id,
       },
     });
-  }, 1500);
+  }, 1200);
 };
 
 const openStatusPreview = async (msg) => {
@@ -205,6 +231,11 @@ console.log("Active Chat:", activeChat);
   </div>
 )}
           <h3>{activeChat.name}</h3>
+           {isTyping && (
+  <p className="typing-indicator">
+    {activeChat.name} is typing...
+  </p>
+)}
         </div>
 
         <div className="header-actions">
@@ -425,11 +456,6 @@ console.log("Active Chat:", activeChat);
           {emoji}
         </span>
       ))}
-      {isTyping && (
-  <p className="typing-indicator">
-    {activeChat.name} is typing...
-  </p>
-)}
 
     </div>
   </>

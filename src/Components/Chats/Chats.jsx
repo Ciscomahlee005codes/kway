@@ -75,18 +75,36 @@ useEffect(() => {
         schema: "public",
         table: "messages",
       },
-      (payload) => {
+      payload => {
         const msg = payload.new;
 
         console.log("Realtime message:", msg);
 
+        if (!activeChat) return;
+
         if (
-          msg.sender_id === activeChat?.id ||
-          msg.receiver_id === activeChat?.id
+          msg.sender_id === activeChat.id ||
+          msg.receiver_id === activeChat.id
         ) {
-          setActiveChat((prev) => ({
+          setActiveChat(prev => ({
             ...prev,
-            messages: [...prev.messages, msg],
+            messages: [
+              ...(prev.messages || []),
+              {
+                id: msg.id,
+                text: msg.content,
+                sender:
+                  msg.sender_id === session.user.id
+                    ? "you"
+                    : "them",
+                time: new Date(
+                  msg.created_at
+                ).toLocaleTimeString(),
+                status: msg.seen
+                  ? "seen"
+                  : "sent",
+              },
+            ],
           }));
         }
       }
@@ -97,7 +115,7 @@ useEffect(() => {
   return () => {
     supabase.removeChannel(channel);
   };
-}, [activeChat]);
+}, []);
 
 useEffect(() => {
   if (!activeChat || !user) return;
@@ -408,51 +426,51 @@ formatted.sort(
   fetchChats();
 }, [user]);
   
-useEffect(() => {
-  if (!user) return;
+// useEffect(() => {
+//   if (!user) return;
 
-  const channel = supabase
-    .channel("messages-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-      },
-      payload => {
-        const msg = payload.new;
+//   const channel = supabase
+//     .channel("messages-realtime")
+//     .on(
+//       "postgres_changes",
+//       {
+//         event: "INSERT",
+//         schema: "public",
+//         table: "messages",
+//       },
+//       payload => {
+//         const msg = payload.new;
 
-        if (msg.receiver_id !== user.id) return;
+//         if (msg.receiver_id !== user.id) return;
 
-        const sender = msg.sender_id;
+//         const sender = msg.sender_id;
 
-        // ignore if chat is currently open
-        if (activeChat?.id === sender) return;
+//         // ignore if chat is currently open
+//         if (activeChat?.id === sender) return;
 
-        setChats(prev =>
-          prev.map(chat => {
-            if (chat.id === sender) {
-              const newCount = (chat.unread || 0) + 1;
+//         setChats(prev =>
+//           prev.map(chat => {
+//             if (chat.id === sender) {
+//               const newCount = (chat.unread || 0) + 1;
 
-              saveUnread(sender, newCount);
+//               saveUnread(sender, newCount);
 
-              return {
-                ...chat,
-                unread: newCount,
-                lastMessage: msg.content,
-                lastMessageType: msg.type, 
-              };
-            }
-            return chat;
-          })
-        );
-      }
-    )
-    .subscribe();
+//               return {
+//                 ...chat,
+//                 unread: newCount,
+//                 lastMessage: msg.content,
+//                 lastMessageType: msg.type, 
+//               };
+//             }
+//             return chat;
+//           })
+//         );
+//       }
+//     )
+//     .subscribe();
 
-  return () => supabase.removeChannel(channel);
-}, [user, activeChat]);
+//   return () => supabase.removeChannel(channel);
+// }, [user, activeChat]);
 
   // =========================================
   // ✅ SEND MESSAGE
