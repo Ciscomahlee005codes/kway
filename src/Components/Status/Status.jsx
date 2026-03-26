@@ -6,7 +6,9 @@ import { FiCamera } from "react-icons/fi";
 import { MdEdit } from "react-icons/md";
 import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
+import { PiEyesBold } from "react-icons/pi";
 import toast from "react-hot-toast";
+import { formatTime } from "../../utils/timeFormatter";
 import "./Status.css";
 
 const bg_color = ["#25d366", "#34b7f1", "#ffeb3b", "#f44336", "#9c27b0"];
@@ -30,6 +32,8 @@ const Status = () => {
   const [paused, setPaused] = useState(false);
   const videoRef = React.useRef();
   const [storyDuration, setStoryDuration] = useState(5000); // default 8s
+  const [viewers, setViewers] = useState([]);
+const [showViewers, setShowViewers] = useState(false);
   const colors = ["#25d366","#34b7f1","#ff9800","#e91e63","#9c27b0"];
 
 
@@ -114,8 +118,28 @@ useEffect(() => {
   useEffect(() => {
   fetchStatuses();
 }, []);
+// Pause on Mobile Devices
+useEffect(() => {
+  const handleResize = () => {
+    if (window.innerHeight < 500) {
+      setPaused(true);
+    }
+  };
 
+  window.addEventListener("resize", handleResize);
 
+  return () =>
+    window.removeEventListener("resize", handleResize);
+}, []);
+useEffect(() => {
+  if (showViewers) {
+    setPaused(true);
+    videoRef.current?.pause();
+  } else {
+    setPaused(false);
+    videoRef.current?.play();
+  }
+}, [showViewers]);
   useEffect(() => {
   const channel = supabase
     .channel("status-changes")
@@ -136,7 +160,7 @@ useEffect(() => {
     // 1️⃣ GET STATUS
     const { data: statusData, error: statusError } = await supabase
       .from("status")
-      .select("*")
+      .select(`*,status_views(count)`)
       .gt("created_at", yesterday.toISOString())
       .order("created_at", { ascending: false });
 
@@ -174,7 +198,10 @@ useEffect(() => {
             stories: [],
           };
         }
-        acc[s.user_id].stories.push(s);
+        acc[s.user_id].stories.push({
+  ...s,
+  views_count: s.status_views?.[0]?.count || 0
+});
         return acc;
       }, {})
     );
@@ -185,6 +212,76 @@ useEffect(() => {
     console.log("Fetch crash:", err);
   }
 };
+
+// Fetching Status Viewers
+const fetchViewers = async (statusId) => {
+
+  console.log("Fetching viewers for:", statusId);
+
+  const { data, error } = await supabase
+    .from("status_views")
+    .select("viewer_id, created_at")
+    .eq("status_id", statusId);
+
+  if (error) {
+    console.log("Viewer fetch error:", error);
+    return;
+  }
+
+  console.log("Status views raw:", data);
+
+  if (!data || data.length === 0) {
+    setViewers([]);
+    setShowViewers(true);
+    return;
+  }
+
+  const ids = data.map(v => v.viewer_id);
+
+  const { data: profiles, error: profileError } =
+    await supabase
+      .from("profiles")
+      .select("id, name, photo")
+      .in("id", ids);
+
+  if (profileError) {
+    console.log("Profile fetch error:", profileError);
+    return;
+  }
+
+  console.log("Profiles fetched:", profiles);
+
+  // merge profile + timestamp
+
+  const merged = data.map(view => {
+
+    const profile = profiles.find(
+      p => p.id === view.viewer_id
+    );
+
+    return {
+      ...profile,
+      viewed_at: view.created_at
+    };
+
+  });
+
+  setViewers(merged);
+  setShowViewers(true);
+};
+
+const formatTime = (timestamp) => {
+
+  if (!timestamp) return "";
+
+  return new Date(timestamp)
+    .toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+};
+
 const sendReply = async () => {
   if (!reply.trim()) return;
 
@@ -276,16 +373,33 @@ const sendReply = async () => {
     setActiveStoryIndex(0);
     setProgress(0);
   };
-   const markSeen = async (storyId) => {
+  const markSeen = async (storyId) => {
+
   if (!session?.user) return;
 
-  await supabase.from("status_views").upsert({
-    status_id: storyId,
-    viewer_id: session.user.id,
-  });
+  console.log("Attempting to insert viewer:", storyId);
+
+  const { error } = await supabase
+    .from("status_views")
+    .upsert(
+      {
+        status_id: storyId,
+        viewer_id: session.user.id,
+      },
+      {
+        onConflict: "status_id,viewer_id"
+      }
+    );
+
+  if (error) {
+    console.log("Viewer insert failed:", error.message);
+  } else {
+    console.log("Viewer inserted successfully");
+  }
+
 };
 
-  useEffect(() => {
+ useEffect(() => {
   if (
     activeUserIndex !== null &&
     statuses[activeUserIndex]?.stories?.[activeStoryIndex]
@@ -293,9 +407,11 @@ const sendReply = async () => {
     const story =
       statuses[activeUserIndex]?.stories?.[activeStoryIndex];
 
+    console.log("Recording viewer:", story.id);
+
     markSeen(story.id);
   }
-}, [activeStoryIndex]);
+}, [activeUserIndex, activeStoryIndex]);
 
 
   const closeStatus = () => {
@@ -569,22 +685,15 @@ const handlePost = async () => {
         <div className="status-modal">
           <div
   className="status-modal-content"
-  onMouseDown={() => {
-    setPaused(true);
-    videoRef.current?.pause();
-  }}
-  onMouseUp={() => {
-    setPaused(false);
-    videoRef.current?.play();
-  }}
-  onTouchStart={() => {
-    setPaused(true);
-    videoRef.current?.pause();
-  }}
-  onTouchEnd={() => {
-    setPaused(false);
-    videoRef.current?.play();
-  }}
+  onPointerDown={() => {
+  setPaused(true);
+  videoRef.current?.pause();
+}}
+
+onPointerUp={() => {
+  setPaused(false);
+  videoRef.current?.play();
+}}
 >
             <div className="progress-container">
               {statuses[activeUserIndex]?.stories?.[activeStoryIndex] && statuses[activeUserIndex]?.stories?.map((_, i) => (
@@ -649,30 +758,40 @@ const handlePost = async () => {
    <input
   placeholder="Reply..."
   value={reply}
-   onFocus={() => {
-  setPaused(true);
-
-  if (videoRef.current) {
-    videoRef.current.pause();
-  }
-}}
-  onBlur={() => {
-  setPaused(false);
-
-  if (videoRef.current) {
-    videoRef.current.play();
-  }
-}}
-  onChange={(e) => setReply(e.target.value)}
+  onFocus={() => setPaused(true)}
+  onBlur={() => setPaused(false)}
+  onChange={(e) => {
+    setReply(e.target.value);
+    setPaused(true);
+  }}
+  onKeyDown={() => setPaused(true)}
+  onKeyUp={() => {
+    if (!reply.length) setPaused(false);
+  }}
 />
   <button onClick={sendReply}>Send</button>
            </div>
 
-           <p className="seen-count">
- 👀 {statuses[activeUserIndex]
-   .stories[activeStoryIndex]
-   .views_count || 0} seen
-</p>
+          {statuses[activeUserIndex].id === session.user.id && (
+  <p
+  className="seen-count"
+  onClick={() => {
+  setPaused(true);
+  videoRef.current?.pause();
+
+  fetchViewers(
+    statuses[activeUserIndex]
+    .stories[activeStoryIndex].id
+  );
+}}
+>
+    <PiEyesBold  className="eye-con"/> {
+      statuses[activeUserIndex]
+      .stories[activeStoryIndex]
+      .views_count || 0
+    } seen
+  </p>
+)}
 
 {/* <div className="emoji-bar">
   {["❤️","🔥","😂"].map(e => (
@@ -690,7 +809,76 @@ const handlePost = async () => {
         </div>
 
       )}
-     
+     {/* Viewers */}
+{showViewers && (
+  <div
+    className="viewers-sheet-overlay"
+    onClick={() => {
+  setShowViewers(false);
+  setPaused(false);
+  videoRef.current?.play();
+}}
+  >
+
+    <div
+      className="viewers-sheet"
+      onPointerDown={()=> setPaused(true)}
+      onClick={(e) => e.stopPropagation()}
+    >
+
+      <div className="sheet-handle" />
+
+      <h3>
+        Viewed by {viewers.length}
+      </h3>
+
+      <div className="viewer-list">
+
+        {viewers.length === 0 ? (
+
+  <p className="no-viewers">
+    No viewers yet
+  </p>
+
+) : (
+
+  viewers.map(user => (
+
+    <div
+      key={user.id}
+      className="viewer-row"
+    >
+
+      {renderAvatar(
+        user.photo,
+        user.name,
+        45
+      )}
+
+      <div className="viewer-meta">
+
+        <span className="viewer-name">
+          {user.name}
+        </span>
+
+        <span className="viewer-time">
+          Viewed {formatTime(user.viewed_at)}
+        </span>
+
+      </div>
+
+    </div>
+
+  ))
+
+)}
+
+      </div>
+
+    </div>
+
+  </div>
+)}
 
 
      <div className="fab-group">

@@ -673,8 +673,106 @@
 .seen-count{
   font-size: 12px;
   color: #ccc;
+  cursor: pointer;
 }
 
+/* Overlay background */
+
+.viewers-sheet-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  z-index:999999;
+}
+
+/* Bottom popup container */
+
+.viewers-sheet{
+  width:100%;
+  max-width:500px;
+  height:60vh;
+
+  background:white;
+
+  border-radius:20px 20px 0 0;
+
+  padding:18px;
+
+  animation:slideUpSheet .25s ease;
+
+  display:flex;
+  flex-direction:column;
+}
+
+/* Drag handle */
+
+.sheet-handle{
+  width:45px;
+  height:5px;
+
+  background:#ccc;
+
+  border-radius:5px;
+
+  margin:0 auto 12px auto;
+}
+
+/* Viewer list scroll */
+
+.viewer-list{
+  overflow-y:auto;
+  margin-top:10px;
+}
+
+/* Single viewer row */
+
+.viewer-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  padding:12px 6px;
+
+  border-bottom:1px solid #eee;
+
+  font-size:15px;
+}
+
+/* Empty state */
+
+.no-viewers{
+  text-align:center;
+  margin-top:40px;
+  color:#888;
+}
+
+/* Animation */
+
+@keyframes slideUpSheet{
+  from{
+    transform:translateY(100%);
+  }
+
+  to{
+    transform:translateY(0);
+  }
+}
+.viewer-meta{
+  display:flex;
+  flex-direction:column;
+}
+
+.viewer-name{
+  font-weight:500;
+}
+
+.viewer-time{
+  font-size:12px;
+  color:#888;
+}
 
 /* Status preview */
 .status-preview {
@@ -688,7 +786,9 @@
   align-items: center;
   min-height: 60px;
 }
-
+.eye-con{
+  font-size: 18px;
+}
 .preview-img {
   width: 100%;
   max-height: 200px;
