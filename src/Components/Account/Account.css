@@ -168,6 +168,7 @@ select:focus,
   60%  { transform: scale(1.05); opacity: 1; }
   100% { transform: scale(1); }
 }
+
 @media (max-width: 768px) {
     .account-container {
   /* max-width: 700px; */

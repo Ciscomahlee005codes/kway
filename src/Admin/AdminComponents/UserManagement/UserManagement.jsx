@@ -128,7 +128,10 @@ const UserManagement = () => {
 <td className="actions" data-label="Actions">
                     <button
                       className="btn view"
-                      onClick={() => setSelectedUser(user)}
+                      onClick={() => {
+                        console.log("Viewing user:", user);
+                        setSelectedUser(user);
+                      }}
                     >
                       View
                     </button>
@@ -156,8 +159,9 @@ const UserManagement = () => {
 
       {/* MODAL */}
 {selectedUser && (
-  <div className="modal">
-    <div className="modal-box">
+  <div className="modal-root">
+    <div className="modal"  onClick={() => setSelectedUser(null)}>
+    <div className="modal-box"  onClick={() => setSelectedUser(null)}>
 
       <button className="close" onClick={() => setSelectedUser(null)}>×</button>
 
@@ -173,24 +177,34 @@ const UserManagement = () => {
 
       <div className="modal-info">
 
-        <div className="info-row">
-          <span className="label">Date of Birth</span>
-          <span className="value">{selectedUser.dob || "—"}</span>
-        </div>
+  <div className="info-row">
+    <span className="label">Username</span>
+    <span className="value">@{selectedUser.username}</span>
+  </div>
 
-        <div className="info-row">
-          <span className="label">Gender</span>
-          <span className="value">{selectedUser.gender || "—"}</span>
-        </div>
+  <div className="info-row">
+    <span className="label">Gender</span>
+    <span className="value">{selectedUser.gender || "—"}</span>
+  </div>
 
-        <div className="info-row">
-          <span className="label">Bio</span>
-          <span className="value bio">
-            {selectedUser.about || "No bio yet"}
-          </span>
-        </div>
+  <div className="info-row">
+    <span className="label">DOB</span>
+    <span className="value">{selectedUser.dob || "—"}</span>
+  </div>
 
-      </div>
+  <div className="info-row">
+    <span className="label">Role</span>
+    <span className="value">{selectedUser.role || "user"}</span>
+  </div>
+
+  <div className="info-row">
+    <span className="label">Bio</span>
+    <span className="value bio">
+      {selectedUser.about || "No bio yet"}
+    </span>
+  </div>
+
+</div>
 
       <button
         className="btn delete full"
@@ -200,6 +214,7 @@ const UserManagement = () => {
       </button>
 
     </div>
+  </div>
   </div>
 )}
     </div>

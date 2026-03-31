@@ -350,7 +350,16 @@ setChats(prev =>
   if (!messages) return;
 
   const chatMap = {};
-  const unreadMap = {};
+  const { data: unreadCounts } = await supabase
+  .from("chat_unread_counts")
+  .select("*")
+  .eq("user_id", user.id);
+
+const unreadMap = {};
+
+unreadCounts?.forEach(row => {
+  unreadMap[row.chat_id] = row.unread_count;
+});
 
   messages.forEach(msg => {
   const other =
@@ -366,14 +375,6 @@ setChats(prev =>
     };
   }
 
-  if (
-    msg.receiver_id === user.id &&
-    msg.seen === false &&
-    msg.sender_id !== activeChat?.id
-  ) {
-    unreadMap[other] =
-      (unreadMap[other] || 0) + 1;
-  }
 });
 
   const ids = Object.keys(chatMap);
@@ -396,10 +397,7 @@ setChats(prev =>
 
   time: chatMap[p.id]?.time,
 
-  unread:
-    getUnread(p.id) ||
-    unreadMap[p.id] ||
-    0,
+  unread: unreadMap[p.id] || 0,
 
   messages: [],
 
@@ -426,51 +424,53 @@ formatted.sort(
   fetchChats();
 }, [user]);
   
-// useEffect(() => {
-//   if (!user) return;
+useEffect(() => {
+  if (!user) return;
 
-//   const channel = supabase
-//     .channel("messages-realtime")
-//     .on(
-//       "postgres_changes",
-//       {
-//         event: "INSERT",
-//         schema: "public",
-//         table: "messages",
-//       },
-//       payload => {
-//         const msg = payload.new;
 
-//         if (msg.receiver_id !== user.id) return;
+}, [user, activeChat]);
 
-//         const sender = msg.sender_id;
+  useEffect(() => {
+  if (!user) return;
 
-//         // ignore if chat is currently open
-//         if (activeChat?.id === sender) return;
+  const channel = supabase
+    .channel("messages-realtime-unread")
 
-//         setChats(prev =>
-//           prev.map(chat => {
-//             if (chat.id === sender) {
-//               const newCount = (chat.unread || 0) + 1;
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "messages",
+      },
+      async () => {
 
-//               saveUnread(sender, newCount);
+        const { data } = await supabase
+          .from("chat_unread_counts")
+          .select("*")
+          .eq("user_id", user.id);
 
-//               return {
-//                 ...chat,
-//                 unread: newCount,
-//                 lastMessage: msg.content,
-//                 lastMessageType: msg.type, 
-//               };
-//             }
-//             return chat;
-//           })
-//         );
-//       }
-//     )
-//     .subscribe();
+        const unreadMap = {};
 
-//   return () => supabase.removeChannel(channel);
-// }, [user, activeChat]);
+        data?.forEach(row => {
+          unreadMap[row.chat_id] = row.unread_count;
+        });
+
+        setChats(prev =>
+          prev.map(chat => ({
+            ...chat,
+            unread: unreadMap[chat.id] || 0
+          }))
+        );
+
+      }
+    )
+
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+
+}, [user?.id]);
 
   // =========================================
   // ✅ SEND MESSAGE

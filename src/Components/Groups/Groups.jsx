@@ -18,11 +18,12 @@ const Groups = () => {
     fetchGroups();
   }, []);
 
-  const fetchGroups = async () => {
+ const fetchGroups = async () => {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData?.user;
   if (!user) return;
 
+  // Step 1: get memberships
   const { data: memberships, error } = await supabase
     .from("group_members")
     .select("group_id")
@@ -40,12 +41,54 @@ const Groups = () => {
 
   const ids = memberships.map(m => m.group_id);
 
+  // Step 2: get groups
   const { data: groupsData } = await supabase
     .from("groups")
     .select("*")
     .in("id", ids);
 
-  setGroups(groupsData || []);
+  if (!groupsData) return;
+
+  // Step 3: attach last message + sender for each group
+const groupsWithLastMessage = await Promise.all(
+  groupsData.map(async (group) => {
+
+    const { data: lastMsg } = await supabase
+      .from("group_messages")
+      .select("message, created_at, sender_id")
+      .eq("group_id", group.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let senderName = "";
+
+    if (lastMsg?.sender_id) {
+      const { data: sender } = await supabase
+        .from("users")
+        .select("full_name")
+        .eq("id", lastMsg.sender_id)
+         .maybeSingle();
+
+      senderName = sender?.full_name || "";
+    }
+
+    return {
+      ...group,
+      lastMessage: lastMsg
+        ? `${senderName}: ${lastMsg.message}`
+        : "No messages yet",
+      time: lastMsg?.created_at
+        ? new Date(lastMsg.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : ""
+    };
+  })
+);
+
+  setGroups(groupsWithLastMessage);
 };
 
   const filtered = groups.filter(g =>
@@ -84,7 +127,7 @@ const Groups = () => {
             onClick={() => navigate(`/group/${group.id}`)}
           >
             <img
-              src={group.image || "https://i.pravatar.cc/150"}
+              src={group.image}
               alt="group"
               width={55}
               height={55}

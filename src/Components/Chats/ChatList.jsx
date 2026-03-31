@@ -18,7 +18,6 @@ const ChatList = ({
   showSidebarDropdown,
   setShowSidebarDropdown,
   setShowChatDropdown,
-  saveUnread,
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -151,24 +150,14 @@ useEffect(() => {
         className={`chat-item ${
           activeChat?.id === chat.id ? "active" : ""
         }`}
-      onClick={async () => {
-  // if (chat.unread > 0) {
-  //   await supabase
-  //     .from("messages")
-  //     .update({ seen: true })
-  //     .eq("sender_id", chat.id)
-  //     .eq("receiver_id", user.id);
+       onClick={async () => {
 
-  //   setChats(prev =>
-  //     prev.map(c =>
-  //       c.id === chat.id
-  //         ? { ...c, unread: 0 }
-  //         : c
-  //     )
-  //   );
-  // }
-
-  saveUnread(chat.id, 0);
+await supabase
+  .from("messages")
+  .update({ seen: true })
+  .eq("sender_id", chat.id)
+  .eq("receiver_id", user.id)
+  .eq("seen", false);
 
 setChats(prev =>
   prev.map(c =>
@@ -178,10 +167,10 @@ setChats(prev =>
   )
 );
 
-setActiveChat(prev => ({
+setActiveChat({
   ...chat,
-  messages: prev?.messages || []
-}));
+  messages: chat.messages || []
+});
 }}
       >
         <div className="chat-avatar">

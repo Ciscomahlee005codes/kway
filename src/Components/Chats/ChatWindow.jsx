@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { IoArrowBack } from "react-icons/io5";
 import { FiPhone, FiVideo, FiSend, FiSmile } from "react-icons/fi";
+import { FaMicrophoneAlt } from "react-icons/fa";
+import { FaCameraRetro } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
@@ -28,6 +30,7 @@ const ChatWindow = ({
 }) => {
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [recording, setRecording] = useState(false);
   const [pressTimer, setPressTimer] = useState(null);
    const [isTyping, setIsTyping] = useState(false);
    const channel = supabase.channel("typing-status");
@@ -42,6 +45,10 @@ useEffect(() => {
   // Close dropdown when chat changes
   setShowChatDropdown(false);
 }, [activeChat]);
+
+const handleVoiceClick = () => {
+  setRecording(prev => !prev);
+};
 
 // Real Time Chatting
 useEffect(() => {
@@ -118,8 +125,10 @@ useEffect(() => {
 const endRef = useRef(null);
 
 useEffect(() => {
-  endRef.current?.scrollIntoView({ behavior: "smooth" });
-}, [activeChat?.messages]);
+  endRef.current?.scrollIntoView({
+    behavior: "auto"
+  });
+}, [activeChat?.messages?.length]);
 
 useEffect(() => {
   const typingChannel = supabase
@@ -373,12 +382,13 @@ console.log("Active Chat:", activeChat);
   );
 
 })}
+      <div ref={endRef} />
       </div>
 
       {/* ================= INPUT ================= */}
       {/* ================= INPUT ================= */}
+     {/* ================= INPUT ================= */}
 <div className="chat-input-wrapper">
-
   <div className="chat-input-box">
     <FiSmile
       className="emoji-btn"
@@ -386,27 +396,58 @@ console.log("Active Chat:", activeChat);
     />
 
     <textarea
-  rows={1}
-  placeholder="Type a message..."
-  value={newMessage}
-  onChange={(e) => {
-    setNewMessage(e.target.value);
-    handleTyping();
-  }}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  }}
-/>
+      rows={1}
+      placeholder="Type a message"
+      value={newMessage}
+      onChange={(e) => {
+        setNewMessage(e.target.value);
+        handleTyping();
+        e.target.style.height = "auto";           
+        e.target.style.height = e.target.scrollHeight + "px";
+      }}
+      onInput={(e) => {  
+        e.target.style.height = "auto";
+        e.target.style.height = e.target.scrollHeight + "px";
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
+          e.target.style.height = "auto";
+        }
+      }}
+    />
+
+    {/* Media Upload Button */}
+    <label htmlFor="media-upload" className="media-upload-btn">
+      <FaCameraRetro />
+    </label>
+    <input
+      type="file"
+      id="media-upload"
+      accept="image/*,video/*"
+      multiple
+      style={{ display: "none" }}
+      onChange={(e) => {
+        const files = Array.from(e.target.files);
+        // You can send these files to supabase or store in state for preview
+        console.log("Selected Media:", files);
+      }}
+    />
   </div>
 
-  <button className="chat-send-btn" onClick={handleSendMessage}>
-    <FiSend />
-  </button>
-
+  {newMessage.trim() ? (
+    <button className="chat-send-btn" onClick={handleSendMessage}>
+      <FiSend />
+    </button>
+  ) : (
+    <button className="chat-voice-btn" onClick={handleVoiceClick}>
+      <FaMicrophoneAlt />
+    </button>
+  )}
 </div>
+
+
 
       {/* ================= EMOJI PICKER ================= */}
       {showEmojiPicker && (
@@ -424,6 +465,16 @@ console.log("Active Chat:", activeChat);
       }
       theme="auto"
     />
+  </div>
+)}
+
+{recording && (
+  <div className="voice-recording-ui">
+
+    <span className="recording-dot" />
+
+    Recording voice message...
+
   </div>
 )}
 

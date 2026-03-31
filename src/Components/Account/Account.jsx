@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaLock, FaShieldAlt, FaUserShield, FaArrowLeft } from "react-icons/fa";
 import { useLanguage } from "../../Context/LanguageContext";
+import { supabase } from "../../supabase";
 import "./Account.css";
 
 const Account = () => {
@@ -10,6 +11,49 @@ const Account = () => {
 
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const toggle2FA = () => setTwoFAEnabled(prev => !prev);
+  const [lastSeen, setLastSeen] = useState("everyone");
+const [profilePhoto, setProfilePhoto] = useState("everyone");
+
+
+ useEffect(()=>{
+  fetchSettings()
+ },[]);
+
+//  const toggle2FA = async () => {
+//   const newValue = !twoFAEnabled;
+//   setTwoFAEnabled(newValue);
+
+//   const {
+//     data: { user }
+//   } = await supabase.auth.getUser();
+
+//   await supabase
+//     .from("user_settings")
+//     .upsert({
+//       user_id: user.id,
+//       two_factor_enabled: newValue
+//     });
+// };
+
+ const fetchSettings = async () => {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("user_settings")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  if (data) {
+    setLastSeen(data.last_seen_visibility);
+    setProfilePhoto(data.profile_photo_visibility);
+    setTwoFAEnabled(data.two_factor_enabled);
+  }
+};
 
   return (
     <div className="account-container fade-in">
@@ -31,7 +75,23 @@ const Account = () => {
 
         <div className="option-row">
           <label>{t("showLastSeen")}</label>
-          <select>
+          <select
+  value={lastSeen}
+  onChange={async (e) => {
+    setLastSeen(e.target.value);
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    await supabase
+      .from("user_settings")
+      .upsert({
+        user_id: user.id,
+        last_seen_visibility: e.target.value
+      });
+  }}
+>
             <option>{t("everyone")}</option>
             <option>{t("contactsOnly")}</option>
             <option>{t("nobody")}</option>
@@ -40,7 +100,23 @@ const Account = () => {
 
         <div className="option-row">
           <label>{t("profilePhotoVisibility")}</label>
-          <select>
+          <select
+  value={profilePhoto}
+  onChange={async (e) => {
+    setProfilePhoto(e.target.value);
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    await supabase
+      .from("user_settings")
+      .upsert({
+        user_id: user.id,
+        profile_photo_visibility: e.target.value
+      });
+  }}
+>
             <option>{t("everyone")}</option>
             <option>{t("contactsOnly")}</option>
             <option>{t("nobody")}</option>
