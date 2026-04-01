@@ -10,9 +10,14 @@ import { useEffect, useRef } from "react";
 import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
 import KwayLogo from "../../assets/kway-logo-1.png";
+import VoiceNotePlayer from "./VoiceNotePlayer";
 
 
 const ChatWindow = ({
+  selectedMedia,
+  setSelectedMedia,
+  mediaCaption,
+  setMediaCaption,
   activeChat,
   setActiveChat,
   newMessage,
@@ -31,6 +36,8 @@ const ChatWindow = ({
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+const audioChunksRef = useRef([]);
   const [pressTimer, setPressTimer] = useState(null);
    const [isTyping, setIsTyping] = useState(false);
    const channel = supabase.channel("typing-status");
@@ -38,7 +45,7 @@ const ChatWindow = ({
   const dropdownRef = useRef(null);
   const typingChannelRef = useRef(null);
 
-  const { session } = UserAuth();
+  const { session } = UserAuth() || {};
 
 
 useEffect(() => {
@@ -46,8 +53,150 @@ useEffect(() => {
   setShowChatDropdown(false);
 }, [activeChat]);
 
-const handleVoiceClick = () => {
-  setRecording(prev => !prev);
+const startRecording = async () => {
+
+  if (!activeChat) return;
+
+  try {
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        audio: true
+      });
+
+    const recorder =
+       new MediaRecorder(stream, {
+    mimeType: "audio/webm"
+  });
+
+    mediaRecorderRef.current = recorder;
+
+    audioChunksRef.current = [];
+
+    recorder.ondataavailable = e => {
+
+      if (e.data.size > 0) {
+
+        audioChunksRef.current.push(e.data);
+
+      }
+
+    };
+
+    recorder.onstop = async () => {
+
+  console.log("Recording stopped");
+
+  if (!audioChunksRef.current.length) {
+    console.log("❌ No audio chunks captured");
+    return;
+  }
+
+  const blob = new Blob(
+    audioChunksRef.current,
+    { type: "audio/webm" }
+  );
+
+  console.log("Blob size:", blob.size);
+
+  const fileName =
+    `voice-${Date.now()}.webm`;
+
+  const { error: uploadError } =
+    await supabase.storage
+      .from("chat-media")
+      .upload(fileName, blob);
+
+  if (uploadError) {
+
+    console.log("Upload failed:", uploadError);
+
+    return;
+
+  }
+
+  const { data } =
+    supabase.storage
+      .from("chat-media")
+      .getPublicUrl(fileName);
+
+  if (!data?.publicUrl) {
+
+    console.log("No public URL");
+
+    return;
+
+  }
+
+  console.log("Voice uploaded:", data.publicUrl);
+
+  await sendVoiceMessage(
+    data.publicUrl
+  );
+
+  stream
+    .getTracks()
+    .forEach(track => track.stop());
+
+  setRecording(false);
+
+};
+
+    recorder.start(100); // 🔥 critical fix
+
+    setRecording(true);
+
+  } catch (err) {
+
+    console.log("Mic permission denied");
+
+  }
+
+};
+
+const stopRecording = () => {
+
+  if (!mediaRecorderRef.current) return;
+
+  if (
+    mediaRecorderRef.current.state === "recording"
+  ) {
+
+    mediaRecorderRef.current.stop();
+
+  }
+
+};
+
+const sendVoiceMessage = async (audioUrl) => {
+
+  const { data } = await supabase
+    .from("messages")
+    .insert({
+      sender_id: session.user.id,
+      receiver_id: activeChat.id,
+      content: audioUrl,
+      type: "audio"
+    })
+    .select()
+    .single();
+
+  if (!data) return;
+
+  setActiveChat(prev => ({
+    ...prev,
+    messages: [
+      ...(prev.messages || []),
+      {
+        id: data.id,
+        content: audioUrl,
+        sender: "you",
+        type: "audio",
+        time: new Date(data.created_at).toLocaleTimeString(),
+        status: "sent"
+      }
+    ]
+  }));
 };
 
 // Real Time Chatting
@@ -150,6 +299,19 @@ useEffect(() => {
     supabase.removeChannel(typingChannel);
   };
 }, [activeChat]);
+
+// Media Upload Handler
+const handleMediaSelect = (e) => {
+  const files = Array.from(e.target.files);
+
+  const previews = files.map(file => ({
+    file,
+    preview: URL.createObjectURL(file),
+    type: file.type.startsWith("video") ? "video" : "image"
+  }));
+
+  setSelectedMedia(prev => [...prev, ...previews]);
+};
 
 useEffect(() => {
   if (!activeChat) return;
@@ -333,9 +495,34 @@ console.log("Active Chat:", activeChat);
 
         {/* ================= MESSAGE TEXT ================= */}
 
-        <p className="message-text">
-          {msg?.content || msg?.text || ""}
-        </p>
+   {msg.type === "image" && (
+  <>
+    <img src={msg.content} className="chat-media" />
+    {msg.caption && (
+      <p className="media-caption">{msg.caption}</p>
+    )}
+  </>
+)}
+
+ {msg.type === "video" && (
+  <>
+    <video src={msg.content} controls className="chat-media" />
+    {msg.caption && (
+      <p className="media-caption">{msg.caption}</p>
+    )}
+  </>
+)}
+{msg.type === "audio" && (
+  <VoiceNotePlayer
+    audioUrl={msg.content}
+    isSender={msg.sender === "you"}
+  />
+)}
+{(!msg.type || msg.type === "text") && (
+  <p className="message-text">
+    {msg?.content || msg?.text}
+  </p>
+)}
 
         {/* ================= META INFO ================= */}
 
@@ -388,6 +575,46 @@ console.log("Active Chat:", activeChat);
       {/* ================= INPUT ================= */}
       {/* ================= INPUT ================= */}
      {/* ================= INPUT ================= */}
+
+     {/* Media Preview  */}
+      {selectedMedia.length > 0 && (
+  <div className="media-preview-bar">
+
+    {selectedMedia.map((item, index) => (
+
+      <div key={index} className="media-preview-item">
+
+        {item.type === "image" ? (
+          <img src={item.preview}  alt="preview" />
+        ) : (
+          <video src={item.preview}  />
+        )}
+
+        <span
+          className="remove-media"
+          onClick={() =>
+            setSelectedMedia(prev =>
+              prev.filter((_, i) => i !== index)
+            )
+          }
+        >
+          ✕
+        </span>
+
+      </div>
+
+    ))}
+
+    {/* Caption box */}
+    <input
+      className="media-caption-input"
+      placeholder="Add a caption..."
+      value={mediaCaption}
+      onChange={(e) => setMediaCaption(e.target.value)}
+    />
+
+  </div>
+)}
 <div className="chat-input-wrapper">
   <div className="chat-input-box">
     <FiSmile
@@ -395,7 +622,8 @@ console.log("Active Chat:", activeChat);
       onClick={() => setShowEmojiPicker(prev => !prev)}
     />
 
-    <textarea
+    <input
+      type="text"
       rows={1}
       placeholder="Type a message"
       value={newMessage}
@@ -410,7 +638,11 @@ console.log("Active Chat:", activeChat);
         e.target.style.height = e.target.scrollHeight + "px";
       }}
       onKeyDown={(e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
+        if (
+  e.key === "Enter" &&
+  !e.shiftKey &&
+  (newMessage.trim() || selectedMedia.length > 0)
+) {
           e.preventDefault();
           handleSendMessage();
           e.target.style.height = "auto";
@@ -430,21 +662,32 @@ console.log("Active Chat:", activeChat);
       style={{ display: "none" }}
       onChange={(e) => {
         const files = Array.from(e.target.files);
+        handleMediaSelect(e);
         // You can send these files to supabase or store in state for preview
         console.log("Selected Media:", files);
       }}
     />
   </div>
 
-  {newMessage.trim() ? (
-    <button className="chat-send-btn" onClick={handleSendMessage}>
-      <FiSend />
-    </button>
-  ) : (
-    <button className="chat-voice-btn" onClick={handleVoiceClick}>
-      <FaMicrophoneAlt />
-    </button>
-  )}
+ {newMessage.trim() || selectedMedia.length > 0 ? (
+  <button className="chat-send-btn" onClick={handleSendMessage}>
+    <FiSend />
+  </button>
+) : (
+   <button
+  className={`chat-voice-btn ${
+    recording ? "recording-active" : ""
+  }`}
+  onClick={() => {
+    if (!recording)
+      startRecording();
+    else
+      stopRecording();
+  }}
+>
+  {recording ? <FiSend /> : <FaMicrophoneAlt />}
+</button>
+)}
 </div>
 
 

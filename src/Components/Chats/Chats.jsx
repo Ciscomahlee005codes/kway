@@ -21,6 +21,8 @@ const Chats = () => {
   const [showCallModal, setShowCallModal] = useState(false);
   const [callType, setCallType] = useState("voice");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [selectedMedia, setSelectedMedia] = useState([]);
+const [mediaCaption, setMediaCaption] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
   const markMessagesAsSeen = async (chatId) => {
@@ -83,16 +85,18 @@ useEffect(() => {
         if (!activeChat) return;
 
         if (
-          msg.sender_id === activeChat.id ||
-          msg.receiver_id === activeChat.id
-        ) {
+  msg.receiver_id === session.user.id &&
+  msg.sender_id === activeChat.id
+) {
           setActiveChat(prev => ({
             ...prev,
             messages: [
               ...(prev.messages || []),
               {
                 id: msg.id,
-                text: msg.content,
+    content: msg.content,
+    caption: msg.caption,
+    type: msg.type,
                 sender:
                   msg.sender_id === session.user.id
                     ? "you"
@@ -117,59 +121,47 @@ useEffect(() => {
   };
 }, []);
 
-useEffect(() => {
-  if (!activeChat || !user) return;
+// useEffect(() => {
+//   if (!activeChat || !user) return;
 
-  const loadChat = async () => {
-    // 🔥 mark seen FIRST
-    await markMessagesAsSeen(activeChat.id);
+//   const loadChat = async () => {
+//     // 🔥 mark seen FIRST
+//     await markMessagesAsSeen(activeChat.id);
 
-    // 🔥 THEN fetch messages
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .or(
-        `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
-      )
-      .order("created_at");
+//     // 🔥 THEN fetch messages
+//     const { data } = await supabase
+//       .from("messages")
+//       .select("*")
+//       .or(
+//         `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
+//       )
+//       .order("created_at");
 
-    if (!data) return;
+//     if (!data) return;
 
-    setActiveChat(prev => ({
-  ...prev,
-  messages: data.map(msg => ({
-    id: msg.id,
+//     setActiveChat(prev => ({
+//       ...prev,
+//       messages: data.map(msg => ({
+//         id: msg.id,
+//         content: msg.content,
+//         caption: msg.caption,
+//         sender:
+//           msg.sender_id === session.user.id
+//             ? "you"
+//             : "them",
+//         time: new Date(
+//           msg.created_at
+//         ).toLocaleTimeString(),
+//         status: msg.seen
+//           ? "seen"
+//           : "sent",
+//         type: msg.type,
+//       })),
+//     }));
+//   };
 
-    text: msg.content,
-
-    sender:
-      msg.sender_id === user.id
-        ? "you"
-        : "them",
-
-    time: new Date(
-      msg.created_at
-    ).toLocaleTimeString(),
-
-    status: msg.seen
-      ? "seen"
-      : "sent",
-
-    type: msg.type,
-
-    status_id: msg.status_id,
-
-    status_text: msg.status_text,
-
-    status_media: msg.status_media,
-
-    status_bg: msg.status_bg,
-  })),
-}));
-  };
-
-  loadChat();
-}, [activeChat?.id, user?.id]);
+//   loadChat();
+// }, [activeChat?.id, user?.id]);
 useEffect(() => {
   const handleResize = () =>
     setIsMobile(window.innerWidth <= 768);
@@ -261,76 +253,56 @@ useEffect(() => {
   // ✅ LOAD MESSAGES
   // =========================================
   useEffect(() => {
-    if (!activeChat || !user) return;
-
-const fetchMessages = async () => {
   if (!activeChat || !user) return;
 
-  // ✅ FIRST mark unseen messages as seen
-  await supabase
-    .from("messages")
-    .update({ seen: true })
-    .eq("sender_id", activeChat.id)
-    .eq("receiver_id", user.id)
-    .eq("seen", false);
-// after update
-setChats(prev =>
-  prev.map(c =>
-    c.id === activeChat.id
-      ? { ...c, unread: 0 }
-      : c
-  )
-);
-  // ✅ THEN fetch fresh messages
-  const { data } = await supabase
-    .from("messages")
-    .select("*")
-    .or(
-      `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
-    )
-    .order("created_at");
+  const fetchMessages = async () => {
 
-  if (!data) return;
+    await supabase
+      .from("messages")
+      .update({ seen: true })
+      .eq("sender_id", activeChat.id)
+      .eq("receiver_id", user.id)
+      .eq("seen", false);
 
-  setActiveChat(prev => ({
-  ...prev,
-  messages: data.map(msg => ({
-    id: msg.id,
+    setChats(prev =>
+      prev.map(c =>
+        c.id === activeChat.id
+          ? { ...c, unread: 0 }
+          : c
+      )
+    );
 
-    text: msg.content,
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .or(
+        `and(sender_id.eq.${user.id},receiver_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},receiver_id.eq.${user.id})`
+      )
+      .order("created_at");
 
-    sender:
-      msg.sender_id === user.id
-        ? "you"
-        : "them",
+    if (!data) return;
 
-    time: new Date(
-      msg.created_at
-    ).toLocaleTimeString(),
+    setActiveChat(prev => ({
+      ...prev,
+      messages: data.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        caption: msg.caption,
+        sender:
+          msg.sender_id === session.user.id
+            ? "you"
+            : "them",
+        time: new Date(msg.created_at).toLocaleTimeString(),
+        status: msg.seen ? "seen" : "sent",
+        type: msg.type,
+      })),
+    }));
 
-    status: msg.seen
-      ? "seen"
-      : msg.delivered
-      ? "delivered"
-      : "sent",
+  };
 
-    // ✅ ADD THESE FIELDS (CRITICAL FIX)
+  fetchMessages();
 
-    type: msg.type,
-
-    status_id: msg.status_id,
-
-    status_text: msg.status_text,
-
-    status_media: msg.status_media,
-
-    status_bg: msg.status_bg,
-  })),
-}));
-};
-
-    fetchMessages();
-  }, [activeChat?.id, user?.id]);
+}, [activeChat?.id, user?.id]);
 
   // =========================================
   // ✅ LOAD ALL CONVERSATIONS
@@ -475,63 +447,125 @@ useEffect(() => {
   // =========================================
   // ✅ SEND MESSAGE
   // =========================================
-   const handleSendMessage = async () => {
-  if (!newMessage.trim() || !activeChat) return;
+const handleSendMessage = async () => {
+  if (!activeChat || !user) return;
 
-  const messageText = newMessage;
+  // =============================
+  // SEND TEXT MESSAGE
+  // =============================
+  if (newMessage.trim()) {
 
-  const { data, error } = await supabase
-    .from("messages")
-    .insert({
-      sender_id: user.id,
-      receiver_id: activeChat.id,
-      content: messageText,
-      delivered: false,
-  seen: false,
-    })
-    .select()
-    .single();
+    const { data: inserted, error } = await supabase
+      .from("messages")
+      .insert({
+        sender_id: user.id,
+        receiver_id: activeChat.id,
+        content: newMessage,
+        type: "text",
+      })
+      .select()
+      .single();
+
+    if (!error && inserted) {
+      setActiveChat(prev => ({
+        ...prev,
+        messages: [
+          ...(prev.messages || []),
+          {
+            id: inserted.id,
+            content: inserted.content,
+            sender: "you",
+            time: new Date(
+              inserted.created_at
+            ).toLocaleTimeString(),
+            type: "text",
+            status: "sent"
+          }
+        ]
+      }));
+    }
+
+    setNewMessage("");
+  }
+
+  // =============================
+  // SEND MEDIA MESSAGE
+  // =============================
+  for (const item of selectedMedia) {
+
+    const fileName = `${Date.now()}-${item.file.name}`;
+
+    const { error: uploadError } =
+      await supabase.storage
+        .from("chat-media")
+        .upload(fileName, item.file);
+
+    if (uploadError) {
+      console.log(uploadError);
+      continue;
+    }
+
+    const { data } = supabase.storage
+      .from("chat-media")
+      .getPublicUrl(fileName);
+
+    const { data: inserted } = await supabase
+      .from("messages")
+      .insert({
+        sender_id: user.id,
+        receiver_id: activeChat.id,
+        content: data.publicUrl,
+        caption: mediaCaption,
+        type: item.type
+      })
+      .select()
+      .single();
+
+    // 🔥 instantly update UI (NO REFRESH NEEDED)
+    if (inserted) {
+      setActiveChat(prev => ({
+        ...prev,
+        messages: [
+          ...(prev.messages || []),
+          {
+            id: inserted.id,
+            content: inserted.content,
+            caption: inserted.caption,
+            sender: "you",
+            time: new Date(
+              inserted.created_at
+            ).toLocaleTimeString(),
+            type: inserted.type,
+            status: "sent"
+          }
+        ]
+      }));
+    }
+  }
+
+  setSelectedMedia([]);
+  setMediaCaption("");
+};
+
+// Media Selection Handler
+const uploadMedia = async (file) => {
+  const fileName = `${Date.now()}-${file.name}`;
+
+  const { error } = await supabase.storage
+    .from("chat-media")
+    .upload(fileName, file);
 
   if (error) {
     console.log(error);
-    return;
+    return null;
   }
 
-  const newMsgObject = {
-    text: messageText,
-    sender: "you",
-    time: new Date(data.created_at).toLocaleTimeString(),
-  };
+  const { data } = supabase.storage
+    .from("chat-media")
+    .getPublicUrl(fileName);
 
-  // ✅ Update active chat messages instantly
-  setActiveChat((prev) => ({
-    ...prev,
-    messages: [...(prev.messages || []), newMsgObject],
-  }));
-
-  // ✅ Update chat list preview (last message)
-  setChats(prevChats => {
-  const updated = prevChats.map(chat =>
-    chat.id === activeChat.id
-      ? {
-          ...chat,
-          lastMessage: messageText,
-          time: newMsgObject.time,
-          lastMessageDate: new Date().toISOString(),
-        }
-      : chat
-  );
-
-  // move active chat to top
-  const active = updated.find(c => c.id === activeChat.id);
-  const others = updated.filter(c => c.id !== activeChat.id);
-
-  return [active, ...others];
-});
-
-  setNewMessage("");
+  return data.publicUrl;
 };
-
 
   const handleVoiceClick = () => {
     setRecording(true);
@@ -553,6 +587,10 @@ useEffect(() => {
       />
 
       <ChatWindow
+         selectedMedia={selectedMedia}
+         setSelectedMedia={setSelectedMedia}
+         mediaCaption={mediaCaption}
+         setMediaCaption={setMediaCaption}
         activeChat={activeChat}
         setActiveChat={setActiveChat}
         newMessage={newMessage}

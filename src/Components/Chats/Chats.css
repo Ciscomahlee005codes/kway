@@ -756,7 +756,7 @@
   min-height: 48px; /* ensures consistent size */
 }
 
-.chat-input-box textarea {
+.chat-input-box input {
   flex: 1;
   border: none;
   outline: none;
@@ -768,6 +768,7 @@
   padding: 6px 0;
   min-height: 24px; /* prevents collapsing */
 }
+
 
 .chat-send-btn,
 .chat-voice-btn {
@@ -819,6 +820,16 @@
   0% { opacity: 1 }
   50% { opacity: .3 }
   100% { opacity: 1 }
+}
+.voice-note-player {
+  width: 220px;
+  border-radius: 12px;
+  outline: none;
+}
+
+.message-wrapper.sent audio {
+  filter: invert(1);
+
 }
 /* Dropdown animation */
 .animated-dropdown {
@@ -1136,7 +1147,102 @@ mark {
   opacity: 0.6;
   font-size: 12px;
 }
+/* Media Preview Section */
+.media-preview-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(0,0,0,.1);
+  background: var(--secondary-bg);
+  overflow-x: auto;
+}
 
+.media-preview-item {
+  position: relative;
+}
+.chat-media {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 16px;
+  margin-top: 6px;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  transition: transform 0.25s ease;
+}
+
+.chat-media:hover {
+  transform: scale(1.02);
+  cursor: pointer;
+}
+
+/* Sent media bubble spacing */
+.message-wrapper.sent .chat-media {
+  border-bottom-right-radius: 6px;
+}
+
+/* Received media bubble spacing */
+.message-wrapper.received .chat-media {
+  border-bottom-left-radius: 6px;
+}
+.media-preview-item img,
+.media-preview-item video {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.remove-media {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: black;
+  color: white;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+.media-caption-input{
+  width:100%;
+  margin-top:8px;
+  padding:6px 10px;
+  border-radius:8px;
+  border:1px solid rgba(0,0,0,.15);
+  outline:none;
+}
+
+.media-caption{
+  font-size:14px;
+  margin-top:4px;
+}
+.chat-voice-btn.recording-active {
+  background: var(--accent-color);
+  color: white;
+  transform: scale(1.08);
+  transition: all 0.2s ease;
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.3;
+  }
+}
 /* Context animation */
 @keyframes popIn {
   from {

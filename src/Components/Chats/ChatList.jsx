@@ -188,7 +188,13 @@ setActiveChat({
         <div className="chat-info">
           <h4>{chat?.name || "Unknown"}</h4>
          <p>
-  {chat?.lastMessageType === "status_reply"
+  {chat?.lastMessageType === "image"
+    ? "📷 Photo"
+    : chat?.lastMessageType === "video"
+    ? "🎬 Video"
+    : chat?.lastMessageType === "audio"
+    ? "🎤 Voice message"
+    : chat?.lastMessageType === "status_reply"
     ? "↩️ Replied to your status"
     : chat?.lastMessage
     ? chat.lastMessage.slice(0, 30)
