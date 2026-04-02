@@ -17,6 +17,7 @@ import "./Profile.css";
 const Profile = () => {
   const { session, profile, setProfile, refreshProfile } = UserAuth();
   const [loading, setLoading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -121,13 +122,18 @@ const Profile = () => {
               />
             </label>
 
-            {profile.photo ? (
-             <img src={profile.photo} alt="profile" />
-            ) : (
-              <div className="avatar-fallback">
-                {profile.username?.charAt(0).toUpperCase()}
-              </div>
-            )}
+           {profile.photo ? (
+  <img
+    src={profile.photo}
+    alt="profile"
+    onClick={() => setShowPreview(true)}
+    style={{ cursor: "pointer" }}
+  />
+) : (
+  <div className="avatar-fallback">
+    {profile.username?.charAt(0).toUpperCase()}
+  </div>
+)}
           </div>
 
           <h2 className="profile-name">
@@ -184,8 +190,43 @@ const Profile = () => {
             ? new Date(profile.created_at).toLocaleDateString()
             : ""}
         </div>
+        {showPreview && (
+  <motion.div
+    className="image-preview-overlay"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+  >
+    <motion.div
+      className="image-preview-container"
+      initial={{ scale: 0.8 }}
+      animate={{ scale: 1 }}
+    >
+      <button
+        className="close-preview"
+        onClick={() => setShowPreview(false)}
+      >
+        ✕
+      </button>
+
+      <img
+        src={profile.photo}
+        alt="preview"
+        className="preview-image"
+      />
+
+      <a
+        href={profile.photo}
+        download
+        className="download-btn"
+      >
+        Download Image
+      </a>
+    </motion.div>
+  </motion.div>
+)}
       </motion.div>
     </div>
+    
   );
 };
 

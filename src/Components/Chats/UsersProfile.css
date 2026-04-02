@@ -159,7 +159,62 @@
   font-weight: 600;
   color: #333;
 }
+/* ================= FULL AVATAR PREVIEW ================= */
 
+.avatar-preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 5000;
+}
+
+.avatar-preview-container {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  text-align: center;
+}
+
+.avatar-preview-image {
+  max-width: 100%;
+  max-height: 75vh;
+  border-radius: 18px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+}
+
+/* CLOSE BUTTON */
+
+.avatar-preview-close {
+  position: absolute;
+  top: -45px;
+  right: 0;
+  font-size: 28px;
+  color: white;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* DOWNLOAD BUTTON */
+
+.avatar-preview-download {
+  display: inline-block;
+  margin-top: 20px;
+  background: #007bff;
+  color: white;
+  padding: 10px 22px;
+  border-radius: 24px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: 0.25s ease;
+}
+
+.avatar-preview-download:hover {
+  transform: scale(1.05);
+}
 /* ================= MOBILE ================= */
 @media (max-width: 600px) {
   .profile-overlay {

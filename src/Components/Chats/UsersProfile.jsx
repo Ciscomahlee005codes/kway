@@ -16,6 +16,7 @@ const UsersProfile = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [callModal, setCallModal] = useState({ open: false, type: "voice" });
 
@@ -103,13 +104,15 @@ const UsersProfile = () => {
         {/* AVATAR */}
         <div className="profile-avatar-section">
           <img
-            src={
-              user.photo ||
-              `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`
-            }
-            alt={user.name}
-            className="profile-avatar2"
-          />
+  src={
+    user.photo ||
+    `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`
+  }
+  alt={user.name}
+  className="profile-avatar2"
+  onClick={() => setShowPreview(true)}
+  style={{ cursor: "pointer" }}
+/>
 
           <h2>{user.name}</h2>
           <p className="username">@{user.username}</p>
@@ -175,6 +178,35 @@ const UsersProfile = () => {
           }}
         />
       )}
+      {showPreview && (
+  <div
+    className="avatar-preview-overlay"
+    onClick={() => setShowPreview(false)}
+  >
+    <div
+      className="avatar-preview-container"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        className="avatar-preview-close"
+        onClick={() => setShowPreview(false)}
+      >
+        ✕
+      </button>
+
+      <img
+        src={
+          user.photo ||
+          `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`
+        }
+        alt="preview"
+        className="avatar-preview-image"
+      />
+
+      
+    </div>
+  </div>
+)}
     </div>
   );
 };

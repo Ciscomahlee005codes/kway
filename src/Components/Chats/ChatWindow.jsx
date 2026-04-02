@@ -4,6 +4,7 @@ import { FiPhone, FiVideo, FiSend, FiSmile } from "react-icons/fi";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { FaCameraRetro } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import {FiPause, FiPlay, FiTrash2, FiStopCircle} from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
 import { useEffect, useRef } from "react";
@@ -38,9 +39,14 @@ const ChatWindow = ({
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
 const audioChunksRef = useRef([]);
+const recordTimerRef = useRef(null);
   const [pressTimer, setPressTimer] = useState(null);
    const [isTyping, setIsTyping] = useState(false);
    const channel = supabase.channel("typing-status");
+   const [recordTime, setRecordTime] = useState(0);
+   const [paused, setPaused] = useState(false);
+const [audioBlob, setAudioBlob] = useState(null);
+const [audioPreview, setAudioPreview] = useState(null);
   const emojiRef = useRef(null);
   const dropdownRef = useRef(null);
   const typingChannelRef = useRef(null);
@@ -65,9 +71,9 @@ const startRecording = async () => {
       });
 
     const recorder =
-       new MediaRecorder(stream, {
-    mimeType: "audio/webm"
-  });
+      new MediaRecorder(stream, {
+        mimeType: "audio/webm"
+      });
 
     mediaRecorderRef.current = recorder;
 
@@ -83,33 +89,110 @@ const startRecording = async () => {
 
     };
 
-    recorder.onstop = async () => {
+    recorder.onstop = () => {
 
-  console.log("Recording stopped");
+      const blob = new Blob(
+        audioChunksRef.current,
+        { type: "audio/webm" }
+      );
 
-  if (!audioChunksRef.current.length) {
-    console.log("❌ No audio chunks captured");
-    return;
+      const preview =
+        URL.createObjectURL(blob);
+
+      setAudioBlob(blob);
+      setAudioPreview(preview);
+
+      stream
+        .getTracks()
+        .forEach(track => track.stop());
+
+      clearInterval(recordTimerRef.current);
+
+    };
+
+    recorder.start();
+
+    setRecording(true);
+    setPaused(false);
+    setRecordTime(0);
+
+    recordTimerRef.current = setInterval(() => {
+
+      setRecordTime(prev => prev + 1);
+
+    }, 1000);
+
+  } catch {
+
+    console.log("Mic permission denied");
+
   }
 
-  const blob = new Blob(
-    audioChunksRef.current,
-    { type: "audio/webm" }
-  );
+};
+// Pause/Resume Recording on long press
+const togglePauseRecording = () => {
 
-  console.log("Blob size:", blob.size);
+  if (!mediaRecorderRef.current) return;
+
+  if (paused) {
+
+    mediaRecorderRef.current.resume();
+
+    recordTimerRef.current = setInterval(() => {
+
+      setRecordTime(prev => prev + 1);
+
+    }, 1000);
+
+  } else {
+
+    mediaRecorderRef.current.pause();
+
+    clearInterval(recordTimerRef.current);
+
+  }
+
+  setPaused(!paused);
+
+};
+// Timer for recording duration
+
+const stopRecording = () => {
+
+  if (!mediaRecorderRef.current) return;
+
+  mediaRecorderRef.current.stop();
+
+  setRecording(false);
+
+};
+
+// Delete recording
+const deleteRecording = () => {
+
+  setAudioBlob(null);
+
+  setAudioPreview(null);
+
+  setRecordTime(0);
+
+};
+
+const sendVoiceMessage = async () => {
+
+  if (!audioBlob) return;
 
   const fileName =
     `voice-${Date.now()}.webm`;
 
-  const { error: uploadError } =
+  const { error } =
     await supabase.storage
       .from("chat-media")
-      .upload(fileName, blob);
+      .upload(fileName, audioBlob);
 
-  if (uploadError) {
+  if (error) {
 
-    console.log("Upload failed:", uploadError);
+    console.log(error);
 
     return;
 
@@ -120,83 +203,55 @@ const startRecording = async () => {
       .from("chat-media")
       .getPublicUrl(fileName);
 
-  if (!data?.publicUrl) {
+  const audioUrl =
+    data.publicUrl;
 
-    console.log("No public URL");
+  const { data: inserted } =
+    await supabase
+      .from("messages")
+      .insert({
+        sender_id: session.user.id,
+        receiver_id: activeChat.id,
+        content: audioUrl,
+        type: "audio"
+      })
+      .select()
+      .single();
 
-    return;
-
-  }
-
-  console.log("Voice uploaded:", data.publicUrl);
-
-  await sendVoiceMessage(
-    data.publicUrl
-  );
-
-  stream
-    .getTracks()
-    .forEach(track => track.stop());
-
-  setRecording(false);
-
-};
-
-    recorder.start(100); // 🔥 critical fix
-
-    setRecording(true);
-
-  } catch (err) {
-
-    console.log("Mic permission denied");
-
-  }
-
-};
-
-const stopRecording = () => {
-
-  if (!mediaRecorderRef.current) return;
-
-  if (
-    mediaRecorderRef.current.state === "recording"
-  ) {
-
-    mediaRecorderRef.current.stop();
-
-  }
-
-};
-
-const sendVoiceMessage = async (audioUrl) => {
-
-  const { data } = await supabase
-    .from("messages")
-    .insert({
-      sender_id: session.user.id,
-      receiver_id: activeChat.id,
-      content: audioUrl,
-      type: "audio"
-    })
-    .select()
-    .single();
-
-  if (!data) return;
+  if (!inserted) return;
 
   setActiveChat(prev => ({
+
     ...prev,
+
     messages: [
+
       ...(prev.messages || []),
+
       {
-        id: data.id,
+
+        id: inserted.id,
+
         content: audioUrl,
+
         sender: "you",
+
         type: "audio",
-        time: new Date(data.created_at).toLocaleTimeString(),
+
+        time: new Date(
+          inserted.created_at
+        ).toLocaleTimeString(),
+
         status: "sent"
+
       }
+
     ]
+
   }));
+
+  deleteRecording();
+
 };
 
 // Real Time Chatting
@@ -679,13 +734,19 @@ console.log("Active Chat:", activeChat);
     recording ? "recording-active" : ""
   }`}
   onClick={() => {
-    if (!recording)
+
+    if (audioPreview) {
+      sendVoiceMessage();
+      return;
+    }
+
+    if (!recording) {
       startRecording();
-    else
-      stopRecording();
+    }
+
   }}
 >
-  {recording ? <FiSend /> : <FaMicrophoneAlt />}
+  {audioPreview ? <FiSend /> : <FaMicrophoneAlt />}
 </button>
 )}
 </div>
@@ -712,13 +773,55 @@ console.log("Active Chat:", activeChat);
 )}
 
 {recording && (
+
   <div className="voice-recording-ui">
 
     <span className="recording-dot" />
 
-    Recording voice message...
+    <span>{recordTime}s</span>
+
+    <div className="record-controls">
+
+  <button onClick={togglePauseRecording}>
+    {paused ? <FiPlay /> : <FiPause />}
+  </button>
+
+  <button onClick={stopRecording}>
+    <FiStopCircle />
+  </button>
+
+</div>
 
   </div>
+
+)}
+
+{audioPreview && (
+
+  <div className="voice-preview-bar">
+
+    <button
+      className="voice-delete"
+      onClick={deleteRecording}
+    >
+      <FiTrash2 />
+    </button>
+
+    <audio
+      src={audioPreview}
+      controls
+      className="voice-audio-player"
+    />
+
+    <button
+      className="voice-send"
+      onClick={sendVoiceMessage}
+    >
+      <FiSend />
+    </button>
+
+  </div>
+
 )}
 
 
