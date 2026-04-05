@@ -197,7 +197,7 @@
   gap: 10px;
 }
 
-.action-btn {
+.action-btn2 {
   flex: 1;
   display: flex;
   justify-content: center;
@@ -213,7 +213,7 @@
   transition: 0.2s;
 }
 
-.action-btn:hover {
+.action-btn2:hover {
   opacity: 0.85;
 }
 

@@ -124,11 +124,11 @@ const LinkUp = () => {
             <p className="profile-about">{selectedProfile.about}</p>
 
             <div className="profile-actions">
-              <button className="action-btn" onClick={() => navigate(`/user-profile/${selectedProfile.id}`)}>
+              <button className="action-btn2" onClick={() => navigate(`/user-profile/${selectedProfile.id}`)}>
                 <PiEyesFill /> View Profile
               </button>
                <button
-  className="action-btn"
+  className="action-btn2"
   onClick={() => {
     navigate(`/chat/${selectedProfile.id}`);
   }}

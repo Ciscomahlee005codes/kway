@@ -151,6 +151,13 @@ useEffect(() => {
           activeChat?.id === chat.id ? "active" : ""
         }`}
        onClick={async () => {
+        if (chat.isAI) {
+    setActiveChat({
+      ...chat,
+      messages: chat.messages || []
+    });
+    return;
+  }
 
 await supabase
   .from("messages")

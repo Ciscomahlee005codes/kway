@@ -52,6 +52,7 @@ const [audioPreview, setAudioPreview] = useState(null);
   const typingChannelRef = useRef(null);
 
   const { session } = UserAuth() || {};
+  const isAIChat = activeChat?.isAI;
 
 
 useEffect(() => {
@@ -443,7 +444,13 @@ console.log("Active Chat:", activeChat);
 
         <div
           className="chat-header-left"
-           onClick={() => navigate(`/user-profile/${activeChat.id}`)}
+           onClick={() => {
+  if (isAIChat) {
+    navigate("/mpa-profile");
+  } else {
+    navigate(`/user-profile/${activeChat.id}`);
+  }
+}}
         >
           {activeChat.avatar ? (
   <img
@@ -491,7 +498,13 @@ console.log("Active Chat:", activeChat);
 
             {showChatDropdown && (
               <div className="chat-dropdown-menu animated-dropdown">
-                <p onClick={() => navigate(`/user-profile/${activeChat.id}`)}>View contact</p>
+                <p onClick={() => {
+  if (isAIChat) {
+    navigate("/mpa-profile");
+  } else {
+    navigate(`/user-profile/${activeChat.id}`);
+  }
+}}>View contact</p>
                 <p>Search</p>
                 <p>Mute notifications</p>
                 <p className="danger">Block</p>

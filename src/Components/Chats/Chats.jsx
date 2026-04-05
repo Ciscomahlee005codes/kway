@@ -5,6 +5,7 @@ import { UserAuth } from "../../Context/AuthContext";
 import CallModal from "./CallModal";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
+import MpA_Img from "../../assets/Mpa_AI2.png"
 import { useParams } from "react-router-dom";
 
 const Chats = () => {
@@ -215,6 +216,18 @@ useEffect(() => {
   const reactions = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
   const { id } = useParams();
 
+  // Mp.A Feature
+  const MPA_CHAT = {
+  id: "mpa-ai",
+  name: "Mp.A Assistant",
+  avatar: MpA_Img, // you can use your logo for now
+  lastMessage: "Ask me anything...",
+  lastMessageType: "text",
+  unread: 0,
+  isAI: true,
+  messages: []
+};
+
   // =========================================
   // ✅ LOAD USER FROM URL
   // =========================================
@@ -389,7 +402,10 @@ formatted.sort(
 );
 
 
-  setChats(formatted);
+  setChats(() => {
+  const withoutMPA = formatted.filter(c => c.id !== "mpa-ai");
+  return [MPA_CHAT, ...withoutMPA];
+});
 };
 
 
@@ -448,6 +464,40 @@ useEffect(() => {
   // ✅ SEND MESSAGE
   // =========================================
 const handleSendMessage = async () => {
+  if (activeChat?.isAI) {
+  const userMsg = {
+    id: Date.now(),
+    content: newMessage,
+    sender: "you",
+    type: "text",
+    time: new Date().toLocaleTimeString()
+  };
+
+  setActiveChat(prev => ({
+    ...prev,
+    messages: [...(prev.messages || []), userMsg]
+  }));
+
+  setNewMessage("");
+
+  // fake AI reply (we'll upgrade later)
+  setTimeout(() => {
+    const aiReply = {
+      id: Date.now() + 1,
+      content: "I'm Mp.A 🤖, your assistant. Soon I'll be fully smart!",
+      sender: "them",
+      type: "text",
+      time: new Date().toLocaleTimeString()
+    };
+
+    setActiveChat(prev => ({
+      ...prev,
+      messages: [...prev.messages, aiReply]
+    }));
+  }, 1000);
+
+  return;
+}
   if (!activeChat || !user) return;
 
   // =============================

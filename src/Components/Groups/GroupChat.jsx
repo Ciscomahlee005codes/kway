@@ -23,7 +23,14 @@ const GroupChat = () => {
   const [recording, setRecording] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState([]);
 const [mediaCaption, setMediaCaption] = useState("");
+const [searchMode, setSearchMode] = useState(false);
+const [searchText, setSearchText] = useState("");
 const [recordTime, setRecordTime] = useState(0);
+const [touchStartX,setTouchStartX]=useState(null);
+const [selectedMember,setSelectedMember]=useState(null);
+const [typingUsers, setTypingUsers] = useState([]);
+const typingTimeoutRef = useRef(null);
+const typingChannelRef = useRef(null);
 const mediaRecorderRef = useRef(null);
 const audioChunksRef = useRef([]);
   const navigate = useNavigate();
@@ -43,6 +50,84 @@ const audioChunksRef = useRef([]);
     document.body.classList.remove("chat-open");
   };
 }, []);
+
+ //Real Time Typing 
+  useEffect(() => {
+
+if (!id || !user) return;
+
+const channel =
+supabase.channel(`group-typing-${id}`, {
+config: {
+presence: {
+key: user.id
+}
+}
+});
+
+typingChannelRef.current = channel;
+
+channel
+.on("presence", { event: "sync" }, () => {
+
+const presenceState =
+channel.presenceState();
+
+const typingList =
+Object.values(presenceState)
+.flat()
+.filter(p => p.typing && p.user_id !== user.id);
+
+setTypingUsers(typingList);
+
+})
+
+.subscribe(async status => {
+
+if (status === "SUBSCRIBED") {
+
+await channel.track({
+user_id: user.id,
+name: user.user_metadata?.name || "Someone",
+typing: false
+});
+
+}
+
+});
+
+return () => {
+
+channel.unsubscribe();
+
+};
+
+}, [id, user]);
+
+// Handling Typing Indicator
+const handleTyping = async () => {
+
+if (!typingChannelRef.current) return;
+
+await typingChannelRef.current.track({
+user_id: user.id,
+name: user.user_metadata?.name || "Someone",
+typing: true
+});
+
+clearTimeout(typingTimeoutRef.current);
+
+typingTimeoutRef.current = setTimeout(async () => {
+
+await typingChannelRef.current.track({
+user_id: user.id,
+name: user.user_metadata?.name || "Someone",
+typing: false
+});
+
+}, 1500);
+
+};
 
 // Nigeria Time UTC+1
 const formatTimeNG = (dateString) => {
@@ -124,22 +209,24 @@ mediaRecorderRef.current.timer = timer;
 
     const optimisticAudio = {
 
-      id: `temp-${Date.now()}`,
+  id: `temp-${Date.now()}`,
 
-      content: data.publicUrl,
+  content: data.publicUrl,
 
-      type: "audio",
+  type: "audio",
 
-      created_at: new Date(),
+  created_at: new Date(),
 
-      sender_id: user.id,
+  sender_id: user.id,
 
-      profiles: {
-        name: "You",
-        photo: user.user_metadata?.avatar_url
-      }
+  reply_to: replyTo?.id || null,
 
-    };
+  profiles: {
+    name: "You",
+    photo: user.user_metadata?.avatar_url
+  }
+
+};
 
     setMessages(prev => [
       ...prev,
@@ -328,7 +415,7 @@ const sendMessage = async () => {
   // send TEXT message
   if (newMessage.trim()) {
 
-    const optimisticText = {
+   const optimisticText = {
 
   id: `temp-${Date.now()}`,
 
@@ -340,6 +427,8 @@ const sendMessage = async () => {
 
   sender_id: user.id,
 
+  reply_to: replyTo?.id || null,
+
   profiles: {
     name: "You",
     photo: user.user_metadata?.avatar_url
@@ -347,11 +436,10 @@ const sendMessage = async () => {
 
 };
 
-setMessages(prev => {
-  const exists = prev.find(m => m.id === fullMessage.id);
-  if (exists) return prev;
-  return [...prev, fullMessage];
-});
+setMessages(prev => [
+  ...prev,
+  optimisticText
+]);
 
   const { error } = await supabase
 .from("group_messages")
@@ -372,6 +460,9 @@ return;
 
 setNewMessage("");
 setReplyTo(null);
+setSelectedMedia([]);
+
+setMediaCaption("");
 
   }
 
@@ -400,24 +491,26 @@ setReplyTo(null);
 
   const optimisticMessage = {
 
-    id: tempId,
+  id: tempId,
 
-    content: data.publicUrl,
+  content: data.publicUrl,
 
-    caption: mediaCaption,
+  caption: mediaCaption,
 
-    type: media.type,
+  type: media.type,
 
-    created_at: new Date(),
+  created_at: new Date(),
 
-    sender_id: user.id,
+  sender_id: user.id,
 
-    profiles: {
-      name: "You",
-      photo: user.user_metadata?.avatar_url
-    }
+  reply_to: replyTo?.id || null,
 
-  };
+  profiles: {
+    name: "You",
+    photo: user.user_metadata?.avatar_url
+  }
+
+};
 
   // 🔥 SHOW MESSAGE IMMEDIATELY
   setMessages(prev => [
@@ -452,7 +545,11 @@ setReplyTo(null);
   setMediaCaption("");
 
 };
+const messageMap = {};
 
+messages.forEach(m => {
+  messageMap[m.id] = m;
+});
   return (
     <div className="chat-container">
 
@@ -476,7 +573,21 @@ setReplyTo(null);
 
     <div>
       <h3>{group?.name || "Loading..."}</h3>
-      <span>{messages.length} messages</span>
+      <span>
+
+{typingUsers.length === 0
+? `${messages.length} messages`
+
+: typingUsers.length === 1
+? `${typingUsers[0].name} is typing...`
+
+: typingUsers.length === 2
+? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
+
+: `${typingUsers.length} people are typing...`
+}
+
+</span>
     </div>
   </div>
 
@@ -494,7 +605,12 @@ setReplyTo(null);
           View Group Info
         </button>
 
-        <button>Search Messages</button>
+        <button onClick={() => {
+  setSearchMode(true);
+  setShowMenu(false);
+}}>
+  Search Messages
+</button>
 
         <button>Mute Notifications</button>
 
@@ -506,10 +622,34 @@ setReplyTo(null);
   </div>
 
 </div>
+{/* Search Bar UI */}
+{searchMode && (
+  <div className="search-bar-modern">
+    <input
+      placeholder="Search messages..."
+      value={searchText}
+      onChange={(e)=>setSearchText(e.target.value)}
+    />
 
+    <button
+className="search-close-btn"
+onClick={()=>{
+setSearchMode(false)
+setSearchText("")
+}}
+>
+✕
+</button>
+  </div>
+)}
       {/* 🔥 CHAT BODY */}
       <div className="chat-body">
-        {messages.map(msg => {
+        {messages
+.filter(msg =>
+  msg.content?.toLowerCase()
+  .includes(searchText.toLowerCase())
+)
+.map(msg => {
           const isOwn = msg.sender_id === user?.id;
 // {msg.reply_to && (
 //   <div className="reply-box">
@@ -518,24 +658,71 @@ setReplyTo(null);
 //   </div>
 // )}
           return (
-            <div key={msg.id} className={`message-row ${isOwn ? "own" : ""}`}>
+            <div
+  id={msg.id}
+  key={msg.id}
+  className={`message-row ${isOwn ? "own" : ""}`}
+>
 
               {!isOwn && (
-                <img
-                  className="avatar"
-                  src={msg.profiles?.photo || ""}
-                  alt=""
-                />
+                msg.profiles?.photo ? (
+                  <img
+className="avatar"
+src={msg.profiles.photo}
+
+onClick={()=>setSelectedMember(msg)}
+
+/>
+                ) : (
+                  <div className="avatar-fallback" onClick={()=>setSelectedMember(msg)}>
+                    {msg.profiles?.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                )
               )}
 
-              <div className="message-bubble" onDoubleClick={() => setReplyTo(msg)}>
+             <div
+className="message-bubble"
+onDoubleClick={()=>{
+setReplyTo(msg)
+}}
+onTouchStart={(e)=>{
+setTouchStartX(e.changedTouches[0].clientX)
+}}
 
-  {msg.reply_to && (
-    <div className="reply-box">
-      <small>Replying to</small>
-      <p>{msg.reply_to?.content || "Message"}</p>
-    </div>
-  )}
+onTouchEnd={(e)=>{
+
+const touchEnd=e.changedTouches[0].clientX;
+
+if(touchStartX-touchEnd>80){
+
+setReplyTo(msg)
+
+}
+
+}}>
+
+  {msg.reply_to && messageMap[msg.reply_to] && (
+  <div className="reply-box">
+     <small className="reply-author">
+  {messageMap[msg.reply_to].profiles?.name} replied
+</small>
+
+    <p>
+
+{messageMap[msg.reply_to].type === "audio"
+? "🎤 Voice note"
+
+: messageMap[msg.reply_to].type === "image"
+? "📷 Photo"
+
+: messageMap[msg.reply_to].type === "video"
+? "🎥 Video"
+
+: messageMap[msg.reply_to].content}
+
+</p>
+  </div>
+)}
 
   {!isOwn && (
     <span className="sender-name">
@@ -602,7 +789,20 @@ setReplyTo(null);
 {replyTo && (
   <div className="reply-preview">
     <span>{replyTo.profiles?.name || "User"}</span>
-    <p>{replyTo.content}</p>
+    <p>
+
+{replyTo.type === "audio"
+? "🎤 Voice note"
+
+: replyTo.type === "image"
+? "📷 Photo"
+
+: replyTo.type === "video"
+? "🎥 Video"
+
+: replyTo.content}
+
+</p>
     <button onClick={() => setReplyTo(null)}>✕</button>
   </div>
 )}
@@ -667,6 +867,19 @@ e.target.value
 Tap mic again to send
   </div>
 )}
+<span className="typing-dots">
+
+{typingUsers.length > 0 && `${typingUsers[0].name} is typing`}
+
+{typingUsers.length > 0 && (
+<>
+<span>.</span>
+<span>.</span>
+<span>.</span>
+</>
+)}
+
+</span>
       {/* 🔥 INPUT */}
        <div className="chat-input-wrapper">
 
@@ -696,12 +909,10 @@ placeholder="Type a message..."
 
 value={newMessage}
 
-onChange={e =>
-
-setNewMessage(e.target.value)
-
-}
-
+onChange={(e) => {
+setNewMessage(e.target.value);
+handleTyping();
+}}
 />
 
 {newMessage.trim() ||
@@ -736,6 +947,71 @@ stopRecording();
 )}
 
 </div>
+{selectedMember && (
+
+<div
+className="profile-modal-overlay"
+onClick={()=>setSelectedMember(null)}
+>
+
+<div
+className="profile-modal"
+onClick={(e)=>e.stopPropagation()}
+>
+
+<button
+className="close-btn"
+onClick={()=>setSelectedMember(null)}
+>
+✖
+</button>
+
+<div className="profile-modal-header">
+
+<div className="profile-avatar-large">
+
+{selectedMember.profiles?.photo
+? <img src={selectedMember.profiles.photo}/>
+: selectedMember.profiles?.name?.charAt(0)
+}
+
+</div>
+
+<h3>
+{selectedMember.profiles?.name}
+</h3>
+
+</div>
+
+<div className="profile-actions">
+
+<button
+className="action-btn2"
+onClick={()=>
+navigate(`/user-profile/${selectedMember.sender_id}`)
+}
+>
+
+👁 View Profile
+
+</button>
+
+<button
+className="action-btn2"
+onClick={()=>
+navigate(`/chat/${selectedMember.sender_id}`)
+}
+>
+
+💬 Chat Directly
+
+</button>
+</div>
+</div>
+
+</div>
+
+)}
 
     </div>
   );

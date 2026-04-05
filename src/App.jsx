@@ -36,6 +36,7 @@ import ResetPassword from "./Components/Auth/ResetPassword";
 import GroupPage from "./Pages/GroupPage/GroupPage";
 import GroupChat from "./Components/Groups/GroupChat";
 import GroupInfo from "./Components/Groups/GroupInfo";
+import MpAProfile from "./Components/Chats/MpAProfile";
 
 function App() {
   const location = useLocation();
@@ -83,6 +84,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Chats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mpa-profile"
+          element={
+            <ProtectedRoute>
+              <MpAProfile />
             </ProtectedRoute>
           }
         />

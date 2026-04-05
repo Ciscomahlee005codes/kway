@@ -8,7 +8,7 @@ import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
 import { PiEyesBold } from "react-icons/pi";
 import toast from "react-hot-toast";
-import { formatTime } from "../../utils/timeFormatter";
+import { useNavigate } from "react-router-dom";
 import "./Status.css";
 
 const bg_color = ["#25d366", "#34b7f1", "#ffeb3b", "#f44336", "#9c27b0"];
@@ -35,6 +35,7 @@ const Status = () => {
   const [viewers, setViewers] = useState([]);
 const [showViewers, setShowViewers] = useState(false);
   const colors = ["#25d366","#34b7f1","#ff9800","#e91e63","#9c27b0"];
+  const navigate = useNavigate();
 
 
  useEffect(() => {
@@ -274,11 +275,55 @@ const formatTime = (timestamp) => {
 
   if (!timestamp) return "";
 
-  return new Date(timestamp)
-    .toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+  const now = new Date();
+
+  const storyTime = new Date(timestamp);
+
+  // Convert both to Nigeria timezone
+
+  const nowWAT = new Date(
+    now.toLocaleString("en-US", {
+      timeZone: "Africa/Lagos"
+    })
+  );
+
+  const storyWAT = new Date(
+    storyTime.toLocaleString("en-US", {
+      timeZone: "Africa/Lagos"
+    })
+  );
+
+  const diff = nowWAT - storyWAT;
+
+  const minutes = Math.floor(diff / 60000);
+
+  const hours = Math.floor(diff / 3600000);
+
+  const days = Math.floor(diff / 86400000);
+
+  // JUST NOW
+
+  if (minutes < 1) return "Just now";
+
+  // MINUTES AGO
+
+  if (minutes < 60) return `${minutes} mins ago`;
+
+  // HOURS AGO
+
+  if (hours < 24)
+    return `${hours} hrs ago`;
+
+  // YESTERDAY
+
+  if (days === 1) return "Yesterday";
+
+  // OLDER THAN YESTERDAY
+
+  return storyWAT.toLocaleTimeString("en-NG", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 
 };
 
@@ -633,7 +678,7 @@ const handlePost = async () => {
               <p>Refresh</p>
               <p>Status Privacy</p>
               <p>Clear My Status</p>
-              <p>Settings</p>
+              <p onClick={() => { navigate("/settings"); setDropdownOpen(false); }} >Settings</p>
             </div>
           )}
         </div>
@@ -647,7 +692,17 @@ const handlePost = async () => {
 </div>
         <div className="status-text">
           <h3>My Status</h3>
-          <p>Tap to add status update</p>
+          <p>
+{
+statuses.find(s => s.id === session.user.id)
+? formatTime(
+statuses.find(
+s => s.id === session.user.id
+)?.stories?.[0]?.created_at
+)
+: "Tap to add status update"
+}
+</p>
         </div>
       </div>
 
@@ -671,9 +726,7 @@ const handlePost = async () => {
             </div>
             <div className="status-text">
               <h3>{s.name}</h3>
-                <p>
-  {new Date(s.stories[0].created_at).toLocaleTimeString()}
-</p>
+              <p>{formatTime(s.stories[0].created_at)}</p>
 
             </div>
           </div>
@@ -739,12 +792,12 @@ onPointerUp={() => {
 )}
                 <div>
                   <h3>{statuses[activeUserIndex]?.name}</h3>
-                  <p>
- {new Date(
+                <p>
+ {formatTime(
    statuses[activeUserIndex]
      ?.stories?.[activeStoryIndex]
      ?.created_at
- ).toLocaleTimeString()}
+ )}
 </p>
 
                 </div>
@@ -799,7 +852,11 @@ onPointerUp={() => {
   ))}
 </div> */}
   </div>
-              <p className="status-caption">{statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}</p>
+              {statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.type !== "text" && (
+  <p className="status-caption">
+    {statuses[activeUserIndex]?.stories?.[activeStoryIndex]?.text}
+  </p>
+)}
             </div>
             <IoClose className="close-btn4" onClick={closeStatus} />
             <IoChevronBack className="nav-btn left" onClick={prevStory} />

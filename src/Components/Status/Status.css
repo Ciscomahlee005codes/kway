@@ -140,16 +140,33 @@
 
 /* Text avatar inside ring */
 .text-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  text-align: center;
-  padding: 5px;
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+color:white;
+
+font-size:11px;
+
+text-align:center;
+
+padding:6px;
+
+width:55px;
+
+height:55px;
+
+border-radius:50%;
+
+overflow:hidden;
+
+white-space:nowrap;
+
+text-overflow:ellipsis;
+
 }
 
 /* Multiple stories indicator (small dots around ring) */
