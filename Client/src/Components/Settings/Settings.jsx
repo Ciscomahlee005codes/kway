@@ -1,0 +1,199 @@
+import React, { useState, useEffect } from "react";
+import { IoChevronForward } from "react-icons/io5";
+import { supabase } from "../../supabase";
+import { UserAuth } from "../../Context/AuthContext";
+import {
+  FaLock,
+  FaBell,
+  FaPaintBrush,
+  FaInfoCircle,
+  FaQuestionCircle,
+  FaLanguage,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../Context/LanguageContext";
+import "./Settings.css";
+
+const Settings = () => {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { session, profile } = UserAuth();
+  
+  const [showLogout, setShowLogout] = useState(false);
+
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  navigate("/"); // back to login
+};
+
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("app-theme") || "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("app-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === "light" ? "dark" : "light"));
+  };
+
+  if (!profile) return null;
+
+  return (
+    <div className="settings-page">
+
+      <div className="settings-header">
+        <h2>{t("settings")}</h2>
+      </div>
+
+      {/* ================= PROFILE TOP ================= */}
+      <div
+        className="settings-profile"
+        onClick={() => navigate("/profile")}
+      >
+        {profile.photo ? (
+          <img
+            src={profile.photo}
+            alt="Profile"
+            className="settings-avatar"
+          />
+        ) : (
+          <div className="settings-avatar-fallback">
+            {profile.username?.charAt(0).toUpperCase()}
+          </div>
+        )}
+
+        <div className="profile-info">
+          <h3>{profile.name || t("profileName")}</h3>
+          <p className="profile-bio">
+            {profile.username || t("bioPlaceholder")}
+          </p>
+        </div>
+
+        <IoChevronForward className="profile-arrow" />
+      </div>
+
+      {/* ================= SETTINGS LIST ================= */}
+      <div className="settings-list">
+
+        <div
+          className="settings-item"
+          onClick={() => navigate("/settings/account")}
+        >
+          <FaLock className="item-icon" />
+          <div className="item-text">
+            <h4>{t("account")}</h4>
+            <p>{t("accountDesc")}</p>
+          </div>
+          <IoChevronForward className="item-arrow" />
+        </div>
+
+        <div
+          className="settings-item"
+          onClick={() => navigate("/settings/notifications")}
+        >
+          <FaBell className="item-icon" />
+          <div className="item-text">
+            <h4>{t("notifications")}</h4>
+            <p>{t("notificationsDesc")}</p>
+          </div>
+          <IoChevronForward className="item-arrow" />
+        </div>
+
+        <div className="settings-item">
+          <FaPaintBrush className="item-icon" />
+          <div className="item-text">
+            <h4>{t("appearance")}</h4>
+            <p>{t("appearanceDesc")}</p>
+          </div>
+
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={theme === "dark"}
+              onChange={toggleTheme}
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+
+        <div
+          className="settings-item"
+          onClick={() => navigate("/settings/language")}
+        >
+          <FaLanguage className="item-icon" />
+          <div className="item-text">
+            <h4>{t("language")}</h4>
+            <p>{t("languageDesc")}</p>
+          </div>
+          <IoChevronForward className="item-arrow" />
+        </div>
+
+        <div
+          className="settings-item"
+          onClick={() => navigate("/settings/help")}
+        >
+          <FaInfoCircle className="item-icon" />
+          <div className="item-text">
+            <h4>{t("help")}</h4>
+            <p>{t("helpDesc")}</p>
+          </div>
+          <IoChevronForward className="item-arrow" />
+        </div>
+
+        <div
+          className="settings-item"
+          onClick={() => navigate("/settings/about")}
+        >
+          <FaQuestionCircle className="item-icon" />
+          <div className="item-text">
+            <h4>{t("about")}</h4>
+            <p>{t("aboutDesc")}</p>
+          </div>
+          <IoChevronForward className="item-arrow" />
+        </div>
+
+        
+
+      </div>
+ {/* ================= LOGOUT BUTTON ================= */}
+<div className="logout-section">
+  <button
+    className="logout-btn"
+    onClick={() => setShowLogout(true)}
+  >
+    Logout
+  </button>
+</div>
+{showLogout && (
+  <div className="logout-modal-overlay">
+    <div className="logout-modal">
+      <h3>Confirm Logout</h3>
+      <p>Are you sure you want to logout from Kway?</p>
+
+      <div className="logout-actions">
+        <button
+          className="cancel-btn"
+          onClick={() => setShowLogout(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="confirm-btn"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </div>
+  );
+};
+
+export default Settings;

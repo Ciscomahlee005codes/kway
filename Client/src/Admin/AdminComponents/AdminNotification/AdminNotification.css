@@ -1,0 +1,129 @@
+.admin-notify-container {
+  padding: 30px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.admin-notify-container h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #0f5132;
+}
+
+/* SEARCH */
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #cce5d0;
+  font-size: 14px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.search-bar input:focus {
+  border-color: #198754;
+  box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
+}
+
+/* TABS */
+.admin-notify-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-notify-tabs button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background: #e9f7ef;
+  color: #198754;
+  transition: 0.3s;
+}
+
+.admin-notify-tabs button.active {
+  background: #198754;
+  color: white;
+}
+
+/* CONTENT */
+.admin-notify-content {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* NOTIFICATION LIST */
+.notify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.notify-item {
+  padding: 16px;
+  border-left: 5px solid #198754;
+  background: #f0fdf4;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+
+.notify-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.15);
+}
+
+.notify-item span {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* ANNOUNCEMENTS */
+.announce-item {
+  background: #f0fdf4;
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.announce-form {
+  margin-top: 25px;
+  padding: 20px;
+  background: #f9fdfb;
+  border-radius: 12px;
+}
+
+.announce-form input,
+.announce-form textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #cce5d0;
+  font-size: 14px;
+}
+
+.announce-form button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #198754;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.announce-form button:hover {
+  background: #157347;
+}
