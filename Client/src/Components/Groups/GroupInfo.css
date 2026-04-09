@@ -1,39 +1,25 @@
 .group-info-page{
 
-background:#f6f7fb;
+background: var(--bg-color);
 min-height:100vh;
-
 margin-left:70px;
-
 }
 
 
 /* HEADER */
 
 .group-info-header-modern{
-
 position:sticky;
-
 top:0;
-
 height:65px;
-
 display:flex;
-
 align-items:center;
-
 gap:15px;
-
 padding:0 18px;
-
-background:rgba(255,255,255,.7);
-
+background: var(--secondary-bg);
 backdrop-filter:blur(15px);
-
 font-weight:600;
-
 font-size:18px;
-
 z-index:10;
 
 }
@@ -167,7 +153,7 @@ padding:6px 14px;
 
 border-radius:25px;
 
-background:white;
+background:var(--bg-color);
 
 font-size:13px;
 
@@ -209,9 +195,7 @@ color:red;
 /* MEMBERS CARD */
 
 .members-card{
-
-background:white;
-
+background:var(--secondary-bg);
 margin:15px;
 
 border-radius:18px;
@@ -262,7 +246,7 @@ transition:.2s;
 
 
 .member-row:hover{
-background:#f5f6fa;
+background:var(--bg-color);
 color: var(--accent-color);
 }
 /* Admin Buttons */

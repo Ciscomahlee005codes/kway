@@ -475,7 +475,7 @@ text-overflow:ellipsis;
 .post-box.modern {
   width: 100%;
   max-width: 500px;
-  background: #fff;
+  background: var(--bg-color);
   border-radius: 20px 20px 0 0;
   padding: 20px;
   animation: slideUp 0.3s ease;
@@ -499,6 +499,7 @@ text-overflow:ellipsis;
 
 .post-header h3 {
   font-size: 18px;
+  color: var(--text-color);
 }
 
 .post-header svg {
@@ -550,7 +551,8 @@ text-overflow:ellipsis;
   border-radius: 14px;
   border: none;
   padding: 15px;
-  background: #f4f4f4;
+  background: var(--secondary-bg);
+  color: var(--text-color);
   font-size: 15px;
   outline: none;
 }
@@ -619,10 +621,11 @@ text-overflow:ellipsis;
   border: none;
   font-size: 15px;
   cursor: pointer;
+  color: var(--text-color);
 }
 
 .post-actions .send {
-  background: #25d366;
+  background: var(--accent-color);
   color: white;
   padding: 10px 20px;
   border-radius: 25px;

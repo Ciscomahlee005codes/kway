@@ -32,7 +32,7 @@
 
 /* ---------- SECTIONS ---------- */
 .admin-section {
-  background: var(--secondary-bg);
+  background: #dde0e3;
   padding: 18px;
   margin-bottom: 20px;
   border-radius: 14px;

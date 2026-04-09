@@ -11,6 +11,8 @@ import { useEffect, useRef } from "react";
 import { supabase } from "../../supabase";
 import { UserAuth } from "../../Context/AuthContext";
 import KwayLogo from "../../assets/kway-logo-1.png";
+import MpaImg from "../../assets/Mpa_AI2.png";
+import MpaImg2 from "../../assets/Mpa_AI22.png";
 import VoiceNotePlayer from "./VoiceNotePlayer";
 
 
@@ -47,6 +49,8 @@ const recordTimerRef = useRef(null);
    const [paused, setPaused] = useState(false);
 const [audioBlob, setAudioBlob] = useState(null);
 const [audioPreview, setAudioPreview] = useState(null);
+const [showMPA, setShowMPA] = useState(false);
+const [mpaInput, setMpaInput] = useState("");
   const emojiRef = useRef(null);
   const dropdownRef = useRef(null);
   const typingChannelRef = useRef(null);
@@ -586,7 +590,9 @@ console.log("Active Chat:", activeChat);
     isSender={msg.sender === "you"}
   />
 )}
-{(!msg.type || msg.type === "text") && (
+{(!msg.type ||
+  msg.type === "text" ||
+  msg.type === "status_reply") && (
   <p className="message-text">
     {msg?.content || msg?.text}
   </p>
@@ -690,33 +696,30 @@ console.log("Active Chat:", activeChat);
       onClick={() => setShowEmojiPicker(prev => !prev)}
     />
 
-    <input
-      type="text"
-      rows={1}
-      placeholder="Type a message"
-      value={newMessage}
-      onChange={(e) => {
-        setNewMessage(e.target.value);
-        handleTyping();
-        e.target.style.height = "auto";           
-        e.target.style.height = e.target.scrollHeight + "px";
-      }}
-      onInput={(e) => {  
-        e.target.style.height = "auto";
-        e.target.style.height = e.target.scrollHeight + "px";
-      }}
-      onKeyDown={(e) => {
-        if (
-  e.key === "Enter" &&
-  !e.shiftKey &&
-  (newMessage.trim() || selectedMedia.length > 0)
-) {
-          e.preventDefault();
-          handleSendMessage();
-          e.target.style.height = "auto";
-        }
-      }}
-    />
+    <textarea
+  rows={1}
+  className="chat-textarea"
+  placeholder="Type a message"
+  value={newMessage}
+  onChange={(e) => {
+    setNewMessage(e.target.value);
+    handleTyping();
+
+    e.target.style.height = "24px"; // 👈 reset to base height
+    e.target.style.height = e.target.scrollHeight + "px";
+  }}
+  onKeyDown={(e) => {
+    if (
+      e.key === "Enter" &&
+      !e.shiftKey &&
+      (newMessage.trim() || selectedMedia.length > 0)
+    ) {
+      e.preventDefault();
+      handleSendMessage();
+      e.target.style.height = "28px"; // 👈 reset after send
+    }
+  }}
+/>
 
     {/* Media Upload Button */}
     <label htmlFor="media-upload" className="media-upload-btn">
@@ -737,6 +740,14 @@ console.log("Active Chat:", activeChat);
     />
   </div>
 
+  {/* Mp.A AI */}
+  <div className="chat-actions-right">
+    <img
+  src={MpaImg2}
+  alt="Mp.A"
+  className="mpa-btn"
+  onClick={() => setShowMPA(prev => !prev)}
+/>
  {newMessage.trim() || selectedMedia.length > 0 ? (
   <button className="chat-send-btn" onClick={handleSendMessage}>
     <FiSend />
@@ -761,6 +772,102 @@ console.log("Active Chat:", activeChat);
 >
   {audioPreview ? <FiSend /> : <FaMicrophoneAlt />}
 </button>
+)}
+  </div>
+{showMPA && (
+  <div className="mpa-overlay" onClick={()=> setShowMPA(false)}>
+    <div className="mpa-popout2" onClick={(e) => e.stopPropagation()}>
+
+    <div className="mpa-header">
+  <div className="mpa-title">
+    <img src={MpaImg2} alt="" />
+    <span>Mp.A Assistant</span>
+  </div>
+  <button onClick={() => setShowMPA(false)}>✕</button>
+</div>
+
+    <div className="mpa-actions">
+      <button
+  onClick={() => {
+    setNewMessage("Alright, let’s talk later 👍"); // dummy text
+    handleSendMessage(); // send it
+    setShowMPA(false); // close modal
+  }}
+  className="mpa2-btn"
+>
+  Suggest replies in my tone
+</button>
+
+      <button
+  onClick={() => {
+    const msg = "Here is a better version of your message ✨";
+    setNewMessage(msg);
+    handleSendMessage();
+    setShowMPA(false);
+  }}
+  className="mpa2-btn"
+>
+  Rewrite message
+</button>
+
+      <button
+  onClick={() => {
+    const msg = "Your message has been corrected ✔";
+    setNewMessage(msg);
+    handleSendMessage();
+    setShowMPA(false);
+  }}
+  className="mpa2-btn"
+>
+  Fix grammar
+</button>
+
+      <button
+  onClick={() => {
+    const msg = "Short version 👍";
+    setNewMessage(msg);
+    handleSendMessage();
+    setShowMPA(false);
+  }}
+  className="mpa2-btn"
+>
+  Make it shorter
+</button>
+
+      <button
+  onClick={() => {
+    const msg = "Good day, I will get back to you shortly.";
+    setNewMessage(msg);
+    handleSendMessage();
+    setShowMPA(false);
+  }}
+  className="mpa2-btn"
+>
+  Make it professional
+</button>
+    </div>
+
+    <div className="mpa-custom">
+      <input
+        type="text"
+        placeholder="Ask Mp.A anything..."
+        value={mpaInput}
+        onChange={(e) => setMpaInput(e.target.value)}
+      />
+
+      <button
+        onClick={() => {
+          setNewMessage(mpaInput);
+          setMpaInput("");
+          setShowMPA(false);
+        }}
+      >
+        Send
+      </button>
+    </div>
+
+  </div>
+  </div>
 )}
 </div>
 

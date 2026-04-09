@@ -24,7 +24,7 @@
 }
 
 .prompt-list span {
-  background: #f1f1f1;
+  background: var(--bg-color);
   padding: 8px 12px;
   border-radius: 10px;
   cursor: pointer;
@@ -33,5 +33,5 @@
 }
 
 .prompt-list span:hover {
-  background: #e0e0e0;
+  background: var(--secondary-bg);
 }

@@ -904,11 +904,8 @@ onChange={handleMediaSelect}
 </label>
 
 <input
-
 placeholder="Type a message..."
-
 value={newMessage}
-
 onChange={(e) => {
 setNewMessage(e.target.value);
 handleTyping();
