@@ -758,11 +758,9 @@
   font-size: 15px;
   line-height: 1.5;
   padding: 8px 0;
-
   height: 28px;          /* 👈 Force clean default height */
   min-height: 24px;
   max-height: 120px;
-
   overflow-y: hidden;     /* 👈 prevent scroll jump */
   font-family: inherit;
 }
