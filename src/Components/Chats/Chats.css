@@ -741,7 +741,7 @@
 .chat-input-wrapper {
   position: sticky;
   bottom: 0;
-  background: red !important;
+  background: var(--bg-color)!important;
   padding: 8px 12px;
   display: flex;
   gap: 10px;
