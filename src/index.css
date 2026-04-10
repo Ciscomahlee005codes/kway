@@ -6,7 +6,9 @@
   box-sizing: border-box;
   font-family: 'Rubik', sans-serif;
 }
-
+html, body {
+  overflow-x: hidden;
+}
 /* 🌞 Default Light Mode (like WhatsApp) */
 :root {
   --bg-color: #ffffff;

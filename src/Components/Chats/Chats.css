@@ -275,14 +275,14 @@
 .message-wrapper.sent .message-bubble {
   background: var(--accent-color);
   color: #fff;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 4;
 }
 
 /* RECEIVED */
 .message-wrapper.received .message-bubble {
   background: var(--secondary-bg);
   color: var(--text-color);
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 4;
 }
 .message-meta {
   display: flex;
@@ -290,7 +290,7 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  margin-top: 4px;
+  margin-top: 4;
   opacity: 0.8;
 }
 
@@ -575,7 +575,7 @@
 }
 .status-reply-bubble {
   background: #e7fce9;
-  border-left: 4px solid #25d366;
+  border-left: 4 solid #25d366;
   padding: 6px 10px;
   border-radius: 10px;
 }
@@ -741,12 +741,15 @@
 .chat-input-wrapper {
   position: sticky;
   bottom: 0;
-  background: var(--bg-color)!important;
-  padding: 8px 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-color);
+  padding: 8px 10px;
   display: flex;
-  gap: 10px;
-  align-items: flex-end;
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(0,0,0,0.12);
 }
 .chat-textarea {
   flex: 1;
@@ -801,6 +804,8 @@
   /* box-shadow: 0 4px 12px rgba(0,0,0,0.15); */
   cursor: pointer;
   transition: all 0.25s ease;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .mpa-btn:hover {
@@ -1261,7 +1266,7 @@
   top: 40px;
   right: 0;
   width: 180px;
-  padding: 4px 8px;
+  padding: 4 8px;
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   outline: none;
@@ -1316,7 +1321,7 @@ mark {
   background: rgba(0, 255, 170, 0.25);
   color: inherit;
   padding: 0 2px;
-  border-radius: 4px;
+  border-radius: 4;
 }
 
 /* 🔔 Unread badge */
@@ -1372,7 +1377,7 @@ mark {
   background: #25d366;
   color: white;
   border-radius: 50%;
-  padding: 4px 8px;
+  padding: 4 8px;
   font-size: 12px;
 }
 .chat-item {
@@ -1625,7 +1630,7 @@ mark {
 
 .media-caption {
   font-size: 14px;
-  margin-top: 4px;
+  margin-top: 4;
 }
 .chat-voice-btn.recording-active {
   background: var(--accent-color);
@@ -1742,4 +1747,33 @@ mark {
     color: var(--accent-color);
     transition: background 0.2s;
   }
+}
+@media (max-width: 320px) {
+  .mpa-btn {
+  width: 24px;
+  border-radius: 50%;
+  /* box-shadow: 0 4px 12px rgba(0,0,0,0.15); */
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.mpa-btn:hover {
+  transform: scale(1.1);
+}
+.chat-send-btn,
+.chat-voice-btn {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-color);
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+}
 }
