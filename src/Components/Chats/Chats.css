@@ -1700,11 +1700,20 @@ mark {
     padding: 6px 10px;
     min-height: 42px;
   } */
-  .chat-send-btn,
-  .chat-voice-btn {
-    width: 40px;
-    height: 40px;
-  }
+   .chat-send-btn,
+.chat-voice-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  color: var(--accent-color) !important;
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+}
   .hide-on-mobile {
     display: none;
   }
