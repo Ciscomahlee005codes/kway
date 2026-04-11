@@ -695,7 +695,6 @@ console.log("Active Chat:", activeChat);
       className="emoji-btn"
       onClick={() => setShowEmojiPicker(prev => !prev)}
     />
-
     <textarea
   rows={1}
   className="chat-textarea"
@@ -720,7 +719,6 @@ console.log("Active Chat:", activeChat);
     }
   }}
 />
-
     {/* Media Upload Button */}
     <label htmlFor="media-upload" className="media-upload-btn">
       <FaCameraRetro />
@@ -742,12 +740,6 @@ console.log("Active Chat:", activeChat);
 
   {/* Mp.A AI */}
   <div className="chat-actions-right">
-    <img
-  src={MpaImg2}
-  alt="Mp.A"
-  className="mpa-btn"
-  onClick={() => setShowMPA(prev => !prev)}
-/>
  {newMessage.trim() || selectedMedia.length > 0 ? (
   <button className="chat-send-btn" onClick={handleSendMessage}>
     <FiSend />
@@ -773,6 +765,12 @@ console.log("Active Chat:", activeChat);
   {audioPreview ? <FiSend /> : <FaMicrophoneAlt />}
 </button>
 )}
+ <img
+  src={MpaImg2}
+  alt="Mp.A"
+  className="mpa-btn"
+  onClick={() => setShowMPA(prev => !prev)}
+/>
   </div>
 {showMPA && (
   <div className="mpa-overlay" onClick={()=> setShowMPA(false)}>
