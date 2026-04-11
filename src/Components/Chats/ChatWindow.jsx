@@ -695,6 +695,7 @@ console.log("Active Chat:", activeChat);
       className="emoji-btn"
       onClick={() => setShowEmojiPicker(prev => !prev)}
     />
+
     <textarea
   rows={1}
   className="chat-textarea"
@@ -719,6 +720,7 @@ console.log("Active Chat:", activeChat);
     }
   }}
 />
+
     {/* Media Upload Button */}
     <label htmlFor="media-upload" className="media-upload-btn">
       <FaCameraRetro />
