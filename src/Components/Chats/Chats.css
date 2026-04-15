@@ -821,11 +821,7 @@
   justify-content: center;
   z-index: 999999999999999999999999999999999;
 }
-.mpa-custom {
-  display: flex;
-  gap: 10px;
-  margin-top: 5px;
-}
+
 
 .mpa-custom input {
   flex: 1;
@@ -841,31 +837,164 @@
 .mpa-custom input::placeholder {
   color: rgba(37, 33, 33, 0.5);
 }
+/* ================= Mp.A MODAL PRO VERSION ================= */
 
-.mpa-custom button {
-  background: #22c55e;
-  border: none;
-  padding: 10px 16px !important;
-  border-radius: 14px !important;
-  color: white;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  cursor: pointer;
-}
 .mpa-popout2 {
-  width: 400px;
-  max-width: 95%;
-  background: linear-gradient(135deg, #0f172a, #020617);
-  border-radius: 22px;
-  padding: 18px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+  width: 420px;
+  max-width: 94%;
+
+  height: 520px; /* 🔥 fixed height prevents stretching */
+  max-height: 90vh;
+
+  background: linear-gradient(145deg,#020617,#0f172a);
+
+  border-radius: 24px;
+  padding: 16px;
 
   display: flex;
   flex-direction: column;
-  gap: 18px;
 
-  animation: popCenter 0.25s ease;
+  box-shadow: 0 40px 120px rgba(0,0,0,.8);
+
+  animation: popCenter .25s ease;
 }
+
+/* HEADER stays fixed */
+
+.mpa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* ACTION BUTTON GRID stays fixed */
+
+.mpa-actions {
+  flex-shrink: 0;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* RESULT AREA becomes scroll container */
+
+.mpa-result-area {
+  flex: 1;
+  overflow-y: auto;
+  background: rgba(255,255,255,.03);
+  border-radius: 14px;
+  padding: 18px;
+  font-size: 15px;
+  line-height: 1.85;
+  letter-spacing: .2px;
+  transition: all .3s ease;
+}
+.mpa-result-area.answer-mode {
+  padding: 24px;
+  font-size: 16px;
+}
+.mpa-result {
+  animation: answerReveal .35s ease;
+}
+
+@keyframes answerReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* nicer reading typography */
+
+.mpa-line {
+  margin-bottom: 8px;
+  color: #e5e7eb;
+}
+
+/* smooth scrollbar */
+
+.mpa-result-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mpa-result-area::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.2);
+  border-radius: 20px;
+}
+
+/* sticky USE BUTTON */
+
+.mpa-use-btn {
+  margin-top: 10px;
+  width: 100%;
+  background: #22c55e;
+  border: none;
+
+  padding: 10px;
+
+  border-radius: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: .2s ease;
+}
+
+.mpa-use-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* INPUT AREA pinned bottom */
+
+.mpa-custom {
+  flex-shrink: 0;
+
+  display: flex;
+
+  gap: 8px;
+}
+
+/* textarea improvement */
+
+.mpa-input {
+  flex: 1;
+
+  border-radius: 14px;
+
+  padding: 10px;
+
+  resize: none;
+
+  background: rgba(255,255,255,.06);
+
+  font-size: 14px;
+
+  color: white;
+}
+
+/* ask button styling */
+
+.mpa-custom button {
+  background: #22c55e;
+  width: 50px !important;
+  border-radius: 14px !important;
+
+  padding: 10px 16px;
+
+  font-weight: 600;
+
+  border: none;
+
+  cursor: pointer;
+}
+
 
 @keyframes popCenter {
   from {
@@ -877,11 +1006,7 @@
     opacity: 1;
   }
 }
- .mpa-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+
 
 .mpa-title {
   display: flex;
@@ -909,7 +1034,18 @@
 }
 .mpa-actions {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
+
+  transition: all .35s ease;
+}
+
+.mpa-actions.hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
 }
 
 .mpa2-btn {
@@ -973,6 +1109,62 @@
   gap: 8px;
   z-index: 999;
   white-space: nowrap;
+}
+/* Mp.A Result Area */
+
+.mpa-loading {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+
+.mpa-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7c5cbf;
+  animation: mpaBounce 0.6s infinite alternate;
+}
+
+.mpa-dot:nth-child(2) { animation-delay: 0.2s; }
+.mpa-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes mpaBounce {
+  from { transform: translateY(0); opacity: 0.5; }
+  to   { transform: translateY(-6px); opacity: 1; }
+}
+
+.mpa-result {
+  background: rgba(124, 92, 191, 0.08);
+  border-left: 3px solid #7c5cbf;
+  color: #d4d1da !important;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.mpa-use-btn {
+  margin-top: 8px;
+  background: #7c5cbf !important;
+  color: white !important;
+  border: none;
+  border-radius: 6px !important;
+  padding: 5px 12px;
+  width: 100% !important;
+  font-size: 16px !important;
+  cursor: pointer;
+}
+
+.mpa-use-btn:hover { background: #6a4daa; }
+
+.mpa-error {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  padding: 6px 0;
 }
 /* .voice-recording-ui {
 
