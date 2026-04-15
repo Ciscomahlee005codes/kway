@@ -84,7 +84,6 @@ const VoiceNotePlayer = ({ audioUrl, isSender }) => {
         ref={waveformRef}
         className="waveform"
       />
-
     </div>
   );
 };
