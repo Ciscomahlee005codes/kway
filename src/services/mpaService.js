@@ -44,9 +44,9 @@ Always be yourself — Mp.A, the heart of Kway. 💬
 export const getMpAResponse = async (message, history = []) => {
   if (!message?.trim()) throw new Error("Message is empty");
 
-  const apiKey = import.meta.env.GROQ_API_KEY;
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey || apiKey === "undefined") {
-    throw new Error("API key missing. Add GROQ_API_KEY to your .env file.");
+    throw new Error("API key missing. Add VITE_GROQ_API_KEY to your .env file.");
   }
 
   // ✅ Build history array from past messages (last 20 to stay within token limits)
