@@ -41,18 +41,39 @@ Always be yourself — Mp.A, the heart of Kway. 💬
 `;
 
 export default async function handler(req, res) {
-  try {
-    const { message, history } = req.body;
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
+  // ✅ Guard against undefined body
+  if (!req.body) {
+    return res.status(400).json({ error: "No body received" });
+  }
+
+  const { message, history = [] } = req.body;
+
+  if (!message?.trim()) {
+    return res.status(400).json({ error: "Message is empty" });
+  }
+
+  // ✅ Map history correctly from your message format
+  const historyMessages = history.slice(-20).map(msg => ({
+    role: msg.sender === "you" ? "user" : "assistant",
+    content: msg.content,
+  }));
+
+  try {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         model: "llama-3.1-8b-instant",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...history,
+          { role: "system", content: MPA_SYSTEM_PROMPT },
+          ...historyMessages,
           { role: "user", content: message },
         ],
+        temperature: 0.7,
+        max_tokens: 1024,
       },
       {
         headers: {
@@ -65,10 +86,11 @@ export default async function handler(req, res) {
     res.status(200).json(response.data);
 
   } catch (error) {
-    console.error(error.response?.data || error.message);
-
-    res.status(500).json({
-      error: "Mp.A failed to respond",
-    });
+    // ✅ Log the REAL error so you can see it in terminal
+    console.error("GROQ ERROR:", error.response?.data || error.message);
+    const status = error.response?.status;
+    if (status === 429) return res.status(429).json({ error: "Rate limit hit" });
+    if (status === 401) return res.status(401).json({ error: "Invalid API key" });
+    res.status(500).json({ error: error.response?.data?.error?.message || "Mp.A failed to respond" });
   }
 }
