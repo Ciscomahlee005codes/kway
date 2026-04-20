@@ -42,50 +42,23 @@ Always be yourself — Mp.A, the heart of Kway. 💬
 
 // ✅ Now accepts full chat history for memory
 export const getMpAResponse = async (message, history = []) => {
-  if (!message?.trim()) throw new Error("Message is empty");
-
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  if (!apiKey || apiKey === "undefined") {
-    throw new Error("API key missing. Add VITE_GROQ_API_KEY to your .env file.");
-  }
-
-  // ✅ Build history array from past messages (last 20 to stay within token limits)
-  const historyMessages = history.slice(-20).map(msg => ({
-    role: msg.sender === "you" ? "user" : "assistant",
-    content: msg.content,
-  }));
-
   try {
-    const res = await axios.post(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        model: "llama-3.1-8b-instant",
-        messages: [
-          { role: "system", content: MPA_SYSTEM_PROMPT },
-          ...historyMessages, // ✅ inject chat history
-          { role: "user", content: message },
-        ],
-        temperature: 0.7,
-        max_tokens: 1024,
+    const res = await fetch("http://localhost:5000/api/mpa", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+      body: JSON.stringify({ message, history }),
+    });
 
-    return res.data.choices[0]?.message?.content || "No response from Mp.A.";
+    if (!res.ok) {
+      throw new Error("Server not responding");
+    }
 
-  } catch (err) {
-    const status = err.response?.status;
-    const groqMessage = err.response?.data?.error?.message;
-    console.error("🔥 GROQ ERROR:", groqMessage || err.message);
-
-    if (status === 401) throw new Error("Invalid API key.");
-    if (status === 400) throw new Error(groqMessage || "Bad request to Groq.");
-    if (status === 429) throw new Error("Rate limit hit. Try again in a moment.");
-    throw new Error("Network error reaching Mp.A.");
+    const data = await res.json();
+    return data.reply || "Mp.A had no response.";
+  } catch (error) {
+    console.error("Mp.A Error:", error.message);
+    return "Mp.A is having trouble right now.";
   }
 };
