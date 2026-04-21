@@ -185,28 +185,30 @@ useEffect(() => {
   // TYPING STATUS
   // =========================================
   useEffect(() => {
-    if (!activeChat || !user) return;
+  if (!activeChat || !user) return;
 
-    const channel = supabase
-      .channel("typing-status")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "typing",
-          filter: `chat_id=eq.${activeChat.id}`,
-        },
-        payload => {
-          if (payload.new.user_id !== user.id) {
-            setIsTyping(payload.new.typing);
-          }
+  const channel = supabase
+    .channel(`typing-status-${activeChat.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "typing",
+        filter: `chat_id=eq.${activeChat.id}`,
+      },
+      (payload) => {
+        if (payload.new.user_id !== user.id) {
+          setIsTyping(payload.new.typing);
         }
-      )
-      .subscribe();
+      }
+    )
+    .subscribe();
 
-    return () => supabase.removeChannel(channel);
-  }, [activeChat, user]);
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [activeChat?.id, user?.id]);
 
   // =========================================
   // LOAD Mp.A CHAT FROM SUPABASE

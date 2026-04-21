@@ -272,7 +272,7 @@ useEffect(() => {
   useEffect(() => {
     if (!activeChat) return;
     typingChannelRef.current = supabase
-      .channel("typing-status")
+      .channel(`typing-broadcast-${activeChat?.id}`)
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (payload.sender === activeChat.id) setIsTyping(true);
       })
@@ -328,7 +328,7 @@ useEffect(() => {
 
   useEffect(() => {
     const typingChannel = supabase
-      .channel("typing-status")
+      .channel(`typing-broadcast-${activeChat?.id}`)
       .on("broadcast", { event: "typing" }, (payload) => {
         if (payload.payload.sender === activeChat?.id) {
           setIsTyping(true);
