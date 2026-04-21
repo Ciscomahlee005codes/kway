@@ -43,7 +43,7 @@ Always be yourself — Mp.A, the heart of Kway. 💬
 // ✅ Now accepts full chat history for memory
 export const getMpAResponse = async (message, history = []) => {
   try {
-    const res = await fetch("http://localhost:5000/api/mpa", {
+    const res = await fetch("/api/mpa", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
