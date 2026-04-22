@@ -208,7 +208,8 @@
   width: 60%;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
+  overflow: hidden; 
   background: var(--bg-color);
 }
 .empty-chat-list {
@@ -235,16 +236,19 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   background: var(--bg-color);
   display: flex;
+  flex-shrink: 0;
 }
 
 .chat-messages {
-  flex: 1;
+  flex: 1;              
+  overflow-y: auto;       
+  overflow-x: hidden;
   padding: 1rem;
-  overflow-y: auto;
   background: var(--bg-color);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;          
 }
 
 /* Chat bubbles */
@@ -747,6 +751,7 @@
   background: var(--bg-color);
   padding: 8px 10px;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
   border-top: 1px solid rgba(0,0,0,0.12);
@@ -1919,6 +1924,7 @@ mark {
 
   .chat-window {
     width: 100%;
+     height: 100dvh; 
     display: none;
   }
   .chat-actions-right {
