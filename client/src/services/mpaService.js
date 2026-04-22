@@ -42,23 +42,25 @@ Always be yourself — Mp.A, the heart of Kway. 💬
 
 // ✅ Now accepts full chat history for memory
 export const getMpAResponse = async (message, history = []) => {
+  if (!message?.trim()) throw new Error("Message is empty");
+
   try {
     const res = await fetch("/api/mpa", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history }),
     });
 
     if (!res.ok) {
-      throw new Error("Server not responding");
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.error || `Server error ${res.status}`);
     }
 
     const data = await res.json();
-    return data.reply || "Mp.A had no response.";
-  } catch (error) {
-    console.error("Mp.A Error:", error.message);
-    return "Mp.A is having trouble right now.";
+    return data.reply || "No response from Mp.A.";
+
+  } catch (err) {
+    console.error("Mp.A Error:", err.message);
+    throw new Error(err.message || "Mp.A is having trouble right now.");
   }
 };
