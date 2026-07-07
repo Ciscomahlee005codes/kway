@@ -223,13 +223,33 @@ if (user.email === "vraphael261@gmail.com") {
   return (
     <div className="auth-container">
       <div className="auth-banner">
+  <div className="banner-grid" />
+  <div className="glow-orb glow-orb-teal" />
+  <div className="glow-orb glow-orb-violet" />
+
+  <div className="floating-stack">
+    <div className="float-card card-1">
+      <span className="card-dot" />
+      <p>Amara is typing...</p>
+    </div>
+    <div className="float-card card-2">
+      <span className="card-live">LIVE</span>
+      <p>Tobi started a status</p>
+    </div>
+    <div className="float-card card-3">
+      <span className="card-dot online" />
+      <p>3 new messages</p>
+    </div>
+  </div>
+
   <div className="banner-content">
     <div className="logo-circle">
       <img src={KwayLogo} alt="Kway Logo" className="logo-img" />
     </div>
+    <span className="banner-eyebrow">ENCRYPTED · REALTIME · YOURS</span>
     <h1>Kway</h1>
     <p>
-      Connect freely. Chat privately.  
+      Connect freely. Chat privately.
       Your conversations, your control.
     </p>
   </div>
@@ -290,12 +310,19 @@ if (user.email === "vraphael261@gmail.com") {
             </div>
 
             {!isLogin && formData.password && (
-              <div className={`password-strength ${passwordStrength}`}>
-                {passwordStrength === "weak" && "Weak password"}
-                {passwordStrength === "medium" && "Medium strength"}
-                {passwordStrength === "strong" && "Strong password"}
-              </div>
-            )}
+  <div className="strength-meter-wrap">
+    <div className="strength-meter">
+      <span className={`strength-bar ${passwordStrength ? "filled" : ""} ${passwordStrength}`} />
+      <span className={`strength-bar ${passwordStrength === "medium" || passwordStrength === "strong" ? "filled" : ""} ${passwordStrength}`} />
+      <span className={`strength-bar ${passwordStrength === "strong" ? "filled" : ""} ${passwordStrength}`} />
+    </div>
+    <span className={`strength-label ${passwordStrength}`}>
+      {passwordStrength === "weak" && "Weak"}
+      {passwordStrength === "medium" && "Medium"}
+      {passwordStrength === "strong" && "Strong"}
+    </span>
+  </div>
+)}
 
             {!isLogin && (
               <div className="password-field">

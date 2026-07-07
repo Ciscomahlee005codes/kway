@@ -6,7 +6,7 @@ const AdminHome = () => {
   const [stats, setStats] = useState({
     users: 0,
     totalMessages: 0,
-    activeChats: 0,
+    activeGroups: 0,
     statusPosts: 0,
   });
 
@@ -18,43 +18,65 @@ const AdminHome = () => {
 
   const fetchDashboard = async () => {
     try {
-      // ================= USERS =================
-      const { count: users } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
-     // ================= TOTAL MESSAGES =================
-const { count: totalMessages } = await supabase
-  .from("messages")
-  .select("*", { count: "exact", head: true });
-      // ================= ACTIVE STATUS =================
-      const { count: statusPosts } = await supabase
-        .from("status")
-        .select("*", { count: "exact", head: true });
+      // 🚀 Run all queries in parallel
+      const [
+        usersRes,
+        messagesRes,
+        statusRes,
+        groupsRes,
+        chatsFallbackRes,
+        recentUsersRes
+      ] = await Promise.all([
 
-      // ================= ACTIVE CHATS =================
-      const { data: chats } = await supabase
-        .from("messages")
-        .select("chat_id");
+        // USERS
+        supabase
+          .from("profiles")
+          .select("*", { count: "exact", head: true }),
 
-      const uniqueChats = new Set(chats?.map(c => c.chat_id));
+        // TOTAL MESSAGES
+        supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true }),
 
-      // ================= RECENT USERS =================
-      const { data: usersRecent } = await supabase
-        .from("profiles")
-        .select("name, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
+        // STATUS POSTS
+        supabase
+          .from("status")
+          .select("*", { count: "exact", head: true }),
+
+        // ✅ PRIMARY: GROUPS TABLE (if exists)
+        supabase
+          .from("groups")
+          .select("*", { count: "exact", head: true }),
+
+        // ⚠️ FALLBACK: CHATS TABLE (if groups table doesn't exist)
+        supabase
+          .from("chats")
+          .select("*", { count: "exact", head: true })
+          .eq("type", "group"),
+
+        // RECENT USERS
+        supabase
+          .from("profiles")
+          .select("name, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5)
+      ]);
+
+      // 🧠 Smart group count logic
+      const activeGroups =
+        groupsRes.count ?? chatsFallbackRes.count ?? 0;
 
       setStats({
-        users: users || 0,
-        totalMessages: totalMessages || 0,
-        activeChats: uniqueChats.size || 0,
-        statusPosts: statusPosts || 0,
+        users: usersRes.count || 0,
+        totalMessages: messagesRes.count || 0,
+        activeGroups: activeGroups,
+        statusPosts: statusRes.count || 0,
       });
 
-      setRecentUsers(usersRecent || []);
+      setRecentUsers(recentUsersRes.data || []);
+
     } catch (err) {
-      console.log(err);
+      console.error("Dashboard Error:", err);
     }
   };
 
@@ -82,8 +104,8 @@ const { count: totalMessages } = await supabase
         </div>
 
         <div className="admin-card">
-          <h3>Active Chats</h3>
-          <p className="admin-number">{stats.activeChats}</p>
+          <h3>Active Groups</h3>
+          <p className="admin-number">{stats.activeGroups}</p>
         </div>
 
         <div className="admin-card">

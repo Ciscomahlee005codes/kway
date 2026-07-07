@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { IoArrowBack } from "react-icons/io5";
 import { FiPhone, FiVideo, FiSend, FiSmile } from "react-icons/fi";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { FaCameraRetro } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { FiPause, FiPlay, FiTrash2, FiStopCircle } from "react-icons/fi";
+import { FiPause, FiPlay, FiTrash2, FiStopCircle, FiSearch, FiChevronUp, FiChevronDown, FiX } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
 import { useEffect, useRef } from "react";
@@ -17,6 +17,8 @@ import VoiceNotePlayer from "./VoiceNotePlayer";
 import { getMpAResponse } from "../../services/mpaService";
 
 const ChatWindow = ({
+  lastSeen,
+  isOnline,
   selectedMedia,
   setSelectedMedia,
   mediaCaption,
@@ -71,6 +73,80 @@ useEffect(() => {
     behavior: "smooth"
   });
 }, [mpaResult]);
+
+const formatLastSeen = (date) => {
+  if (!date) return "";
+  const now = new Date();
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (date.toDateString() === now.toDateString()) return `last seen today at ${time}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return `last seen yesterday at ${time}`;
+  return `last seen ${date.toLocaleDateString()} at ${time}`;
+};
+// ✅ In-chat message search
+const [showSearch, setShowSearch] = useState(false);
+const [searchQuery, setSearchQuery] = useState("");
+const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+const messageRefs = useRef({});
+
+const searchMatches = useMemo(() => {
+  const q = searchQuery.trim().toLowerCase();
+  if (!q) return [];
+  return (activeChat?.messages || [])
+    .map((msg, idx) => ({ msg, idx }))
+    .filter(
+      ({ msg }) =>
+        (!msg.type || msg.type === "text") &&
+        (msg.content || msg.text || "").toLowerCase().includes(q)
+    );
+}, [searchQuery, activeChat?.messages]);
+
+const matchedKeys = useMemo(
+  () => new Set(searchMatches.map(({ msg, idx }) => msg.id ?? idx)),
+  [searchMatches]
+);
+
+useEffect(() => {
+  setCurrentMatchIndex(0);
+}, [searchQuery]);
+
+useEffect(() => {
+  if (searchMatches.length === 0) return;
+  const target = searchMatches[currentMatchIndex];
+  if (!target) return;
+  const key = target.msg.id ?? target.idx;
+  messageRefs.current[key]?.scrollIntoView({ behavior: "smooth", block: "center" });
+}, [currentMatchIndex, searchMatches]);
+
+const goToNextMatch = () => {
+  if (searchMatches.length === 0) return;
+  setCurrentMatchIndex((prev) => (prev + 1) % searchMatches.length);
+};
+
+const goToPrevMatch = () => {
+  if (searchMatches.length === 0) return;
+  setCurrentMatchIndex((prev) => (prev - 1 + searchMatches.length) % searchMatches.length);
+};
+
+const closeSearch = () => {
+  setShowSearch(false);
+  setSearchQuery("");
+  setCurrentMatchIndex(0);
+};
+
+const highlightMatch = (text) => {
+  if (!searchQuery.trim() || !text) return text;
+  const escaped = searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = String(text).split(new RegExp(`(${escaped})`, "gi"));
+  return parts.map((part, i) =>
+    part.toLowerCase() === searchQuery.trim().toLowerCase() ? (
+      <mark key={i} className="search-highlight">{part}</mark>
+    ) : (
+      part
+    )
+  );
+};
 
   // ✅ Helper: get last N messages from current chat as context string
   const getChatContext = (n = 10) => {
@@ -171,6 +247,7 @@ useEffect(() => {
     setMpaResult("");
     setMpaError("");
     setMpaInput("");
+    closeSearch();
   }, [activeChat]);
 
   const startRecording = async () => {
@@ -268,21 +345,31 @@ useEffect(() => {
     }));
     deleteRecording();
   };
+// ================= TYPING (fixed: shared channel name) =================
+useEffect(() => {
+  if (!activeChat?.id || !session?.user?.id) return;
 
-  useEffect(() => {
-    if (!activeChat) return;
-    typingChannelRef.current = supabase
-      .channel(`typing-broadcast-${activeChat?.id}`)
-      .on("broadcast", { event: "typing" }, ({ payload }) => {
-        if (payload.sender === activeChat.id) setIsTyping(true);
-      })
-      .on("broadcast", { event: "stop_typing" }, ({ payload }) => {
-        if (payload.sender === activeChat.id) setIsTyping(false);
-      })
-      .subscribe();
-    return () => supabase.removeChannel(typingChannelRef.current);
-  }, [activeChat]);
+  const channelName = `typing-${[session.user.id, activeChat.id].sort().join("-")}`;
 
+  const channel = supabase.channel(channelName);
+  channel
+    .on("broadcast", { event: "typing" }, ({ payload }) => {
+      if (payload.sender !== session.user.id) setIsTyping(true);
+    })
+    .on("broadcast", { event: "stop_typing" }, ({ payload }) => {
+      if (payload.sender !== session.user.id) setIsTyping(false);
+    })
+    .subscribe();
+
+  typingChannelRef.current = channel;
+  setIsTyping(false); // reset when switching chats
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [activeChat?.id, session?.user?.id]);
+
+  
   const typingTimeoutRef = useRef(null);
 
   const handleTyping = () => {
@@ -326,18 +413,6 @@ useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "auto" });
   }, [activeChat?.messages?.length]);
 
-  useEffect(() => {
-    const typingChannel = supabase
-      .channel(`typing-broadcast-${activeChat?.id}`)
-      .on("broadcast", { event: "typing" }, (payload) => {
-        if (payload.payload.sender === activeChat?.id) {
-          setIsTyping(true);
-          setTimeout(() => setIsTyping(false), 2000);
-        }
-      })
-      .subscribe();
-    return () => supabase.removeChannel(typingChannel);
-  }, [activeChat]);
 
   const handleMediaSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -348,16 +423,6 @@ useEffect(() => {
     }));
     setSelectedMedia(prev => [...prev, ...previews]);
   };
-
-  useEffect(() => {
-    if (!activeChat) return;
-    supabase
-      .from("messages")
-      .update({ status: "seen" })
-      .eq("sender_id", activeChat.id)
-      .eq("receiver_id", session.user.id)
-      .eq("status", "sent");
-  }, [activeChat]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -394,112 +459,173 @@ useEffect(() => {
     <div className="chat-window active">
 
       {/* ================= HEADER ================= */}
-      <div className="chat-window-header">
-        <IoArrowBack
-          className="arrowback-btn"
-          onClick={() => setActiveChat(null)}
-        />
-        <div
-          className="chat-header-left"
-          onClick={() => {
-            if (isAIChat) navigate("/mpa-profile");
-            else navigate(`/user-profile/${activeChat.id}`);
-          }}
+       <div className="chat-window-header">
+  {showSearch ? (
+    <div className="chat-search-bar">
+      <FiSearch className="search-bar-icon" />
+      <input
+        autoFocus
+        type="text"
+        className="chat-search-input"
+        placeholder="Search messages..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            e.shiftKey ? goToPrevMatch() : goToNextMatch();
+          }
+          if (e.key === "Escape") closeSearch();
+        }}
+      />
+      {searchQuery.trim() && (
+        <span className="search-match-count">
+          {searchMatches.length > 0 ? `${currentMatchIndex + 1}/${searchMatches.length}` : "0/0"}
+        </span>
+      )}
+      <div className="search-nav-btns">
+        <button
+          className="search-nav-btn"
+          disabled={searchMatches.length === 0}
+          onClick={goToPrevMatch}
         >
-          {activeChat.avatar ? (
-            <img src={activeChat.avatar} alt={activeChat.name} className="chat-header-avatar" />
-          ) : (
-            <div className="chat-header-avatar fallback-avatar">
-              {activeChat.name?.charAt(0).toUpperCase()}
+          <FiChevronUp />
+        </button>
+        <button
+          className="search-nav-btn"
+          disabled={searchMatches.length === 0}
+          onClick={goToNextMatch}
+        >
+          <FiChevronDown />
+        </button>
+      </div>
+      <button className="search-close-btn" onClick={closeSearch}>
+        <FiX />
+      </button>
+    </div>
+  ) : (
+    <>
+      <IoArrowBack className="arrowback-btn" onClick={() => setActiveChat(null)} />
+      <div
+        className="chat-header-left"
+        onClick={() => {
+          if (isAIChat) navigate("/mpa-profile");
+          else navigate(`/user-profile/${activeChat.id}`);
+        }}
+      >
+        {activeChat.avatar ? (
+          <img src={activeChat.avatar} alt={activeChat.name} className="chat-header-avatar" />
+        ) : (
+          <div className="chat-header-avatar fallback-avatar">
+            {activeChat.name?.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <h3>{activeChat.name}</h3>
+        {isTyping ? (
+          <p className="typing-indicator">{activeChat.name} is typing...</p>
+        ) : isOnline && !isAIChat ? (
+          <p className="online-indicator"><span className="status-dot online" /> Online</p>
+        ) : !isAIChat ? (
+          <p className="last-seen-indicator">{formatLastSeen(lastSeen)}</p>
+        ) : null}
+      </div>
+      <div className="header-actions">
+        <FiPhone className="action-icon" onClick={() => { setCallType("voice"); setShowCallModal(true); }} />
+        <FiVideo className="action-icon" onClick={() => { setCallType("video"); setShowCallModal(true); }} />
+        <div style={{ position: "relative" }} ref={dropdownRef}>
+          <BsThreeDotsVertical
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowChatDropdown((prev) => !prev);
+              setShowSidebarDropdown(false);
+            }}
+          />
+          {showChatDropdown && (
+            <div className="chat-dropdown-menu animated-dropdown">
+              <p onClick={() => {
+                if (isAIChat) navigate("/mpa-profile");
+                else navigate(`/user-profile/${activeChat.id}`);
+              }}>View contact</p>
+              <p onClick={() => { setShowChatDropdown(false); setShowSearch(true); }}>Search</p>
+              <p>Mute notifications</p>
+              <p className="danger">Block</p>
             </div>
           )}
-          <h3>{activeChat.name}</h3>
-          {isTyping && (
-            <p className="typing-indicator">{activeChat.name} is typing...</p>
-          )}
-        </div>
-        <div className="header-actions">
-          <FiPhone className="action-icon" onClick={() => { setCallType("voice"); setShowCallModal(true); }} />
-          <FiVideo className="action-icon" onClick={() => { setCallType("video"); setShowCallModal(true); }} />
-          <div style={{ position: "relative" }} ref={dropdownRef}>
-            <BsThreeDotsVertical
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowChatDropdown(prev => !prev);
-                setShowSidebarDropdown(false);
-              }}
-            />
-            {showChatDropdown && (
-              <div className="chat-dropdown-menu animated-dropdown">
-                <p onClick={() => {
-                  if (isAIChat) navigate("/mpa-profile");
-                  else navigate(`/user-profile/${activeChat.id}`);
-                }}>View contact</p>
-                <p>Search</p>
-                <p>Mute notifications</p>
-                <p className="danger">Block</p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
+    </>
+  )}
+</div>
 
       {/* ================= MESSAGES ================= */}
-      <div className="chat-messages">
-        {activeChat?.messages?.map((msg, i) => {
-          const isStatusReply = msg?.type === "status_reply";
-          return (
-            <div
-              key={msg.id || i}
-              className={`message-wrapper ${msg.sender === "you" ? "sent" : "received"}`}
-            >
-              <div className="message-bubble">
-                {isStatusReply && (
-                  <div className="status-preview-bubble" onClick={() => openStatusPreview(msg)}>
-                    {msg?.status_media ? (
-                      <img src={msg.status_media} alt="status preview" />
-                    ) : (
-                      <div className="status-text-preview" style={{ background: msg?.status_bg || "#25d366" }}>
-                        {msg?.status_text || "Status reply"}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {msg.type === "image" && (
-                  <>
-                    <img src={msg.content} className="chat-media" />
-                    {msg.caption && <p className="media-caption">{msg.caption}</p>}
-                  </>
-                )}
-                {msg.type === "video" && (
-                  <>
-                    <video src={msg.content} controls className="chat-media" />
-                    {msg.caption && <p className="media-caption">{msg.caption}</p>}
-                  </>
-                )}
-                {msg.type === "audio" && (
-                  <VoiceNotePlayer audioUrl={msg.content} isSender={msg.sender === "you"} />
-                )}
-                {(!msg.type || msg.type === "text" || msg.type === "status_reply") && (
-                  <p className="message-text">{msg?.content || msg?.text}</p>
-                )}
-                <div className="message-meta">
-                  <span className="time">{msg?.time || "12:45"}</span>
-                  {msg.sender === "you" && (
-                    <span className={`status ${msg?.status || ""}`}>
-                      {msg?.status === "sent" && "✔"}
-                      {msg?.status === "delivered" && "✔✔"}
-                      {msg?.status === "seen" && <span className="seen">✔✔</span>}
-                    </span>
-                  )}
+       <div className={`chat-messages ${searchQuery.trim() ? "search-active" : ""}`}>
+  {activeChat?.messages?.map((msg, i) => {
+    const isStatusReply = msg?.type === "status_reply";
+    const messageKey = msg.id ?? i;
+    const isMatch = searchQuery.trim() && matchedKeys.has(messageKey);
+    const currentTarget = searchMatches[currentMatchIndex];
+    const isCurrentMatch =
+      isMatch &&
+      currentTarget &&
+      (currentTarget.msg.id ?? currentTarget.idx) === messageKey;
+
+    return (
+      <div
+        key={messageKey}
+        ref={(el) => { if (el) messageRefs.current[messageKey] = el; }}
+        className={`message-wrapper ${msg.sender === "you" ? "sent" : "received"} ${
+          searchQuery.trim() && !isMatch ? "search-dimmed" : ""
+        } ${isCurrentMatch ? "search-current" : ""}`}
+      >
+        <div className="message-bubble">
+          {isStatusReply && (
+            <div className="status-preview-bubble" onClick={() => openStatusPreview(msg)}>
+              {msg?.status_media ? (
+                <img src={msg.status_media} alt="status preview" />
+              ) : (
+                <div className="status-text-preview" style={{ background: msg?.status_bg || "#25d366" }}>
+                  {msg?.status_text || "Status reply"}
                 </div>
-                {msg?.reaction && <span className="message-reaction">{msg.reaction}</span>}
-              </div>
+              )}
             </div>
-          );
-        })}
-        <div ref={endRef} />
+          )}
+          {msg.type === "image" && (
+            <>
+              <img src={msg.content} className="chat-media" />
+              {msg.caption && <p className="media-caption">{msg.caption}</p>}
+            </>
+          )}
+          {msg.type === "video" && (
+            <>
+              <video src={msg.content} controls className="chat-media" />
+              {msg.caption && <p className="media-caption">{msg.caption}</p>}
+            </>
+          )}
+          {msg.type === "audio" && (
+            <VoiceNotePlayer audioUrl={msg.content} isSender={msg.sender === "you"} />
+          )}
+          {(!msg.type || msg.type === "text" || msg.type === "status_reply") && (
+            <p className="message-text">
+              {searchQuery.trim() ? highlightMatch(msg?.content || msg?.text) : (msg?.content || msg?.text)}
+            </p>
+          )}
+          <div className="message-meta">
+            <span className="time">{msg?.time || "12:45"}</span>
+            {msg.sender === "you" && (
+              <span className={`status ${msg?.status || ""}`}>
+                {msg?.status === "sent" && "✔"}
+                {msg?.status === "delivered" && "✔✔"}
+                {msg?.status === "seen" && <span className="seen">✔✔</span>}
+              </span>
+            )}
+          </div>
+          {msg?.reaction && <span className="message-reaction">{msg.reaction}</span>}
+        </div>
       </div>
+    );
+  })}
+  <div ref={endRef} />
+</div>
 
       {/* ================= MEDIA PREVIEW ================= */}
       {selectedMedia.length > 0 && (

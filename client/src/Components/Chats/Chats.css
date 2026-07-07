@@ -176,6 +176,17 @@
   margin-right: 12px;
   font-weight: bold;
   cursor: pointer;
+   position: relative;
+}
+.chat-list-online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #27ae60;
+  border: 2px solid var(--bg-color);
+  border-radius: 50%;
 }
 .chat-avatar-img {
   width: 100%;
@@ -414,13 +425,33 @@
     transform: translateX(-50%) scale(1);
   }
 }
-
+.status .seen {
+  color: #34B7F1; /* WhatsApp-style read-blue, distinct from sent/delivered */
+  font-weight: 900;
+  letter-spacing: -2px;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,0.3)); /* keeps it visible on colored bubble bg */
+}
 .reaction-picker span {
   font-size: 20px;
   cursor: pointer;
   transition: transform 0.2s;
 }
-
+.online-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.75;
+  margin: 0;
+}
+.last-seen-indicator {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.65;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
 .reaction-picker span:hover {
   transform: scale(1.4) rotate(6deg);
 }
@@ -1510,12 +1541,181 @@
     opacity 0.25s ease;
   /* z-index: 50; */
 }
+.chat-list-tick {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--text-color);
+  opacity: 0.6;
+}
 
+.chat-list-tick.seen {
+  color: #34B7F1; /* same read-blue as the chat window ticks */
+  opacity: 1;
+}
 .floating-add-btn:hover {
   transform: scale(1.1);
   opacity: 0.9;
 }
+.typing-indicator {
+  font-size: 12px;
+  color: var(--accent-color);
+  margin: 0;
+  font-style: italic;
+}
+/* ================= CHAT SEARCH BAR ================= */
+.chat-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  animation: searchBarSlide 0.2s ease;
+}
 
+@keyframes searchBarSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.search-bar-icon {
+  font-size: 1.1rem;
+  color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+.chat-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: rgba(127, 127, 127, 0.08);
+  color: var(--text-color);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  min-width: 0;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.chat-search-input:focus {
+  background: rgba(127, 127, 127, 0.14);
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+.search-match-count {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.6;
+  white-space: nowrap;
+  min-width: 34px;
+  text-align: center;
+}
+
+.search-nav-btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.search-nav-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.search-nav-btn:hover:not(:disabled) {
+  background: rgba(127, 127, 127, 0.15);
+}
+
+.search-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.search-close-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent-color);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.search-close-btn:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+/* Dim non-matching messages while searching */
+.chat-messages.search-active .message-wrapper.search-dimmed {
+  opacity: 0.32;
+  filter: grayscale(0.4);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.chat-messages.search-active .message-wrapper:not(.search-dimmed) {
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.message-wrapper.search-current .message-bubble {
+  box-shadow: 0 0 0 2px var(--accent-color), 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Highlighted matched text inside bubbles */
+.search-highlight {
+  background: #ffd93d;
+  color: #111 !important;
+  padding: 0 2px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.message-wrapper.sent .search-highlight {
+  background: #fff2a8;
+}
+/* ================= SIDEBAR TYPING INDICATOR ================= */
+.chatlist-typing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: var(--accent-color);
+  font-weight: 500;
+  font-style: italic;
+  margin: 2px 0 0;
+}
+
+.chatlist-typing-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  display: inline-block;
+  animation: chatlistTypingBounce 1s infinite ease-in-out;
+}
+
+.chatlist-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.chatlist-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes chatlistTypingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
 /* Ensure chat list is relative */
 .chat-list-section {
   position: relative;

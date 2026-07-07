@@ -10,6 +10,7 @@ import "../TestimonialModal/TestimonialModal.css";
 import { supabase } from "../../supabase";
 
 const ChatList = ({
+  typingMap = {},
   chats = [],
   activeChat,
   setChats,
@@ -18,6 +19,7 @@ const ChatList = ({
   showSidebarDropdown,
   setShowSidebarDropdown,
   setShowChatDropdown,
+  onlineUsers = [],
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,7 +101,7 @@ useEffect(() => {
                 <NavLink to="/settings/help">Help & Support</NavLink>
                 <NavLink to="/settings">Settings</NavLink>
                 <NavLink to="/profile">Profile</NavLink>
-                <NavLink to="/saved">Saved Messages</NavLink>
+                <NavLink to="/saved">Starred Messages</NavLink>
               </div>
             )}
           </div>
@@ -181,43 +183,53 @@ setActiveChat({
 }}
       >
         <div className="chat-avatar">
-          {chat?.avatar ? (
-            <img
-              className="chat-avatar-img"
-              src={chat.avatar}
-              alt=""
-            />
-          ) : (
-            chat?.name?.[0] || "?"
-          )}
-        </div>
+  {chat?.avatar ? (
+    <img className="chat-avatar-img" src={chat.avatar} alt="" />
+  ) : (
+    chat?.name?.[0] || "?"
+  )}
+  {!chat.isAI && onlineUsers.includes(chat.id) && (
+    <span className="chat-list-online-dot" />
+  )}
+</div>
 
         <div className="chat-info">
-          <h4>{chat?.name || "Unknown"}</h4>
-         <p>
-  {chat?.lastMessageType === "image"
-    ? "📷 Photo"
-    : chat?.lastMessageType === "video"
-    ? "🎬 Video"
-    : chat?.lastMessageType === "audio"
-    ? "🎤 Voice message"
-    : chat?.lastMessageType === "status_reply"
-    ? "↩️ Replied to your status"
-    : chat?.lastMessage
-    ? chat.lastMessage.slice(0, 30)
-    : "No messages yet"}
-</p>
-
-        </div>
+  <h4>{chat?.name || "Unknown"}</h4>
+  {typingMap[chat.id] ? (
+    <p className="chatlist-typing">
+      <span className="chatlist-typing-dot" />
+      <span className="chatlist-typing-dot" />
+      <span className="chatlist-typing-dot" />
+      typing
+    </p>
+  ) : (
+    <p>
+      {chat?.lastMessageType === "image"
+        ? "📷 Photo"
+        : chat?.lastMessageType === "video"
+        ? "🎬 Video"
+        : chat?.lastMessageType === "audio"
+        ? "🎤 Voice message"
+        : chat?.lastMessageType === "status_reply"
+        ? "↩️ Replied to your status"
+        : chat?.lastMessage
+        ? chat.lastMessage.slice(0, 30)
+        : "No messages yet"}
+    </p>
+  )}
+</div>
         <div className="chat-meta">
   <span className="chat-time">
     {chat?.time || ""}
+    {!chat.isAI && chat.lastMessageSenderId === user?.id && (
+      <span className={`chat-list-tick ${chat.lastMessageSeen ? "seen" : ""}`}>
+        {chat.lastMessageSeen ? "✔✔" : "✔"}
+      </span>
+    )}
   </span>
 
   {chat.unread > 0 && (
-    <span className="unread-badge">
-      {chat.unread}
-    </span>
+    <span className="unread-badge">{chat.unread}</span>
   )}
 </div>
 

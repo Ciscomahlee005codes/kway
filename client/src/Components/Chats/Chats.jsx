@@ -28,7 +28,8 @@ const Chats = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [selectedMedia, setSelectedMedia] = useState([]);
   const [mediaCaption, setMediaCaption] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [typingMap, setTypingMap] = useState({}); // { [chatId]: boolean }
+const typingChannelsRef = useRef({});
   const [reactionPicker, setReactionPicker] = useState({
     open: false,
     msgIndex: null,
@@ -60,7 +61,31 @@ useEffect(() => {
     isAI: true,
     messages: [],
   };
+const [onlineUsers, setOnlineUsers] = useState([]);
+const [lastSeenMap, setLastSeenMap] = useState({}); // { userId: Date }
 
+useEffect(() => {
+  if (!user) return;
+
+  const presenceChannel = supabase.channel("online-users", {
+    config: { presence: { key: user.id } },
+  });
+
+  presenceChannel
+    .on("presence", { event: "sync" }, () => {
+      setOnlineUsers(Object.keys(presenceChannel.presenceState()));
+    })
+    .on("presence", { event: "leave" }, ({ key }) => {
+      setLastSeenMap(prev => ({ ...prev, [key]: new Date() }));
+    })
+    .subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await presenceChannel.track({ online_at: new Date().toISOString() });
+      }
+    });
+
+  return () => supabase.removeChannel(presenceChannel);
+}, [user?.id]);
   // =========================================
   // HELPERS
   // =========================================
@@ -102,50 +127,194 @@ useEffect(() => {
   }, []);
 
   // =========================================
+// TYPING — subscribe to every chat's typing channel
+// so the sidebar can show "typing..." live
+// =========================================
+useEffect(() => {
+  if (!user?.id || chats.length === 0) return;
+
+  chats.forEach((chat) => {
+    if (chat.isAI) return; // no typing indicator for Mp.A
+    if (typingChannelsRef.current[chat.id]) return; // already subscribed
+
+    const channelName = `typing-${[user.id, chat.id].sort().join("-")}`;
+    const channel = supabase.channel(channelName);
+
+    channel
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        if (payload.sender !== user.id) {
+          setTypingMap((prev) => ({ ...prev, [chat.id]: true }));
+        }
+      })
+      .on("broadcast", { event: "stop_typing" }, ({ payload }) => {
+        if (payload.sender !== user.id) {
+          setTypingMap((prev) => ({ ...prev, [chat.id]: false }));
+        }
+      })
+      .subscribe();
+
+    typingChannelsRef.current[chat.id] = channel;
+  });
+
+  // clean up channels for chats that no longer exist in the list
+  Object.keys(typingChannelsRef.current).forEach((chatId) => {
+    if (!chats.find((c) => c.id === chatId)) {
+      supabase.removeChannel(typingChannelsRef.current[chatId]);
+      delete typingChannelsRef.current[chatId];
+    }
+  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [chats.map((c) => c.id).join(","), user?.id]);
+
+// cleanup on unmount
+useEffect(() => {
+  return () => {
+    Object.values(typingChannelsRef.current).forEach((ch) =>
+      supabase.removeChannel(ch)
+    );
+    typingChannelsRef.current = {};
+  };
+}, []);
+
+  // =========================================
   // REALTIME — new messages
   // =========================================
- useEffect(() => {
+useEffect(() => {
   if (!session?.user) return;
 
   const channel = supabase
     .channel("messages-realtime")
     .on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "messages" },
-      payload => {
-        const msg = payload.new;
-        const current = activeChatRef.current; // ✅ always fresh
-        if (!current?.id) return;
+      { event: "*", schema: "public", table: "messages" },
+      (payload) => {
+        const current = activeChatRef.current;
 
-        const isForActiveChat =
-          (msg.receiver_id === session.user.id && msg.sender_id === current.id) ||
-          (msg.sender_id === session.user.id && msg.receiver_id === current.id &&
-           current.isAI); // also catch your own AI messages
+        // ---------------- INSERT ----------------
+        if (payload.eventType === "INSERT") {
+          const msg = payload.new;
+          const iAmReceiver = msg.receiver_id === session.user.id;
+          const iAmSender = msg.sender_id === session.user.id;
 
-        if (!isForActiveChat) return;
+          // Not a message I'm part of — ignore
+          if (!iAmReceiver && !iAmSender) return;
 
-        setActiveChat(prev => ({
-          ...prev,
-          messages: [
-            ...(prev.messages || []),
-            {
-              id: msg.id,
-              content: msg.content,
-              caption: msg.caption,
-              type: msg.type,
-              sender: msg.sender_id === session.user.id ? "you" : "them",
-              time: new Date(msg.created_at).toLocaleTimeString(),
-              status: msg.seen ? "seen" : "sent",
-            },
-          ],
-        }));
+          const otherId = iAmReceiver ? msg.sender_id : msg.receiver_id;
+
+          const isForActiveChat =
+            (iAmReceiver && current?.id === msg.sender_id) ||
+            (iAmSender && current?.isAI && current?.id === msg.receiver_id);
+
+          if (isForActiveChat) {
+            setActiveChat(prev => ({
+              ...prev,
+              messages: [
+                ...(prev.messages || []),
+                {
+                  id: msg.id,
+                  content: msg.content,
+                  caption: msg.caption,
+                  type: msg.type,
+                  sender: iAmSender ? "you" : "them",
+                  time: new Date(msg.created_at).toLocaleTimeString(),
+                  status: msg.seen ? "seen" : "sent",
+                },
+              ],
+            }));
+
+            // I'm actively viewing this chat and just received a message → mark seen now
+            if (iAmReceiver) {
+              supabase.from("messages").update({ seen: true }).eq("id", msg.id);
+            }
+          }
+
+          // Update sidebar preview regardless of whether that chat is currently open
+          setChats(prev => {
+            const exists = prev.find(c => c.id === otherId);
+            if (!exists) return prev;
+            return prev.map(c =>
+              c.id === otherId
+                ? {
+                    ...c,
+                    lastMessage: msg.content,
+                    lastMessageType: msg.type,
+                    lastMessageId: msg.id,
+                    lastMessageSenderId: msg.sender_id,
+                    lastMessageSeen: msg.seen,
+                    time: new Date(msg.created_at).toLocaleTimeString(),
+                  }
+                : c
+            );
+          });
+
+          // Brand-new conversation partner not yet in sidebar
+          if (iAmReceiver && otherId !== MPA_ID) {
+            setChats(prevChats => {
+              const alreadyThere = prevChats.some(c => c.id === otherId);
+              if (alreadyThere) return prevChats;
+
+              supabase
+                .from("profiles")
+                .select("id,name,photo")
+                .eq("id", otherId)
+                .single()
+                .then(({ data }) => {
+                  if (!data) return;
+                  setChats(p => {
+                    if (p.find(c => c.id === data.id)) return p;
+                    return [
+                      {
+                        id: data.id,
+                        name: data.name,
+                        avatar: data.photo,
+                        lastMessage: msg.content,
+                        lastMessageType: msg.type,
+                        time: new Date(msg.created_at).toLocaleTimeString(),
+                        unread: 1,
+                        messages: [],
+                      },
+                      ...p,
+                    ];
+                  });
+                });
+
+              return prevChats; // don't mutate yet, the async fetch above will
+            });
+          }
+        }
+
+        // ---------------- UPDATE (this is what flips the tick blue) ----------------
+        if (payload.eventType === "UPDATE") {
+          const msg = payload.new;
+
+          setActiveChat(prev => {
+            if (!prev?.messages) return prev;
+            const hasMsg = prev.messages.some(m => m.id === msg.id);
+            if (!hasMsg) return prev;
+            return {
+              ...prev,
+              messages: prev.messages.map(m =>
+                m.id === msg.id
+                  ? { ...m, status: msg.seen ? "seen" : "sent" }
+                  : m
+              ),
+            };
+          });
+
+          setChats(prev =>
+            prev.map(c =>
+              c.lastMessageId === msg.id
+                ? { ...c, lastMessageSeen: msg.seen, lastMessageSenderId: msg.sender_id }
+                : c
+            )
+          );
+        }
       }
     )
     .subscribe();
 
   return () => supabase.removeChannel(channel);
-}, [session?.user]); // ✅ no activeChat dep needed — we use the ref
-
+}, [session?.user]);
   // =========================================
   // REALTIME — unread counts
   // =========================================
@@ -184,31 +353,6 @@ useEffect(() => {
   // =========================================
   // TYPING STATUS
   // =========================================
-  useEffect(() => {
-  if (!activeChat || !user) return;
-
-  const channel = supabase
-    .channel(`typing-status-${activeChat.id}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "typing",
-        filter: `chat_id=eq.${activeChat.id}`,
-      },
-      (payload) => {
-        if (payload.new.user_id !== user.id) {
-          setIsTyping(payload.new.typing);
-        }
-      }
-    )
-    .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [activeChat?.id, user?.id]);
 
   // =========================================
   // LOAD Mp.A CHAT FROM SUPABASE
@@ -318,19 +462,19 @@ useEffect(() => {
   useEffect(() => {
     if (!activeChat || !user || activeChat?.isAI) return;
 
-    const fetchMessages = async () => {
-      await supabase
-        .from("messages")
-        .update({ seen: true })
-        .eq("sender_id", activeChat.id)
-        .eq("receiver_id", user.id)
-        .eq("seen", false);
+     const fetchMessages = async () => {
+  const { data: justSeen } = await supabase
+    .from("messages")
+    .update({ seen: true })
+    .eq("sender_id", activeChat.id)
+    .eq("receiver_id", user.id)
+    .eq("seen", false)
+    .select("id"); // grab ids we just marked seen
+
 
       setChats(prev =>
-        prev.map(c =>
-          c.id === activeChat.id ? { ...c, unread: 0 } : c
-        )
-      );
+    prev.map(c => (c.id === activeChat.id ? { ...c, unread: 0 } : c))
+  );
 
       const { data } = await supabase
         .from("messages")
@@ -386,16 +530,19 @@ useEffect(() => {
       });
 
       messages.forEach(msg => {
-        const other =
-          msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-        if (!chatMap[other]) {
-          chatMap[other] = {
-            lastMessage: msg.content,
-            lastMessageType: msg.type,
-            time: new Date(msg.created_at).toLocaleTimeString(),
-          };
-        }
-      });
+  const other =
+    msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+  if (!chatMap[other]) {
+    chatMap[other] = {
+      lastMessage: msg.content,
+      lastMessageType: msg.type,
+      lastMessageId: msg.id,           // ✅ new
+      lastMessageSenderId: msg.sender_id, // ✅ new
+      lastMessageSeen: msg.seen,        // ✅ new
+      time: new Date(msg.created_at).toLocaleTimeString(),
+    };
+  }
+});
 
       const ids = Object.keys(chatMap);
       if (ids.length === 0) return setChats([]);
@@ -405,23 +552,26 @@ useEffect(() => {
         .select("id,name,photo")
         .in("id", ids);
 
-      const formatted = profiles
-        .filter(p => p.id !== MPA_ID) // ✅ exclude Mp.A from normal profiles
-        .map(p => ({
-          id: p.id,
-          name: p.name,
-          avatar: p.photo,
-          lastMessage: chatMap[p.id]?.lastMessage,
-          lastMessageType: chatMap[p.id]?.lastMessageType,
-          time: chatMap[p.id]?.time,
-          unread: unreadMap[p.id] || 0,
-          messages: [],
-          lastMessageDate: messages.find(
-            m =>
-              (m.sender_id === user.id && m.receiver_id === p.id) ||
-              (m.sender_id === p.id && m.receiver_id === user.id)
-          )?.created_at,
-        }));
+       const formatted = profiles
+  .filter(p => p.id !== MPA_ID)
+  .map(p => ({
+    id: p.id,
+    name: p.name,
+    avatar: p.photo,
+    lastMessage: chatMap[p.id]?.lastMessage,
+    lastMessageType: chatMap[p.id]?.lastMessageType,
+    lastMessageId: chatMap[p.id]?.lastMessageId,           // ✅ new
+    lastMessageSenderId: chatMap[p.id]?.lastMessageSenderId, // ✅ new
+    lastMessageSeen: chatMap[p.id]?.lastMessageSeen,        // ✅ new
+    time: chatMap[p.id]?.time,
+    unread: unreadMap[p.id] || 0,
+    messages: [],
+    lastMessageDate: messages.find(
+      m =>
+        (m.sender_id === user.id && m.receiver_id === p.id) ||
+        (m.sender_id === p.id && m.receiver_id === user.id)
+    )?.created_at,
+  }));
 
       formatted.sort(
         (a, b) =>
@@ -670,6 +820,9 @@ useEffect(() => {
     <div className="chat-wrapper">
       <KwayPromoPopup />
       <ChatList
+      typingMap={typingMap} 
+      onlineUsers={onlineUsers} 
+      isOnline={onlineUsers.includes(activeChat?.id)}
         chats={chats}
         activeChat={activeChat}
         setChats={setChats}
@@ -681,6 +834,8 @@ useEffect(() => {
         saveUnread={saveUnread}
       />
       <ChatWindow
+       isOnline={onlineUsers.includes(activeChat?.id)}
+       lastSeen={lastSeenMap[activeChat?.id]}
         selectedMedia={selectedMedia}
         setSelectedMedia={setSelectedMedia}
         mediaCaption={mediaCaption}
@@ -700,7 +855,6 @@ useEffect(() => {
         reactionPicker={reactionPicker}
         setReactionPicker={setReactionPicker}
         reactions={reactions}
-        isTyping={isTyping}
         saveUnread={saveUnread}
       />
       {showCallModal && (
