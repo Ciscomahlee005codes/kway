@@ -359,7 +359,7 @@ input:focus {
 
 .login-btn {
   width: 100%;
-  background: linear-gradient(135deg, var(--accent-soft), var(--accent-deep));
+  background: var(--accent-deep);
   color: #ffffff;
   border: none;
   padding: 0.9rem;

@@ -44,7 +44,7 @@
   transform: scale(1.1);
 }
 
-/* ===== ACTIVE ICON ===== */
+/* ===== ACTIVE ICON (applies to every link the user is currently on) ===== */
 .active-link {
   color: var(--text-color);
   background: var(--secondary-bg);
@@ -77,6 +77,53 @@
   left: 75px;
 }
 
+/* ===== DESKTOP: LIVE — PERMANENT UNIQUE RED BADGE ===== */
+.raised-sidebar-link {
+  margin: 0.4rem 0;
+}
+
+.sidebar-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 1.3rem;
+  box-shadow: 0 0 14px var(--accent-color), 0 4px 10px rgba(0, 0, 0, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.raised-sidebar-link:hover .sidebar-icon-badge {
+  transform: scale(1.12);
+}
+
+/* Live gets its own red identity, distinct from the accent color everyone else uses */
+.live-sidebar-link .sidebar-icon-badge {
+  background: #e0263f;
+  box-shadow: 0 0 14px rgba(224, 38, 63, 0.6), 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.live-sidebar-link:hover .sidebar-icon-badge {
+  box-shadow: 0 0 20px rgba(224, 38, 63, 0.75), 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.live-sidebar-link.active-link .sidebar-icon-badge {
+  transform: scale(1.15);
+  box-shadow: 0 0 24px rgba(224, 38, 63, 0.85);
+}
+
+/* keep only the badge glowing, not the default active box */
+.raised-sidebar-link.active-link {
+  background: transparent;
+  border-left: none;
+  padding-left: 6px;
+  box-shadow: none;
+  transform: none;
+}
+
 /* ===== MOBILE NAV ===== */
 .bottom-nav {
   display: none;
@@ -86,16 +133,18 @@
   .sidebar {
     display: none;
   }
- body.chat-open .bottom-nav {
+
+  body.chat-open .bottom-nav {
     display: none !important;
   }
+
   .bottom-nav {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
     background: var(--secondary-bg);
     color: var(--text-color);
-    padding: 0.7rem 0.4rem;
+    padding: 0.6rem 0.3rem;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -110,16 +159,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 1.4rem;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+    font-size: 1.35rem; /* scaled back so 6 icons fit cleanly */
     color: var(--text-color);
     gap: 2px;
     transition: all 0.3s ease;
     border-radius: 10px;
-    padding: 4px 8px;
+    padding: 4px 2px;
   }
 
   .bottom-link span {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
+    white-space: nowrap;
   }
 
   .bottom-link:hover {
@@ -127,11 +180,11 @@
     transform: translateY(-3px);
   }
 
-  /* ===== ACTIVE ICON MOBILE ===== */
+  /* ===== ACTIVE ICON MOBILE (non-center items) ===== */
   .active-bottom-link {
     background: var(--accent-color);
     color: white;
-    transform: translateY(-4px) scale(1.15);
+    transform: translateY(-4px) scale(1.1);
     font-weight: 600;
     box-shadow: 0 0 12px var(--accent-color);
     border-top: 3px solid var(--accent-color);
@@ -141,5 +194,71 @@
     background-color: var(--accent-color);
     color: white;
   }
-}
 
+  /* ===== FLOATING CENTER BUBBLE (whichever page is active) ===== */
+  .bottom-link.raised-link {
+    position: relative;
+    margin-top: -24px; /* lifts it above the navbar line */
+    flex: 1.1;
+  }
+
+  .icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent-color); /* solid color, no gradient */
+    color: #fff;
+    font-size: 1.5rem;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 0 5px var(--secondary-bg);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  }
+
+  .bottom-link.raised-link span:last-child {
+    margin-top: 3px;
+    font-weight: 600;
+    color: var(--accent-color);
+  }
+
+  .bottom-link.raised-link:hover .icon-wrapper {
+    transform: translateY(-4px) scale(1.06);
+  }
+
+  .bottom-link.raised-link.active-bottom-link {
+    background: transparent;
+    border-top: none;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .bottom-link.raised-link.active-bottom-link .icon-wrapper {
+    box-shadow: 0 0 20px var(--accent-color), 0 0 0 5px var(--secondary-bg);
+    transform: scale(1.08);
+  }
+
+  .bottom-link.raised-link.active-bottom-link span:last-child {
+    background: none;
+    color: var(--accent-color);
+  }
+
+  /* ===== Live — red standout when it's centered ===== */
+  .bottom-link.raised-link.live-link .icon-wrapper {
+    background: #e0263f;
+    box-shadow: 0 6px 16px rgba(224, 38, 63, 0.4), 0 0 0 5px var(--secondary-bg);
+  }
+
+  .bottom-link.raised-link.live-link:hover .icon-wrapper {
+    box-shadow: 0 6px 18px rgba(224, 38, 63, 0.55), 0 0 0 5px var(--secondary-bg);
+  }
+
+  .bottom-link.raised-link.live-link.active-bottom-link .icon-wrapper {
+    box-shadow: 0 0 20px rgba(224, 38, 63, 0.8), 0 0 0 5px var(--secondary-bg);
+  }
+
+  .bottom-link.raised-link.live-link span:last-child,
+  .bottom-link.raised-link.live-link.active-bottom-link span:last-child {
+    color: #e0263f;
+  }
+}
