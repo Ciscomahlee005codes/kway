@@ -10,36 +10,54 @@ const STREAM_SELECT = "*, host:profiles!live_streams_host_id_fkey(id, username, 
 export function useLiveStreams() {
   const [streams, setStreams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const refetch = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("live_streams")
-      .select(STREAM_SELECT)
-      .eq("status", "live")
-      .order("started_at", { ascending: false });
-    if (!error) setStreams(data ?? []);
-    setLoading(false);
+    try {
+      const { data, error: queryError } = await supabase
+        .from("live_streams")
+        .select(STREAM_SELECT)
+        .eq("status", "live")
+        .order("started_at", { ascending: false });
+      if (queryError) throw queryError;
+      setStreams(data ?? []);
+      setError("");
+    } catch (queryError) {
+      setError(queryError.message || "Couldn't load live streams. Try again.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     refetch();
-    // Any stream starting/ending anywhere updates the feed live
     const channel = supabase
       .channel("live-feed")
       .on("postgres_changes", { event: "*", schema: "public", table: "live_streams" }, refetch)
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    const refreshInterval = setInterval(refetch, 15000);
+    return () => {
+      clearInterval(refreshInterval);
+      supabase.removeChannel(channel);
+    };
   }, [refetch]);
 
-  return { streams, loading, refetch };
+  return { streams, loading, error, refetch };
 }
 
 /* ---------- Start / end a stream ---------- */
 export async function startStream({ title, category }) {
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in before starting a live stream.");
   const { data, error } = await supabase
     .from("live_streams")
-    .insert({ host_id: user.id, title: title.trim(), category })
+    .insert({
+      host_id: user.id,
+      title: title.trim(),
+      category,
+      status: "live",
+      started_at: new Date().toISOString(),
+    })
     .select()
     .single();
   if (error) throw error;
@@ -61,6 +79,7 @@ export async function endStream(streamId) {
 /* ---------- Chat (persisted, realtime) ---------- */
 export function useLiveChat(streamId) {
   const [messages, setMessages] = useState([]);
+  const [error, setError] = useState("");
   const profileCache = useRef({});
 
   const getProfile = useCallback(async (userId) => {
@@ -75,15 +94,30 @@ export function useLiveChat(streamId) {
     if (!streamId) return;
     let active = true;
 
-    (async () => {
-      const { data } = await supabase
+    const loadMessages = async () => {
+      const { data, error: queryError } = await supabase
         .from("live_messages")
         .select("id, body, created_at, user_id, profiles(username, avatar_url)")
         .eq("stream_id", streamId)
         .order("created_at", { ascending: false })
         .limit(50);
-      if (active) setMessages((data ?? []).reverse());
-    })();
+      if (!active) return;
+      if (queryError) {
+        setError(queryError.message || "Couldn't load live chat. Try again.");
+        return;
+      }
+      const loadedMessages = data.reverse();
+      setMessages((previous) => {
+        if (
+          previous.length === loadedMessages.length &&
+          previous.every((message, index) => message.id === loadedMessages[index].id)
+        ) return previous;
+        return loadedMessages;
+      });
+      setError("");
+    };
+
+    loadMessages();
 
     const channel = supabase
       .channel(`chat:${streamId}`)
@@ -92,22 +126,35 @@ export function useLiveChat(streamId) {
         { event: "INSERT", schema: "public", table: "live_messages", filter: `stream_id=eq.${streamId}` },
         async (payload) => {
           const profile = await getProfile(payload.new.user_id);
-          setMessages((prev) => [...prev.slice(-100), { ...payload.new, profiles: profile }]);
+          if (!active) return;
+          setMessages((prev) => [
+            ...prev.filter((message) => message.id !== payload.new.id).slice(-100),
+            { ...payload.new, profiles: profile },
+          ]);
         }
       )
       .subscribe();
 
-    return () => { active = false; supabase.removeChannel(channel); };
+    const refreshInterval = setInterval(loadMessages, 5000);
+    return () => {
+      active = false;
+      clearInterval(refreshInterval);
+      supabase.removeChannel(channel);
+    };
   }, [streamId, getProfile]);
 
   const send = useCallback(async (body) => {
     const text = body.trim();
     if (!text) return;
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("live_messages").insert({ stream_id: streamId, user_id: user.id, body: text });
+    if (!user) throw new Error("Sign in to join the live chat.");
+    const { error } = await supabase
+      .from("live_messages")
+      .insert({ stream_id: streamId, user_id: user.id, body: text });
+    if (error) throw error;
   }, [streamId]);
 
-  return { messages, send };
+  return { messages, error, send };
 }
 
 /* ---------- Viewer count + reactions (ephemeral: Presence + Broadcast) ---------- */
@@ -125,7 +172,10 @@ export function useLiveRoom(streamId, { isHost = false } = {}) {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (cancelled) return;
-      channel = supabase.channel(`room:${streamId}`, { config: { presence: { key: user.id } } });
+      if (!user) return;
+      channel = supabase.channel(`room:${streamId}`, {
+        config: { presence: { key: user.id }, broadcast: { self: false } },
+      });
 
       channel
         .on("presence", { event: "sync" }, () => {

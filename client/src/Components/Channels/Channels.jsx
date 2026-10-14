@@ -6,6 +6,7 @@ import { HiUsers } from "react-icons/hi2";
 import { supabase } from "../../supabase"; 
 import { useLiveStreams, startStream } from "../../hooks/useLive";
 import LiveBroadcast from "./LiveBroadcast";
+import LiveViewer from "./LiveViewer";
 import SavedVideos from "./SavedVideos";
 import "./Channels.css";
 
@@ -32,7 +33,7 @@ const Avatar = ({ host, className }) =>
   );
 
 const Live = () => {
-  const { streams, refetch } = useLiveStreams();
+  const { streams, loading: streamsLoading, error: streamsError, refetch } = useLiveStreams();
   const [activeFilter, setActiveFilter] = useState("All");
   const [sortByViewers, setSortByViewers] = useState(false);
   const [followingIds, setFollowingIds] = useState([]);
@@ -40,6 +41,7 @@ const Live = () => {
 
   // Broadcasting state
   const [broadcast, setBroadcast] = useState(null); // { id, title, category } | null
+  const [selectedStream, setSelectedStream] = useState(null);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState("");
 
@@ -208,6 +210,13 @@ const Live = () => {
         ))}
       </div>
 
+      {streamsError && (
+        <div className="live-feed-error" role="alert">
+          <span>Couldn't load live streams: {streamsError}</span>
+          <button type="button" onClick={refetch}>Try again</button>
+        </div>
+      )}
+
       {/* Featured Stream — only when someone is live and user isn't searching */}
       {!searchQuery && featured && (
         <div className="featured-stream">
@@ -220,7 +229,13 @@ const Live = () => {
             <span className="viewer-badge featured-viewer-badge">
               <HiUsers /> {formatViewers(featured.viewer_count)} watching
             </span>
-            <button className="play-btn"><MdPlayArrow /></button>
+            <button
+              className="play-btn"
+              onClick={() => setSelectedStream(featured)}
+              aria-label={`Join ${featured.host?.username || "this creator"}'s live stream`}
+            >
+              <MdPlayArrow />
+            </button>
           </div>
           <div className="featured-info">
             <Avatar host={featured.host} className="featured-avatar" />
@@ -239,7 +254,20 @@ const Live = () => {
       {/* Live Streams Grid */}
       <div className="live-grid">
         {filteredStreams.map((stream) => (
-          <div className="live-card" key={stream.id}>
+          <div
+            className="live-card"
+            key={stream.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Join ${stream.host?.username || "this creator"}'s live stream: ${stream.title}`}
+            onClick={() => setSelectedStream(stream)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setSelectedStream(stream);
+              }
+            }}
+          >
             <div className="live-thumbnail">
               <Thumb stream={stream} />
               <span className="live-badge"><BsFillCircleFill /> LIVE</span>
@@ -262,7 +290,11 @@ const Live = () => {
           </div>
         ))}
 
-        {filteredStreams.length === 0 && (
+        {streamsLoading && filteredStreams.length === 0 && !streamsError && (
+          <p className="empty-state">Checking who is live...</p>
+        )}
+
+        {filteredStreams.length === 0 && !streamsLoading && !streamsError && (
           <p className="empty-state">
             {searchQuery
               ? `No streams found for "${searchQuery}".`
@@ -323,6 +355,10 @@ const Live = () => {
             if (saved) setView("saved"); // jump to the saved videos tab
           }}
         />
+      )}
+
+      {selectedStream && (
+        <LiveViewer stream={selectedStream} onClose={() => setSelectedStream(null)} />
       )}
     </div>
   );

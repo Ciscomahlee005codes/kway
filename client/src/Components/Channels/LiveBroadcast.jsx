@@ -35,6 +35,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
   const [cameraOn, setCameraOn] = useState(true);
   const [cameraError, setCameraError] = useState("");
   const [chatInput, setChatInput] = useState("");
+  const [chatError, setChatError] = useState("");
   const [myId, setMyId] = useState(null);
 
   // End-stream modal
@@ -151,7 +152,13 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
     const text = chatInput;
     if (!text.trim()) return;
     setChatInput("");
-    await send(text);
+    setChatError("");
+    try {
+      await send(text);
+    } catch (error) {
+      setChatInput(text);
+      setChatError(error.message || "Couldn't send your message. Please try again.");
+    }
   };
 
   // ===== End stream flow =====
@@ -291,6 +298,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
           <div ref={chatEndRef} />
         </div>
 
+        {chatError && <p className="chat-send-error" role="alert">{chatError}</p>}
         <div className="chat-input-row">
           <input
             type="text"

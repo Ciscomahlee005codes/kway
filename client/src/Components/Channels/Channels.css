@@ -306,6 +306,32 @@
   padding: 2rem 0;
   font-size: 0.9rem;
 }
+
+.live-feed-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(224, 38, 63, 0.24);
+  border-radius: 10px;
+  background: rgba(224, 38, 63, 0.08);
+  color: var(--text-color);
+  font-size: 0.84rem;
+}
+
+.live-feed-error button {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #e0263f;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
 /* ===== SEARCH BAR (replaces header when active) ===== */
 .search-bar {
   display: flex;
