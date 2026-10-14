@@ -3,7 +3,7 @@
 // Good for testing and small audiences (host uploads one stream PER viewer).
 // For a real audience, swap this for a media server (LiveKit / IVS) later.
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // adjust path
+import { supabase } from "../supabase";
 
 const iceServers = [
   { urls: "stun:stun.l.google.com:19302" },
