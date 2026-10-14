@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BsFillCircleFill, BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { HiUsers } from "react-icons/hi2";
 import { FiX, FiSend, FiCameraOff, FiCamera } from "react-icons/fi";
 import { MdCallEnd } from "react-icons/md";
-import { supabase } from "../../supabase"; 
-import { useLiveBroadcast, useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive";
-import { saveRecording } from "../../hooks/useRecordings"; // adjust path
+import { supabase } from "../../supabase";
+import { useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive";
+import { saveRecording } from "../../hooks/useRecordings";
+import { usePeerHost } from "../../hooks/useP2PVideo";
 import "./LiveBroadcast.css";
-import "./EndModal.css";
 
 const COLORS = ["#e0263f", "#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#0891b2"];
 const colorFor = (id = "") =>
@@ -29,18 +29,12 @@ const pickMime = () =>
 const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) => {
   const { messages, send } = useLiveChat(streamId);
   const { viewers, reactions } = useLiveRoom(streamId, { isHost: true });
-  const [mediaStream, setMediaStream] = useState(null);
-  const { status: videoStatus, error: videoError } = useLiveBroadcast(streamId, {
-    isHost: true,
-    localStream: mediaStream,
-  });
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
   const [cameraError, setCameraError] = useState("");
   const [chatInput, setChatInput] = useState("");
-  const [chatError, setChatError] = useState("");
   const [myId, setMyId] = useState(null);
 
   // End-stream modal
@@ -51,7 +45,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
   const [canRecord, setCanRecord] = useState(true);
 
   const videoRef = useRef(null);
-  const mediaStreamRef = useRef(null);
+  const mediaStreamRef = useRef(null); // the host's camera + mic stream
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
   const blobRef = useRef(null);
@@ -59,11 +53,15 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
   const peakRef = useRef(0);
   const streamEndedRef = useRef(false);
 
+  // Send the host's camera to every viewer who joins (WebRTC)
+  const getStream = useCallback(() => mediaStreamRef.current, []);
+  usePeerHost(streamId, getStream);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null));
   }, []);
 
-  // ===== Camera + mic, recorded locally and sent to viewers over WebRTC =====
+  // ===== Real camera + mic, and a local recorder for "Save video" =====
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -74,7 +72,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
         });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         mediaStreamRef.current = stream;
-        setMediaStream(stream);
+        console.log("[rtc host] camera ready:", stream.getTracks().map((t) => t.kind).join(", "));
         if (videoRef.current) videoRef.current.srcObject = stream;
 
         if (window.MediaRecorder) {
@@ -90,7 +88,8 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
         } else {
           setCanRecord(false);
         }
-      } catch {
+      } catch (err) {
+        console.warn("[rtc host] camera/mic failed:", err);
         setCameraError("Camera or microphone permission was denied.");
         setCanRecord(false);
       }
@@ -127,12 +126,16 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
     peakRef.current = Math.max(peakRef.current, viewers);
   }, [viewers]);
 
-  // Push live viewer count to the DB every 10s for the feed
+  // Push live viewer count + heartbeat to the DB every 10s for the feed
   useEffect(() => {
     const push = () =>
       supabase
         .from("live_streams")
-        .update({ viewer_count: viewers, peak_viewers: peakRef.current })
+        .update({
+          viewer_count: viewers,
+          peak_viewers: peakRef.current,
+          heartbeat_at: new Date().toISOString(),
+        })
         .eq("id", streamId);
     const interval = setInterval(push, 10000);
     return () => clearInterval(interval);
@@ -156,13 +159,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
     const text = chatInput;
     if (!text.trim()) return;
     setChatInput("");
-    setChatError("");
-    try {
-      await send(text);
-    } catch (error) {
-      setChatInput(text);
-      setChatError(error.message || "Couldn't send your message. Please try again.");
-    }
+    await send(text);
   };
 
   // ===== End stream flow =====
@@ -257,9 +254,6 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
 
         <div className="broadcast-top-bar">
           <span className="live-badge-broadcast"><BsFillCircleFill /> LIVE</span>
-          <span className={`broadcast-video-status ${videoStatus === "live" ? "connected" : ""}`}>
-            {videoError || (videoStatus === "live" ? "Video connected" : "Connecting video...")}
-          </span>
           <span className="viewer-badge-broadcast"><HiUsers /> {formatViewers(viewers)}</span>
           <span className="duration-badge">{formatTime(elapsedSeconds)}</span>
           <button className="end-stream-x" onClick={openEndModal}><FiX /></button>
@@ -305,7 +299,6 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
           <div ref={chatEndRef} />
         </div>
 
-        {chatError && <p className="chat-send-error" role="alert">{chatError}</p>}
         <div className="chat-input-row">
           <input
             type="text"
@@ -322,76 +315,52 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
       {/* ===== End stream confirmation ===== */}
       {showEndModal && (
         <div className="end-modal-backdrop">
-          <div
-            className="end-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="end-modal-title"
-            aria-busy={phase === "working"}
-          >
+          <div className="end-modal">
             {phase === "confirm" && (
               <>
-                <div className="end-modal-icon"><MdCallEnd /></div>
-                <div className="end-modal-copy">
-                  <h3 id="end-modal-title">End your live stream?</h3>
-                  <p>
-                    Your stream has been live for {formatTime(elapsedSeconds)}
-                    {peakRef.current > 0 && ` and reached ${peakRef.current} viewers`}.
-                  </p>
-                </div>
-                <div className="end-modal-summary">
-                  <span className="end-modal-live-dot" />
-                  <span>{streamTitle}</span>
-                  <span className="end-modal-summary-time">{formatTime(elapsedSeconds)}</span>
-                </div>
-                <div className="end-modal-actions">
-                  <button
-                    className="end-modal-btn primary"
-                    onClick={() => finishStream(true)}
-                    disabled={!canRecord}
-                  >
-                    Save video &amp; end
-                  </button>
-                  {!canRecord && (
-                    <small className="end-modal-note">
-                      Recording isn't available on this device or camera access was denied.
-                    </small>
-                  )}
-                  <button className="end-modal-btn danger" onClick={() => finishStream(false)}>
-                    End without saving
-                  </button>
-                  <button className="end-modal-btn ghost" onClick={() => setShowEndModal(false)}>
-                    Keep streaming
-                  </button>
-                </div>
+                <h3>End this live stream?</h3>
+                <p>
+                  You've been live for {formatTime(elapsedSeconds)}
+                  {peakRef.current > 0 && ` with a peak of ${peakRef.current} viewers`}.
+                </p>
+                <button
+                  className="end-modal-btn primary"
+                  onClick={() => finishStream(true)}
+                  disabled={!canRecord}
+                >
+                  Save video &amp; end
+                </button>
+                {!canRecord && (
+                  <small className="end-modal-note">
+                    Recording isn't available on this device or camera access was denied.
+                  </small>
+                )}
+                <button className="end-modal-btn danger" onClick={() => finishStream(false)}>
+                  End without saving
+                </button>
+                <button className="end-modal-btn ghost" onClick={() => setShowEndModal(false)}>
+                  Keep streaming
+                </button>
               </>
             )}
 
             {phase === "working" && (
               <div className="end-modal-working">
                 <div className="end-spinner" />
-                <div className="end-modal-copy">
-                  <h3 id="end-modal-title">{wantsSave ? "Saving your stream" : "Ending your stream"}</h3>
-                  <p>{wantsSave ? "Please keep this page open while your video is saved." : "Wrapping things up..."}</p>
-                </div>
+                <p>{wantsSave ? "Saving your video, please don't close this page..." : "Ending stream..."}</p>
               </div>
             )}
 
             {phase === "error" && (
               <>
-                <div className="end-modal-icon error"><MdCallEnd /></div>
-                <div className="end-modal-copy">
-                  <h3 id="end-modal-title">Couldn't save your video</h3>
-                  <p role="alert">{endError}</p>
-                </div>
-                <div className="end-modal-actions">
-                  <button className="end-modal-btn primary" onClick={() => finishStream(true)}>
-                    Try again
-                  </button>
-                  <button className="end-modal-btn danger" onClick={() => finishStream(false)}>
-                    Discard video &amp; close
-                  </button>
-                </div>
+                <h3>Couldn't save video</h3>
+                <p>{endError}</p>
+                <button className="end-modal-btn primary" onClick={() => finishStream(true)}>
+                  Try again
+                </button>
+                <button className="end-modal-btn danger" onClick={() => finishStream(false)}>
+                  Discard video &amp; close
+                </button>
               </>
             )}
           </div>
