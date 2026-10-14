@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BsFillCircleFill } from "react-icons/bs";
-import { FiSend, FiVideo, FiX } from "react-icons/fi";
+import { FiSend, FiVideo, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import { HiUsers } from "react-icons/hi2";
-import { useLiveChat, useLiveRoom } from "../../hooks/useLive";
+import { useLiveBroadcast, useLiveChat, useLiveRoom } from "../../hooks/useLive";
 import { supabase } from "../../supabase";
 import "./LiveViewer.css";
 
@@ -23,13 +23,40 @@ const formatTime = (seconds) => {
 const LiveViewer = ({ stream, onClose }) => {
   const { messages, error: chatLoadError, send } = useLiveChat(stream.id);
   const { viewers, reactions, sendReaction } = useLiveRoom(stream.id);
+  const { remoteStream, status: videoStatus, error: videoError } = useLiveBroadcast(stream.id);
   const [chatInput, setChatInput] = useState("");
   const [chatError, setChatError] = useState("");
+  const [muted, setMuted] = useState(true);
+  const [playbackError, setPlaybackError] = useState("");
   const [myId, setMyId] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(() =>
     Math.max(0, Math.floor((Date.now() - new Date(stream.started_at).getTime()) / 1000))
   );
   const chatEndRef = useRef(null);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !remoteStream) return;
+    video.srcObject = remoteStream;
+    video.play().then(() => setPlaybackError("")).catch(() => {
+      setPlaybackError("Tap play to start the live video.");
+    });
+  }, [remoteStream]);
+
+  const toggleAudio = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const nextMuted = !muted;
+    video.muted = nextMuted;
+    setMuted(nextMuted);
+    try {
+      await video.play();
+      setPlaybackError("");
+    } catch {
+      setPlaybackError("Your browser couldn't start playback. Try tapping the video.");
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -83,12 +110,41 @@ const LiveViewer = ({ stream, onClose }) => {
       >
         <div className="live-viewer-main">
           <div className="live-viewer-video">
-            <div className="live-viewer-video-state">
-              <span className="live-viewer-video-icon"><FiVideo /></span>
-              <h2>You're watching live</h2>
-              <p>Chat and react with the community while {stream.host?.username || "the host"} is live.</p>
-              <small>Live video playback isn't connected yet.</small>
-            </div>
+            <video
+              ref={videoRef}
+              className={`live-viewer-video-player ${remoteStream ? "active" : ""}`}
+              autoPlay
+              playsInline
+              muted={muted}
+              onClick={() => videoRef.current?.play().catch(() => {
+                setPlaybackError("Your browser couldn't start playback. Try enabling sound.");
+              })}
+            />
+            {!remoteStream && (
+              <div className="live-viewer-video-state">
+                <span className="live-viewer-video-icon"><FiVideo /></span>
+                <h2>{videoStatus === "waiting" ? "Waiting for the streamer" : "Connecting to live video..."}</h2>
+                <p>
+                  {videoError ||
+                    `Join ${stream.host?.username || "the host"} in live chat while we connect your video.`}
+                </p>
+              </div>
+            )}
+            {remoteStream && (
+              <div className="live-viewer-media-controls">
+                {(playbackError || videoError) && (
+                  <span role="status">{playbackError || videoError}</span>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleAudio}
+                  aria-label={muted ? "Enable stream sound" : "Mute stream"}
+                >
+                  {muted ? <FiVolumeX /> : <FiVolume2 />}
+                  <span>{muted ? "Enable sound" : "Mute"}</span>
+                </button>
+              </div>
+            )}
             <div className="live-viewer-reactions" aria-live="polite">
               {reactions.map((reaction) => (
                 <span

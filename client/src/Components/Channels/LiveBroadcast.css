@@ -96,6 +96,23 @@
   animation: pulse-dot 1.6s infinite;
 }
 
+.broadcast-video-status {
+  max-width: min(240px, 35vw);
+  overflow: hidden;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.broadcast-video-status.connected {
+  background: rgba(22, 163, 74, 0.22);
+  color: #86efac;
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
@@ -278,8 +295,15 @@
   border-radius: 20px;
   padding: 9px 14px;
   color: #fff;
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
   font-size: 0.85rem;
   outline: none;
+}
+
+.chat-input-row input::placeholder {
+  color: rgba(255, 255, 255, 0.58);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.58);
 }
 
 .chat-input-row button {

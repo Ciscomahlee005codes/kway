@@ -4,7 +4,7 @@ import { HiUsers } from "react-icons/hi2";
 import { FiX, FiSend, FiCameraOff, FiCamera } from "react-icons/fi";
 import { MdCallEnd } from "react-icons/md";
 import { supabase } from "../../supabase"; 
-import { useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive"; // adjust path
+import { useLiveBroadcast, useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive";
 import { saveRecording } from "../../hooks/useRecordings"; // adjust path
 import "./LiveBroadcast.css";
 import "./EndModal.css";
@@ -29,6 +29,11 @@ const pickMime = () =>
 const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) => {
   const { messages, send } = useLiveChat(streamId);
   const { viewers, reactions } = useLiveRoom(streamId, { isHost: true });
+  const [mediaStream, setMediaStream] = useState(null);
+  const { status: videoStatus, error: videoError } = useLiveBroadcast(streamId, {
+    isHost: true,
+    localStream: mediaStream,
+  });
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [micOn, setMicOn] = useState(true);
@@ -58,9 +63,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
     supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null));
   }, []);
 
-  // ===== Real camera + mic, and a local recorder for "Save video" =====
-  // TODO (video provider): publish these same tracks to your provider's SDK so
-  // viewers can watch. Recording then moves to the provider (server-side).
+  // ===== Camera + mic, recorded locally and sent to viewers over WebRTC =====
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -71,6 +74,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
         });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         mediaStreamRef.current = stream;
+        setMediaStream(stream);
         if (videoRef.current) videoRef.current.srcObject = stream;
 
         if (window.MediaRecorder) {
@@ -253,6 +257,9 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
 
         <div className="broadcast-top-bar">
           <span className="live-badge-broadcast"><BsFillCircleFill /> LIVE</span>
+          <span className={`broadcast-video-status ${videoStatus === "live" ? "connected" : ""}`}>
+            {videoError || (videoStatus === "live" ? "Video connected" : "Connecting video...")}
+          </span>
           <span className="viewer-badge-broadcast"><HiUsers /> {formatViewers(viewers)}</span>
           <span className="duration-badge">{formatTime(elapsedSeconds)}</span>
           <button className="end-stream-x" onClick={openEndModal}><FiX /></button>
