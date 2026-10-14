@@ -1,0 +1,238 @@
+/* ===== Live / Saved tabs ===== */
+.live-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0.8rem 0 0.2rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.live-tab {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  opacity: 0.6;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.live-tab.active {
+  opacity: 1;
+  color: #e0263f;
+  border-bottom-color: #e0263f;
+}
+
+/* ===== Saved video cards ===== */
+.saved-thumbnail video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+.saved-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.saved-delete-btn:hover {
+  background: #e0263f;
+}
+
+/* ===== Saved video delete confirmation ===== */
+.saved-delete-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 5, 10, 0.76);
+  backdrop-filter: blur(8px);
+  animation: saved-delete-fade-in 0.18s ease-out;
+}
+
+.saved-delete-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 420px;
+  padding: 30px;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 22px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+  animation: saved-delete-enter 0.22s ease-out;
+}
+
+.saved-delete-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: rgba(224, 38, 63, 0.13);
+  color: #e0263f;
+  font-size: 1.65rem;
+}
+
+.saved-delete-copy h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.saved-delete-copy p {
+  margin: 0;
+  opacity: 0.68;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.saved-delete-copy strong {
+  color: var(--text-color);
+  opacity: 1;
+}
+
+.saved-delete-error {
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(224, 38, 63, 0.1);
+  color: #ff6577;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.saved-delete-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.saved-delete-actions button {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 0.87rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.16s ease, background 0.16s ease, opacity 0.16s ease;
+}
+
+.saved-delete-actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.saved-delete-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.saved-delete-cancel {
+  background: rgba(128, 128, 128, 0.14);
+  color: var(--text-color);
+}
+
+.saved-delete-cancel:hover {
+  background: rgba(128, 128, 128, 0.22);
+}
+
+.saved-delete-confirm {
+  background: #e0263f;
+  color: #fff;
+}
+
+.saved-delete-confirm:not(:disabled):hover {
+  background: #f12e49;
+}
+
+@keyframes saved-delete-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes saved-delete-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 480px) {
+  .saved-delete-modal {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saved-delete-backdrop,
+  .saved-delete-modal {
+    animation: none;
+  }
+}
+
+/* ===== Player modal ===== */
+.player-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 350;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.player-box {
+  width: 100%;
+  max-width: 720px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.player-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.player-head h3 {
+  font-size: 1rem;
+}
+
+.player-box video {
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  display: block;
+}

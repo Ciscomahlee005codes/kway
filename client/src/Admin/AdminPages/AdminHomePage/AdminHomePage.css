@@ -3,13 +3,13 @@
   display: flex;
   width: 100%;
   min-height: 100vh;
-  margin-top: 30px;
+  margin-top: 0;
+  background: #f5f7f3;
 }
 
 /* Main content area */
 .adminDash-content {
   margin-left: 250px;
-  padding: 20px;
   width: calc(100% - 250px);
   transition: all 0.3s ease;
 }

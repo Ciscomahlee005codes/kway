@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { FaArrowUp, FaComments, FaLayerGroup, FaUsers, FaRegClock } from "react-icons/fa";
 import "./AdminHome.css";
 import { supabase } from "../../../supabase";
 
@@ -80,65 +81,82 @@ const AdminHome = () => {
     }
   };
 
+  const statCards = [
+    { label: "Total users", value: stats.users, icon: FaUsers, tone: "green", note: "Registered accounts" },
+    { label: "Active groups", value: stats.activeGroups, icon: FaLayerGroup, tone: "blue", note: "Community spaces" },
+    { label: "Status posts", value: stats.statusPosts, icon: FaArrowUp, tone: "orange", note: "Shared this month" },
+    { label: "Total messages", value: stats.totalMessages, icon: FaComments, tone: "purple", note: "Across all conversations" },
+  ];
+
+  const formatDate = (date) => new Date(date).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
   return (
     <div className="admin-home">
-
-      {/* Header */}
       <div className="admin-header">
         <div>
-          <h1><span className="brand-k">K</span>way Dashboard</h1>
-          <p>Welcome back, Admin 👋</p>
+          <span className="eyebrow">Workspace overview</span>
+          <h1>Good morning, Admin.</h1>
+          <p>Here is what is happening across your Kway community today.</p>
         </div>
         <div className="admin-header-right">
-          <span className="status-indicator"></span>
-          <p>System Active</p>
+          <span className="status-indicator" />
+          <div>
+            <strong>All systems operational</strong>
+            <span>Updated just now</span>
+          </div>
         </div>
       </div>
 
-      {/* Stats */}
       <div className="admin-stats">
-
-        <div className="admin-card">
-          <h3>Total Users</h3>
-          <p className="admin-number">{stats.users}</p>
-        </div>
-
-        <div className="admin-card">
-          <h3>Active Groups</h3>
-          <p className="admin-number">{stats.activeGroups}</p>
-        </div>
-
-        <div className="admin-card">
-          <h3>Status Posts</h3>
-          <p className="admin-number">{stats.statusPosts}</p>
-        </div>
-
-        <div className="admin-card">
-          <h3>Total Messages</h3>
-          <p className="admin-number">{stats.totalMessages}</p>
-        </div>
-
+        {statCards.map(({ label, value, icon: Icon, tone, note }) => (
+          <div className={`admin-card ${tone}`} key={label}>
+            <div className="card-topline">
+              <span className="stat-icon"><Icon /></span>
+              <span className="stat-trend"><FaArrowUp /> Live</span>
+            </div>
+            <p className="admin-label">{label}</p>
+            <p className="admin-number">{value.toLocaleString()}</p>
+            <span className="admin-card-note">{note}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Recent Users */}
-      <div className="admin-section">
+      <div className="admin-dashboard-grid">
+        <section className="admin-section">
         <div className="section-header">
-          <h2>Recent Users</h2>
+          <div>
+            <span className="section-kicker">Activity feed</span>
+            <h2>Recent users</h2>
+          </div>
+          <span className="section-count">{recentUsers.length} latest</span>
         </div>
 
         <div className="activity-list">
-          {recentUsers.map((user, i) => (
-            <div key={i} className="activity-item">
-              <span className="dot online"></span>
+          {recentUsers.length > 0 ? recentUsers.map((user, i) => (
+            <div key={`${user.created_at}-${i}`} className="activity-item">
+              <span className="avatar">{(user.name || "U").charAt(0).toUpperCase()}</span>
               <div className="activity-content">
-                <p><strong>{user.name}</strong> just joined</p>
-                <span className="time">
-                  {new Date(user.created_at).toLocaleString()}
-                </span>
+                <p><strong>{user.name || "New user"}</strong> joined Kway</p>
+                <span className="time"><FaRegClock /> {formatDate(user.created_at)}</span>
               </div>
+              <span className="activity-status">New</span>
             </div>
-          ))}
+          )) : <div className="empty-state">No recent users to display yet.</div>}
         </div>
+        </section>
+
+        <aside className="admin-summary">
+          <div className="summary-orbit"><span>KW</span></div>
+          <span className="section-kicker">Kway pulse</span>
+          <h2>Your community at a glance.</h2>
+          <p>Keep an eye on the people, conversations, and spaces that make Kway feel alive.</p>
+          <div className="summary-divider" />
+          <div className="summary-footer"><span className="summary-dot" /> Live data from Supabase</div>
+        </aside>
       </div>
 
     </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./UserManagement.css";
 import { supabase } from "../../../supabase";
+import { FaCalendarAlt, FaTimes, FaUserShield, FaVenusMars } from "react-icons/fa";
 import Avatar from "../../../assets/avatar.png";
 
 const dummyImg = Avatar;
@@ -158,65 +159,72 @@ const UserManagement = () => {
       </div>
 
       {/* MODAL */}
-{selectedUser && (
-  <div className="modal-root">
-    <div className="modal"  onClick={() => setSelectedUser(null)}>
-    <div className="modal-box"  onClick={() => setSelectedUser(null)}>
+      {selectedUser && (
+        <div
+          className="modal-root"
+          role="presentation"
+          onClick={() => setSelectedUser(null)}
+        >
+          <div
+            className="modal-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-profile-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="close"
+              type="button"
+              aria-label="Close user profile"
+              onClick={() => setSelectedUser(null)}
+            >
+              <FaTimes />
+            </button>
 
-      <button className="close" onClick={() => setSelectedUser(null)}>×</button>
+            <div className="profile-banner" />
+            <div className="modal-header">
+              <img
+                src={selectedUser.photo || dummyImg}
+                alt={`${selectedUser.name || "User"}'s profile`}
+                className="modal-avatar"
+              />
+              <div className="profile-heading">
+                <span className="profile-eyebrow">Kway member</span>
+                <h2 id="user-profile-title">{selectedUser.name || "Unnamed user"}</h2>
+                <span className="username">@{selectedUser.username || "unknown"}</span>
+              </div>
+              <span className="role-badge">
+                <FaUserShield /> {selectedUser.role || "user"}
+              </span>
+            </div>
 
-      <div className="modal-header">
-        <img
-          src={selectedUser.photo || dummyImg}
-          alt="profile"
-          className="modal-avatar"
-        />
-        <h2>{selectedUser.name}</h2>
-        <span className="username">@{selectedUser.username}</span>
-      </div>
+            <div className="modal-info">
+              <div className="info-row">
+                <span className="info-icon"><FaVenusMars /></span>
+                <span className="label">Gender</span>
+                <span className="value">{selectedUser.gender || "Not provided"}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-icon"><FaCalendarAlt /></span>
+                <span className="label">Date of birth</span>
+                <span className="value">{selectedUser.dob || "Not provided"}</span>
+              </div>
+              <div className="info-row bio-row">
+                <span className="label">About</span>
+                <span className="value bio">{selectedUser.about || "No bio added yet."}</span>
+              </div>
+            </div>
 
-      <div className="modal-info">
-
-  <div className="info-row">
-    <span className="label">Username</span>
-    <span className="value">@{selectedUser.username}</span>
-  </div>
-
-  <div className="info-row">
-    <span className="label">Gender</span>
-    <span className="value">{selectedUser.gender || "—"}</span>
-  </div>
-
-  <div className="info-row">
-    <span className="label">DOB</span>
-    <span className="value">{selectedUser.dob || "—"}</span>
-  </div>
-
-  <div className="info-row">
-    <span className="label">Role</span>
-    <span className="value">{selectedUser.role || "user"}</span>
-  </div>
-
-  <div className="info-row">
-    <span className="label">Bio</span>
-    <span className="value bio">
-      {selectedUser.about || "No bio yet"}
-    </span>
-  </div>
-
-</div>
-
-      <button
-        className="btn delete full"
-        onClick={() => deleteUser(selectedUser.id)}
-      >
-        Delete User
-      </button>
-
-    </div>
-  </div>
-  </div>
-)}
+            <button
+              className="btn delete full"
+              type="button"
+              onClick={() => deleteUser(selectedUser.id)}
+            >
+              Delete user
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

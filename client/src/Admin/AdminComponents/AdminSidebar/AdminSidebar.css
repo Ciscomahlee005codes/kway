@@ -5,18 +5,20 @@
   left: 0;
   height: 100vh;
   width: 250px;
-  background-color: #0d6329;
+  padding: 14px;
+  background: #163925;
   color: white;
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 8px 0 28px rgba(17, 48, 29, 0.12);
   z-index: 1000;
 }
 
 /* Collapsed Sidebar */
 .adminDash-sidebar.collapsed {
   width: 70px;
+  padding: 14px 10px;
 }
 
 /* Header */
@@ -24,19 +26,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 8px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* Logo text */
 .adminDash-logo {
-  font-size: 1.5rem;
-  font-weight: bold;
+  color: #eef9ef;
+  font-size: 1.15rem;
+  letter-spacing: -.4px;
+  font-weight: 600;
 }
 
 /* Toggle button */
 .adminDash-toggleBtn {
-  background: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 9px;
+  background: rgba(255,255,255,.06);
   border: none;
   color: white;
   font-size: 1.2rem;
@@ -47,31 +57,36 @@
 .adminDash-navMenu {
   display: flex;
   flex-direction: column;
-  margin-top: 1rem;
+  gap: 5px;
+  margin-top: 24px;
 }
 
 /* Nav items */
 .adminDash-navItem {
   display: flex;
   align-items: center;
-  padding: 0.9rem 1rem;
-  color: white;
+  gap: 13px;
+  padding: 12px 11px;
+  border-radius: 10px;
+  color: #b3c9b7;
   text-decoration: none;
   transition: background 0.2s;
 }
 
 .adminDash-navItem:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
 
 .adminDash-navItem.active {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: #d9f0dc;
+  color: #193c29;
 }
 
 /* Icons */
 .adminDash-navIcon {
-  font-size: 1.2rem;
-  margin-right: 1rem;
+  flex: 0 0 18px;
+  font-size: 1rem;
 }
 
 /* Hide text when collapsed */
@@ -81,8 +96,10 @@
 
 /* Logout */
 .adminDash-logout {
-  margin-top: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: auto !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  padding-top: 20px;
 }
 /* ======= LOGOUT MODAL ======= */
 

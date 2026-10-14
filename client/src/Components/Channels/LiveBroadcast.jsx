@@ -3,248 +3,385 @@ import { BsFillCircleFill, BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { HiUsers } from "react-icons/hi2";
 import { FiX, FiSend, FiCameraOff, FiCamera } from "react-icons/fi";
 import { MdCallEnd } from "react-icons/md";
+import { supabase } from "../../supabase"; 
+import { useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive"; // adjust path
+import { saveRecording } from "../../hooks/useRecordings"; // adjust path
 import "./LiveBroadcast.css";
+import "./EndModal.css";
 
-// =====================================================================
-// 🔴 DUMMY DATA — replace with real-time data once sockets/API are ready.
-// Expected real sources:
-//   - viewers: live count from your streaming backend (websocket)
-//   - chatMessages: pushed via websocket/Supabase Realtime as users type
-//   - reactions: pushed via websocket as floating events
-// =====================================================================
+const COLORS = ["#e0263f", "#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#0891b2"];
+const colorFor = (id = "") =>
+  COLORS[[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
 
-const DUMMY_USERNAMES = [
-  "Chidi_O", "Ada.Live", "TeeVibes", "Kelechi99", "NaijaFan22",
-  "Bola_Streams", "Zainab.tv", "MikeTheGoat", "Funmi_", "Emeka_B",
-];
+const formatTime = (t) => {
+  const h = String(Math.floor(t / 3600)).padStart(2, "0");
+  const m = String(Math.floor((t % 3600) / 60)).padStart(2, "0");
+  const s = String(t % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+};
+const formatViewers = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`);
 
-const DUMMY_MESSAGES = [
-  "yoo this is fire 🔥",
-  "first time catching you live!",
-  "wait what app is this 👀",
-  "LETS GOOO",
-  "can you shout me out",
-  "the audio is clean today",
-  "following now ✅",
-  "this deserves more viewers",
-  "😂😂😂",
-  "where are you streaming from?",
-  "drop the link in the description",
-  "W stream",
-];
+const pickMime = () =>
+  ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"].find(
+    (t) => window.MediaRecorder?.isTypeSupported?.(t)
+  ) || "";
 
-const DUMMY_AVATARS_COLORS = [
-  "#e0263f", "#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#0891b2",
-];
+const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) => {
+  const { messages, send } = useLiveChat(streamId);
+  const { viewers, reactions } = useLiveRoom(streamId, { isHost: true });
 
-const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-const LiveBroadcast = ({ streamTitle, streamCategory, onEndStream }) => {
-  const [viewers, setViewers] = useState(1);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
+  const [cameraError, setCameraError] = useState("");
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState([
-    { id: "sys1", system: true, text: "You started streaming." },
-  ]);
-  const [floatingReactions, setFloatingReactions] = useState([]);
-  const chatEndRef = useRef(null);
+  const [myId, setMyId] = useState(null);
 
-  // 🔴 DUMMY: simulate viewers joining over time — replace with real socket count
+  // End-stream modal
+  const [showEndModal, setShowEndModal] = useState(false);
+  const [phase, setPhase] = useState("confirm"); // confirm | working | error
+  const [wantsSave, setWantsSave] = useState(false);
+  const [endError, setEndError] = useState("");
+  const [canRecord, setCanRecord] = useState(true);
+
+  const videoRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const blobRef = useRef(null);
+  const chatEndRef = useRef(null);
+  const peakRef = useRef(0);
+  const streamEndedRef = useRef(false);
+
   useEffect(() => {
-    const viewerInterval = setInterval(() => {
-      setViewers((prev) => {
-        const change = Math.floor(Math.random() * 4) - 1; // mostly upward drift
-        return Math.max(1, prev + change + 1);
-      });
-    }, 2500);
-    return () => clearInterval(viewerInterval);
+    supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null));
   }, []);
 
-  // Stream duration timer
+  // ===== Real camera + mic, and a local recorder for "Save video" =====
+  // TODO (video provider): publish these same tracks to your provider's SDK so
+  // viewers can watch. Recording then moves to the provider (server-side).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: true,
+        });
+        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
+        mediaStreamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+
+        if (window.MediaRecorder) {
+          const mime = pickMime();
+          const rec = new MediaRecorder(stream, {
+            ...(mime ? { mimeType: mime } : {}),
+            videoBitsPerSecond: 1_000_000, // ~7.5 MB per minute
+            audioBitsPerSecond: 96_000,
+          });
+          rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+          rec.start(1000);
+          recorderRef.current = rec;
+        } else {
+          setCanRecord(false);
+        }
+      } catch {
+        setCameraError("Camera or microphone permission was denied.");
+        setCanRecord(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  useEffect(() => {
+    if (cameraOn && videoRef.current && mediaStreamRef.current) {
+      videoRef.current.srcObject = mediaStreamRef.current;
+    }
+  }, [cameraOn]);
+
+  const toggleMic = () => {
+    const next = !micOn;
+    mediaStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = next));
+    setMicOn(next);
+  };
+  const toggleCamera = () => {
+    const next = !cameraOn;
+    mediaStreamRef.current?.getVideoTracks().forEach((t) => (t.enabled = next));
+    setCameraOn(next);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 🔴 DUMMY: simulate incoming chat messages — replace with websocket listener
   useEffect(() => {
-    const chatInterval = setInterval(() => {
-      const newMsg = {
-        id: Date.now(),
-        username: getRandomItem(DUMMY_USERNAMES),
-        color: getRandomItem(DUMMY_AVATARS_COLORS),
-        text: getRandomItem(DUMMY_MESSAGES),
-        system: false,
-      };
-      setMessages((prev) => [...prev.slice(-40), newMsg]); // cap history
-    }, 3200);
-    return () => clearInterval(chatInterval);
-  }, []);
+    peakRef.current = Math.max(peakRef.current, viewers);
+  }, [viewers]);
 
-  // 🔴 DUMMY: simulate floating heart/like reactions — replace with real event stream
+  // Push live viewer count to the DB every 10s for the feed
   useEffect(() => {
-    const reactionInterval = setInterval(() => {
-      const id = Date.now();
-      setFloatingReactions((prev) => [
-        ...prev,
-        { id, emoji: getRandomItem(["❤️", "🔥", "👏", "😂", "💯"]), left: Math.random() * 80 + 5 },
-      ]);
-      setTimeout(() => {
-        setFloatingReactions((prev) => prev.filter((r) => r.id !== id));
-      }, 3000);
-    }, 1800);
-    return () => clearInterval(reactionInterval);
-  }, []);
+    const push = () =>
+      supabase
+        .from("live_streams")
+        .update({ viewer_count: viewers, peak_viewers: peakRef.current })
+        .eq("id", streamId);
+    const interval = setInterval(push, 10000);
+    return () => clearInterval(interval);
+  }, [viewers, streamId]);
+
+  // If the host leaves without going through the modal, still end the stream
+  useEffect(() => {
+    return () => {
+      if (!streamEndedRef.current) {
+        streamEndedRef.current = true;
+        endStream(streamId);
+      }
+    };
+  }, [streamId]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const formatTime = (totalSeconds) => {
-    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-    const s = String(totalSeconds % 60).padStart(2, "0");
-    return `${h}:${m}:${s}`;
-  };
-
-  const formatViewers = (num) =>
-    num >= 1000 ? `${(num / 1000).toFixed(1)}K` : `${num}`;
-
-  const handleSendMessage = () => {
-    if (!chatInput.trim()) return;
-    // 🔴 TODO: replace with real "send chat message" API/socket emit
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), username: "You", color: "#e0263f", text: chatInput, isSelf: true, system: false },
-    ]);
+  const handleSendMessage = async () => {
+    const text = chatInput;
+    if (!text.trim()) return;
     setChatInput("");
+    await send(text);
   };
 
-  const handleEndStream = () => {
-    // 🔴 TODO: replace with real "end stream" API call
-    onEndStream();
+  // ===== End stream flow =====
+  const openEndModal = () => {
+    setPhase("confirm");
+    setEndError("");
+    setShowEndModal(true);
+  };
+
+  const stopRecording = () =>
+    new Promise((resolve) => {
+      const rec = recorderRef.current;
+      const make = () =>
+        resolve(
+          new Blob(chunksRef.current, {
+            type: (rec?.mimeType || "video/webm").split(";")[0],
+          })
+        );
+      if (!rec || rec.state === "inactive") return make();
+      rec.onstop = make;
+      rec.stop();
+    });
+
+  const finishStream = async (save) => {
+    setWantsSave(save);
+    setPhase("working");
+    setEndError("");
+    try {
+      if (!streamEndedRef.current) {
+        streamEndedRef.current = true;
+        await endStream(streamId); // viewers see it end right away
+      }
+      if (blobRef.current === null) blobRef.current = await stopRecording();
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+
+      let saved = false;
+      if (save && blobRef.current.size > 0) {
+        await saveRecording({
+          streamId,
+          blob: blobRef.current,
+          title: streamTitle,
+          category: streamCategory,
+          duration: elapsedSeconds,
+          peakViewers: peakRef.current,
+        });
+        saved = true;
+      }
+      onEndStream(saved);
+    } catch (err) {
+      const tooBig = /size|exceed/i.test(err?.message || "");
+      setEndError(
+        tooBig
+          ? "This video is larger than your storage upload limit."
+          : "We couldn't save the video. Check your connection and try again."
+      );
+      setPhase("error");
+    }
   };
 
   return (
     <div className="broadcast-page">
-      {/* Video / Camera Area */}
       <div className="broadcast-video-area">
-        {cameraOn ? (
-          <div className="camera-placeholder">
-            <div className="camera-pulse-ring" />
-            <span>Your camera feed</span>
-          </div>
-        ) : (
+        <video
+          ref={videoRef}
+          className="camera-video"
+          autoPlay
+          playsInline
+          muted
+          style={{ display: cameraOn && !cameraError ? "block" : "none" }}
+        />
+        {cameraError ? (
           <div className="camera-off-placeholder">
             <FiCameraOff />
-            <span>Camera is off</span>
+            <span>{cameraError}</span>
           </div>
+        ) : (
+          !cameraOn && (
+            <div className="camera-off-placeholder">
+              <FiCameraOff />
+              <span>Camera is off</span>
+            </div>
+          )
         )}
 
-        {/* Floating reactions */}
         <div className="floating-reactions-layer">
-          {floatingReactions.map((r) => (
-            <span
-              key={r.id}
-              className="floating-reaction"
-              style={{ left: `${r.left}%` }}
-            >
+          {reactions.map((r) => (
+            <span key={r.id} className="floating-reaction" style={{ left: `${r.left}%` }}>
               {r.emoji}
             </span>
           ))}
         </div>
 
-        {/* Top overlay: live badge, viewers, duration, close */}
         <div className="broadcast-top-bar">
-          <span className="live-badge-broadcast">
-            <BsFillCircleFill /> LIVE
-          </span>
-          <span className="viewer-badge-broadcast">
-            <HiUsers /> {formatViewers(viewers)}
-          </span>
+          <span className="live-badge-broadcast"><BsFillCircleFill /> LIVE</span>
+          <span className="viewer-badge-broadcast"><HiUsers /> {formatViewers(viewers)}</span>
           <span className="duration-badge">{formatTime(elapsedSeconds)}</span>
-          <button className="end-stream-x" onClick={handleEndStream}>
-            <FiX />
-          </button>
+          <button className="end-stream-x" onClick={openEndModal}><FiX /></button>
         </div>
 
-        {/* Bottom overlay: title + category */}
         <div className="broadcast-info-bar">
           <h3>{streamTitle}</h3>
           <span className="category-pill">{streamCategory}</span>
         </div>
       </div>
 
-      {/* Controls */}
       <div className="broadcast-controls">
-        <button
-          className={`control-btn ${!micOn ? "off" : ""}`}
-          onClick={() => setMicOn((m) => !m)}
-        >
+        <button className={`control-btn ${!micOn ? "off" : ""}`} onClick={toggleMic}>
           {micOn ? <BsMicFill /> : <BsMicMuteFill />}
           <span>{micOn ? "Mute" : "Unmute"}</span>
         </button>
-        <button
-          className={`control-btn ${!cameraOn ? "off" : ""}`}
-          onClick={() => setCameraOn((c) => !c)}
-        >
+        <button className={`control-btn ${!cameraOn ? "off" : ""}`} onClick={toggleCamera}>
           {cameraOn ? <FiCamera /> : <FiCameraOff />}
           <span>{cameraOn ? "Stop Video" : "Start Video"}</span>
         </button>
-        <button className="control-btn end-btn" onClick={handleEndStream}>
+        <button className="control-btn end-btn" onClick={openEndModal}>
           <MdCallEnd />
           <span>End Stream</span>
         </button>
       </div>
 
-      {/* Live Chat Panel */}
       <div className="broadcast-chat-panel">
         <div className="chat-panel-header">
           <span>Live Chat</span>
-          <span className="chat-viewer-count">
-            <HiUsers /> {formatViewers(viewers)} watching
-          </span>
+          <span className="chat-viewer-count"><HiUsers /> {formatViewers(viewers)} watching</span>
         </div>
 
         <div className="chat-messages">
-          {messages.map((msg) =>
-            msg.system ? (
-              <div key={msg.id} className="chat-system-msg">
-                {msg.text}
-              </div>
-            ) : (
-              <div
-                key={msg.id}
-                className={`chat-message ${msg.isSelf ? "self" : ""}`}
-              >
-                <span
-                  className="chat-username"
-                  style={{ color: msg.color }}
-                >
-                  {msg.username}
-                </span>
-                <span className="chat-text">{msg.text}</span>
-              </div>
-            )
-          )}
+          <div className="chat-system-msg">You started streaming.</div>
+          {messages.map((msg) => (
+            <div key={msg.id} className={`chat-message ${msg.user_id === myId ? "self" : ""}`}>
+              <span className="chat-username" style={{ color: colorFor(msg.user_id) }}>
+                {msg.user_id === myId ? "You" : msg.profiles?.username || "user"}
+              </span>
+              <span className="chat-text">{msg.body}</span>
+            </div>
+          ))}
           <div ref={chatEndRef} />
         </div>
 
         <div className="chat-input-row">
           <input
             type="text"
+            maxLength={300}
             placeholder="Say something..."
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
           />
-          <button onClick={handleSendMessage}>
-            <FiSend />
-          </button>
+          <button onClick={handleSendMessage}><FiSend /></button>
         </div>
       </div>
+
+      {/* ===== End stream confirmation ===== */}
+      {showEndModal && (
+        <div className="end-modal-backdrop">
+          <div
+            className="end-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="end-modal-title"
+            aria-busy={phase === "working"}
+          >
+            {phase === "confirm" && (
+              <>
+                <div className="end-modal-icon"><MdCallEnd /></div>
+                <div className="end-modal-copy">
+                  <h3 id="end-modal-title">End your live stream?</h3>
+                  <p>
+                    Your stream has been live for {formatTime(elapsedSeconds)}
+                    {peakRef.current > 0 && ` and reached ${peakRef.current} viewers`}.
+                  </p>
+                </div>
+                <div className="end-modal-summary">
+                  <span className="end-modal-live-dot" />
+                  <span>{streamTitle}</span>
+                  <span className="end-modal-summary-time">{formatTime(elapsedSeconds)}</span>
+                </div>
+                <div className="end-modal-actions">
+                  <button
+                    className="end-modal-btn primary"
+                    onClick={() => finishStream(true)}
+                    disabled={!canRecord}
+                  >
+                    Save video &amp; end
+                  </button>
+                  {!canRecord && (
+                    <small className="end-modal-note">
+                      Recording isn't available on this device or camera access was denied.
+                    </small>
+                  )}
+                  <button className="end-modal-btn danger" onClick={() => finishStream(false)}>
+                    End without saving
+                  </button>
+                  <button className="end-modal-btn ghost" onClick={() => setShowEndModal(false)}>
+                    Keep streaming
+                  </button>
+                </div>
+              </>
+            )}
+
+            {phase === "working" && (
+              <div className="end-modal-working">
+                <div className="end-spinner" />
+                <div className="end-modal-copy">
+                  <h3 id="end-modal-title">{wantsSave ? "Saving your stream" : "Ending your stream"}</h3>
+                  <p>{wantsSave ? "Please keep this page open while your video is saved." : "Wrapping things up..."}</p>
+                </div>
+              </div>
+            )}
+
+            {phase === "error" && (
+              <>
+                <div className="end-modal-icon error"><MdCallEnd /></div>
+                <div className="end-modal-copy">
+                  <h3 id="end-modal-title">Couldn't save your video</h3>
+                  <p role="alert">{endError}</p>
+                </div>
+                <div className="end-modal-actions">
+                  <button className="end-modal-btn primary" onClick={() => finishStream(true)}>
+                    Try again
+                  </button>
+                  <button className="end-modal-btn danger" onClick={() => finishStream(false)}>
+                    Discard video &amp; close
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
