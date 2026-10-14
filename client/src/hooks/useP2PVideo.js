@@ -48,10 +48,14 @@ export function usePeerHost(streamId, getStream) {
     const handle = async (p) => {
       if (p.to !== "host") return;
       const viewerId = p.from;
+      console.log("[rtc host] got", p.type, "from", viewerId);
 
       if (p.type === "join") {
         const stream = getStream();
-        if (!stream) return; // camera not ready yet; viewer keeps retrying
+        if (!stream) {
+          console.warn("[rtc host] a viewer joined but the camera stream isn't ready (getStream returned null)");
+          return; // viewer keeps retrying
+        }
 
         const existing = peers.get(viewerId);
         if (
@@ -89,7 +93,7 @@ export function usePeerHost(streamId, getStream) {
       .on("broadcast", { event: "sig" }, ({ payload }) => {
         queue = queue.then(() => handle(payload)).catch((e) => console.warn("host rtc:", e));
       })
-      .subscribe();
+      .subscribe((s) => console.log("[rtc host] signaling channel:", s));
 
     return () => {
       peers.forEach(({ pc }) => pc.close());
@@ -111,6 +115,7 @@ export function usePeerViewer(streamId) {
     let sid = 0; // bumps whenever we need a fresh connection
     let pc = null;
     let connected = false;
+    let gotOffer = false;
     let queue = Promise.resolve();
     const channel = supabase.channel(`rtc:${streamId}`);
     const send = (payload) => channel.send({ type: "broadcast", event: "sig", payload });
@@ -118,6 +123,8 @@ export function usePeerViewer(streamId) {
 
     const handle = async (p) => {
       if (p.to !== myId || p.sid !== sid || p.type !== "offer") return;
+      gotOffer = true;
+      console.log("[rtc viewer] got the host's offer");
 
       // Duplicate offer (host re-sent it): just re-send our answer
       if (pc && pc.remoteDescription?.sdp === p.sdp.sdp) {
@@ -163,19 +170,28 @@ export function usePeerViewer(streamId) {
         queue = queue.then(() => handle(payload)).catch((e) => console.warn("viewer rtc:", e));
       })
       .subscribe((s) => {
+        console.log("[rtc viewer] signaling channel:", s);
         if (s === "SUBSCRIBED") {
           setDetail("Asking the host for the stream...");
           join();
+        } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") {
+          setDetail("Can't reach the signaling server. Check that Realtime is enabled on your Supabase project.");
         }
       });
 
     // Keep asking until connected (host camera may still be starting)
     const retry = setInterval(() => { if (!connected) join(); }, 4000);
     const slowTimer = setTimeout(() => { if (!connected) setSlow(true); }, 15000);
+    const noOfferTimer = setTimeout(() => {
+      if (!gotOffer) {
+        setDetail("The host isn't answering. They need to keep the broadcast screen open with camera allowed.");
+      }
+    }, 8000);
 
     return () => {
       clearInterval(retry);
       clearTimeout(slowTimer);
+      clearTimeout(noOfferTimer);
       pc?.close();
       supabase.removeChannel(channel);
     };
