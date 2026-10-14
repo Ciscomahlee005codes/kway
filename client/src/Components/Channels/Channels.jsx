@@ -3,10 +3,10 @@ import { FiSearch, FiX } from "react-icons/fi";
 import { BsThreeDotsVertical, BsFillCircleFill } from "react-icons/bs";
 import { MdAdd, MdPlayArrow, MdRefresh, MdSort, MdFlag } from "react-icons/md";
 import { HiUsers } from "react-icons/hi2";
-import { supabase } from "../../supabase"; 
+import { supabase } from "../../supabase";
 import { useLiveStreams, startStream } from "../../hooks/useLive";
 import LiveBroadcast from "./LiveBroadcast";
-import LiveViewer from "./LiveViewer";
+import LiveWatch from "./LiveWatch";
 import SavedVideos from "./SavedVideos";
 import "./Channels.css";
 
@@ -37,19 +37,29 @@ const Live = () => {
   const [activeFilter, setActiveFilter] = useState("All");
   const [sortByViewers, setSortByViewers] = useState(false);
   const [followingIds, setFollowingIds] = useState([]);
+  const [userId, setUserId] = useState(null);
   const [view, setView] = useState("live"); // "live" | "saved"
 
-  // Broadcasting state
+  // Broadcasting / watching state
   const [broadcast, setBroadcast] = useState(null); // { id, title, category } | null
-  const [selectedStream, setSelectedStream] = useState(null);
+  const [selectedStream, setSelectedStream] = useState(null); // stream row being watched
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState("");
 
-  // Who the current user follows (for the "Following" filter)
+  // Tapping a stream opens the viewer (your own stream can't be watched from the same device)
+  const openStream = (stream) => {
+    if (stream.host_id === userId) return;
+    setSelectedStream(stream);
+  };
+
+  const isMine = (stream) => stream.host_id === userId;
+
+  // Who am I + who do I follow (for the "Following" filter)
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
       const { data } = await supabase
         .from("follows").select("followee_id").eq("follower_id", user.id);
       setFollowingIds((data ?? []).map((f) => f.followee_id));
@@ -220,7 +230,11 @@ const Live = () => {
       {/* Featured Stream — only when someone is live and user isn't searching */}
       {!searchQuery && featured && (
         <div className="featured-stream">
-          <div className="featured-thumbnail">
+          <div
+            className="featured-thumbnail"
+            style={{ cursor: isMine(featured) ? "default" : "pointer" }}
+            onClick={() => openStream(featured)}
+          >
             <Thumb stream={featured} />
             <div className="featured-overlay" />
             <span className="live-badge featured-badge">
@@ -229,19 +243,23 @@ const Live = () => {
             <span className="viewer-badge featured-viewer-badge">
               <HiUsers /> {formatViewers(featured.viewer_count)} watching
             </span>
-            <button
-              className="play-btn"
-              onClick={() => setSelectedStream(featured)}
-              aria-label={`Join ${featured.host?.username || "this creator"}'s live stream`}
-            >
-              <MdPlayArrow />
-            </button>
+            {!isMine(featured) && (
+              <button
+                className="play-btn"
+                onClick={(e) => { e.stopPropagation(); openStream(featured); }}
+                aria-label={`Join ${featured.host?.username || "this creator"}'s live stream`}
+              >
+                <MdPlayArrow />
+              </button>
+            )}
           </div>
           <div className="featured-info">
             <Avatar host={featured.host} className="featured-avatar" />
             <div>
               <h3>{featured.title}</h3>
-              <p>{featured.host?.username} · {featured.category}</p>
+              <p>
+                {featured.host?.username}{isMine(featured) ? " (You)" : ""} · {featured.category}
+              </p>
             </div>
           </div>
         </div>
@@ -260,11 +278,11 @@ const Live = () => {
             role="button"
             tabIndex={0}
             aria-label={`Join ${stream.host?.username || "this creator"}'s live stream: ${stream.title}`}
-            onClick={() => setSelectedStream(stream)}
+            onClick={() => openStream(stream)}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                setSelectedStream(stream);
+                openStream(stream);
               }
             }}
           >
@@ -274,16 +292,19 @@ const Live = () => {
               <span className="viewer-badge">
                 <HiUsers /> {formatViewers(stream.viewer_count)}
               </span>
-              <div className="hover-overlay">
-                <MdPlayArrow className="hover-play-icon" />
-              </div>
+              {!isMine(stream) && (
+                <div className="hover-overlay">
+                  <MdPlayArrow className="hover-play-icon" />
+                </div>
+              )}
             </div>
             <div className="live-card-info">
               <Avatar host={stream.host} className="live-card-avatar" />
               <div className="live-card-text">
                 <h4>{stream.title}</h4>
                 <p>
-                  {stream.host?.username} <span className="dot">•</span> {stream.category}
+                  {stream.host?.username}{isMine(stream) ? " (You)" : ""}{" "}
+                  <span className="dot">•</span> {stream.category}
                 </p>
               </div>
             </div>
@@ -358,7 +379,7 @@ const Live = () => {
       )}
 
       {selectedStream && (
-        <LiveViewer stream={selectedStream} onClose={() => setSelectedStream(null)} />
+        <LiveWatch stream={selectedStream} onClose={() => setSelectedStream(null)} />
       )}
     </div>
   );
