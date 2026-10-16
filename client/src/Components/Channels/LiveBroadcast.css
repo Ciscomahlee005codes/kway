@@ -302,8 +302,8 @@
 }
 
 .chat-input-row input::placeholder {
-  color: rgba(255, 255, 255, 0.58);
-  -webkit-text-fill-color: rgba(255, 255, 255, 0.58);
+  color: #6b7280;
+  -webkit-text-fill-color: #6b7280;
 }
 
 .chat-input-row button {

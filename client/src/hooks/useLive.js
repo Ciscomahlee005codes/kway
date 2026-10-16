@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "../supabase";
 
 const STREAM_SELECT = "*, host:profiles!live_streams_host_id_fkey(id, username, avatar_url)";
+const LIVE_HEARTBEAT_TIMEOUT_MS = 30_000;
 
 /* ---------- Live feed (Live.jsx) ---------- */
 export function useLiveStreams() {
@@ -14,10 +15,12 @@ export function useLiveStreams() {
 
   const refetch = useCallback(async () => {
     try {
+      const heartbeatCutoff = new Date(Date.now() - LIVE_HEARTBEAT_TIMEOUT_MS).toISOString();
       const { data, error: queryError } = await supabase
         .from("live_streams")
         .select(STREAM_SELECT)
         .eq("status", "live")
+        .gte("heartbeat_at", heartbeatCutoff)
         .order("started_at", { ascending: false });
       if (queryError) throw queryError;
       setStreams(data ?? []);
@@ -49,6 +52,7 @@ export function useLiveStreams() {
 export async function startStream({ title, category }) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Sign in before starting a live stream.");
+  const startedAt = new Date().toISOString();
   const { data, error } = await supabase
     .from("live_streams")
     .insert({
@@ -56,7 +60,8 @@ export async function startStream({ title, category }) {
       title: title.trim(),
       category,
       status: "live",
-      started_at: new Date().toISOString(),
+      started_at: startedAt,
+      heartbeat_at: startedAt,
     })
     .select()
     .single();

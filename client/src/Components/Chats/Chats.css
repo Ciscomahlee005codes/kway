@@ -5,6 +5,7 @@
   display: flex;
   margin-left: 70px; /* sidebar */
   height: 100dvh;
+  min-width: 0;
   background: var(--bg-color);
   color: var(--text-color);
   transition:
@@ -14,7 +15,8 @@
 
 /* Left - Chat List */
 .chat-list-section {
-  width: 40%;
+  flex: 0 0 40%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(0, 0, 0, 0.1);
@@ -216,10 +218,12 @@
 
 /* Right - Active Chat */
 .chat-window {
-  width: 60%;
+  flex: 1 1 60%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   height: 100vh;
+  min-height: 0;
   overflow: hidden; 
   background: var(--bg-color);
 }
@@ -2091,17 +2095,15 @@ mark {
 /* Responsive */
 @media (max-width: 1024px) {
   .chat-list-section {
-    width: 60%;
-  }
-
-  .chat-window {
-    width: 60%;
+    flex-basis: 40%;
   }
 }
 
 @media (max-width: 768px) {
   .chat-wrapper {
     margin-left: 0;
+    width: 100%;
+    overflow: hidden;
     background: var(--bg-color);
   }
   .chat-input-wrapper {
@@ -2119,26 +2121,20 @@ mark {
   .hide-on-mobile {
     display: none;
   }
-  .chat-list-section {
-    width: 100%;
-  }
-  .chat-list-section.hide-on-mobile {
-    display: none;
-  }
-  /* .chat-input-wrapper {
-    padding-bottom: env(safe-area-inset-bottom);
-  } */
-
+  .chat-list-section,
   .chat-window {
+    flex: 0 0 100%;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
+
   .chat-list-section.hide-on-mobile {
     display: none;
   }
 
   .chat-window {
-    width: 100%;
-     height: 100dvh; 
+    height: 100dvh;
     display: none;
   }
   .chat-actions-right {

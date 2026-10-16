@@ -420,12 +420,16 @@
   border-radius: 20px;
   padding: 10px 14px;
   color: #fff;
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  color-scheme: dark;
   font-size: 0.85rem;
   outline: none;
 }
 
 .lw-chat-input input::placeholder {
-  color: rgba(255, 255, 255, 0.45);
+  color: #6b7280;
+  -webkit-text-fill-color: #6b7280;
 }
 
 .lw-chat-input input:focus {

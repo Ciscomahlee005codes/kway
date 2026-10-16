@@ -8,6 +8,7 @@ import { useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive";
 import { saveRecording } from "../../hooks/useRecordings";
 import { usePeerHost } from "../../hooks/useP2PVideo";
 import "./LiveBroadcast.css";
+import "./EndModal.css";
 
 const COLORS = ["#e0263f", "#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#0891b2"];
 const colorFor = (id = "") =>
@@ -305,6 +306,12 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
             maxLength={300}
             placeholder="Say something..."
             value={chatInput}
+            style={{
+              backgroundColor: "#fff",
+              color: "#111",
+              WebkitTextFillColor: "#111",
+              caretColor: "#111",
+            }}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
           />

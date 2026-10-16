@@ -216,6 +216,12 @@ const LiveWatch = ({ stream, onClose }) => {
             placeholder={ended ? "Stream ended" : "Say something..."}
             disabled={ended}
             value={chatInput}
+            style={{
+              backgroundColor: "#fff",
+              color: "#111",
+              WebkitTextFillColor: "#111",
+              caretColor: "#111",
+            }}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
           />
