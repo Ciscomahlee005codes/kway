@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BsFillCircleFill, BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { HiUsers } from "react-icons/hi2";
-import { FiX, FiSend, FiCameraOff, FiCamera } from "react-icons/fi";
+import { FiX, FiSend, FiCameraOff, FiCamera, FiCheck } from "react-icons/fi";
 import { MdCallEnd } from "react-icons/md";
 import { supabase } from "../../supabase";
 import { useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive";
@@ -29,7 +29,13 @@ const pickMime = () =>
 
 const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) => {
   const { messages, send } = useLiveChat(streamId);
-  const { viewers, reactions } = useLiveRoom(streamId, { isHost: true });
+  const {
+    viewers,
+    reactions,
+    gifts,
+    joinRequests,
+    respondToJoin,
+  } = useLiveRoom(streamId, { isHost: true });
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [micOn, setMicOn] = useState(true);
@@ -37,6 +43,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
   const [cameraError, setCameraError] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [myId, setMyId] = useState(null);
+  const [joinResponseError, setJoinResponseError] = useState("");
 
   // End-stream modal
   const [showEndModal, setShowEndModal] = useState(false);
@@ -163,6 +170,15 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
     await send(text);
   };
 
+  const handleJoinResponse = async (request, accepted) => {
+    setJoinResponseError("");
+    try {
+      await respondToJoin(request, accepted);
+    } catch (error) {
+      setJoinResponseError(error.message || "Couldn't respond to the request.");
+    }
+  };
+
   // ===== End stream flow =====
   const openEndModal = () => {
     setPhase("confirm");
@@ -253,12 +269,63 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
           ))}
         </div>
 
+        <div className="broadcast-gifts-layer" aria-live="polite">
+          {gifts.map((gift) => (
+            <div className="broadcast-gift-burst" key={gift.id}>
+              <span className="broadcast-gift-emoji">{gift.emoji}</span>
+              <span><strong>{gift.username}</strong> sent {gift.name}</span>
+            </div>
+          ))}
+        </div>
+
         <div className="broadcast-top-bar">
           <span className="live-badge-broadcast"><BsFillCircleFill /> LIVE</span>
           <span className="viewer-badge-broadcast"><HiUsers /> {formatViewers(viewers)}</span>
           <span className="duration-badge">{formatTime(elapsedSeconds)}</span>
+          {joinRequests.length > 0 && (
+            <span className="broadcast-request-count">{joinRequests.length} join request{joinRequests.length === 1 ? "" : "s"}</span>
+          )}
           <button className="end-stream-x" onClick={openEndModal}><FiX /></button>
         </div>
+
+        {joinRequests.length > 0 && (
+          <section className="broadcast-join-requests" aria-label="Viewer join requests" aria-live="polite">
+            <div className="broadcast-requests-heading">
+              <span className="broadcast-requests-live-dot" />
+              <div>
+                <strong>Wants to join</strong>
+                <span>{joinRequests.length} viewer{joinRequests.length === 1 ? "" : "s"} waiting</span>
+              </div>
+            </div>
+            {joinRequests.map((request) => (
+              <div className="broadcast-join-request" key={request.id}>
+                <div className="broadcast-request-avatar">
+                  {(request.username || "V").charAt(0).toUpperCase()}
+                </div>
+                <span className="broadcast-request-name">{request.username}</span>
+                <button
+                  type="button"
+                  className="broadcast-request-accept"
+                  onClick={() => handleJoinResponse(request, true)}
+                  aria-label={`Accept ${request.username}'s request`}
+                  title="Accept request"
+                >
+                  <FiCheck />
+                </button>
+                <button
+                  type="button"
+                  className="broadcast-request-decline"
+                  onClick={() => handleJoinResponse(request, false)}
+                  aria-label={`Decline ${request.username}'s request`}
+                  title="Decline request"
+                >
+                  <FiX />
+                </button>
+              </div>
+            ))}
+            {joinResponseError && <p className="broadcast-request-error" role="alert">{joinResponseError}</p>}
+          </section>
+        )}
 
         <div className="broadcast-info-bar">
           <h3>{streamTitle}</h3>

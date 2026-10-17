@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BsFillCircleFill } from "react-icons/bs";
 import { HiUsers } from "react-icons/hi2";
-import { FiX, FiSend } from "react-icons/fi";
+import { FiX, FiSend, FiGift, FiUserPlus } from "react-icons/fi";
 import { supabase } from "../../supabase";
 import { useLiveChat, useLiveRoom } from "../../hooks/useLive";
 import { usePeerViewer } from "../../hooks/useP2PVideo";
 import "./LiveWatch.css";
 
 const COLORS = ["#ff5d73", "#4f8cff", "#2ecc71", "#b073ff", "#ffb020", "#22c7e8"];
+const GIFTS = [
+  { name: "Rose", emoji: "🌹" },
+  { name: "Heart", emoji: "💖" },
+  { name: "Star", emoji: "🌟" },
+  { name: "Crown", emoji: "👑" },
+  { name: "Rocket", emoji: "🚀" },
+];
 const colorFor = (id = "") =>
   COLORS[[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
 const formatViewers = (n = 0) => (n >= 1000 ? `${(n / 1000).toFixed(1)}K` : `${n}`);
@@ -15,10 +22,20 @@ const REACTIONS = ["❤️", "🔥", "👏", "😂", "💯"];
 
 const LiveWatch = ({ stream, onClose }) => {
   const { messages, send } = useLiveChat(stream.id);
-  const { viewers, reactions, sendReaction } = useLiveRoom(stream.id, { isHost: false });
+  const {
+    viewers,
+    reactions,
+    sendReaction,
+    gifts,
+    sendGift,
+    joinStatus,
+    requestToJoin,
+  } = useLiveRoom(stream.id, { isHost: false, hostId: stream.host_id });
   const { remoteStream, status, slow, detail } = usePeerViewer(stream.id);
 
   const [chatInput, setChatInput] = useState("");
+  const [giftError, setGiftError] = useState("");
+  const [joinError, setJoinError] = useState("");
   const [myId, setMyId] = useState(null);
   const [following, setFollowing] = useState(false);
   const [ended, setEnded] = useState(false);
@@ -94,6 +111,24 @@ const LiveWatch = ({ stream, onClose }) => {
     await send(text);
   };
 
+  const handleGift = async (gift) => {
+    setGiftError("");
+    try {
+      await sendGift(gift);
+    } catch (error) {
+      setGiftError(error.message || "Couldn't send that gift.");
+    }
+  };
+
+  const handleJoinRequest = async () => {
+    setJoinError("");
+    try {
+      await requestToJoin();
+    } catch (error) {
+      setJoinError(error.message || "Couldn't send your request.");
+    }
+  };
+
   return (
     <div className="lw-page" role="dialog" aria-label={`Watching ${stream.title}`}>
       <div className="lw-main">
@@ -143,6 +178,15 @@ const LiveWatch = ({ stream, onClose }) => {
             ))}
           </div>
 
+          <div className="lw-gifts-overlay" aria-live="polite">
+            {gifts.map((gift) => (
+              <div className="lw-gift-burst" key={gift.id}>
+                <span className="lw-gift-emoji">{gift.emoji}</span>
+                <span><strong>{gift.username}</strong> sent {gift.name}</span>
+              </div>
+            ))}
+          </div>
+
           <div className="lw-topbar">
             <span className="lw-live"><BsFillCircleFill /> LIVE</span>
             <span className="lw-pill"><HiUsers /> {formatViewers(viewers)}</span>
@@ -176,17 +220,56 @@ const LiveWatch = ({ stream, onClose }) => {
         </div>
 
         <div className="lw-reactbar">
-          {REACTIONS.map((emoji) => (
-            <button
-              key={emoji}
-              className="lw-react-btn"
-              disabled={ended}
-              onClick={() => sendReaction(emoji)}
-              aria-label={`Send ${emoji}`}
-            >
-              {emoji}
-            </button>
-          ))}
+          <div className="lw-reaction-actions">
+            {REACTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                className="lw-react-btn"
+                disabled={ended}
+                onClick={() => sendReaction(emoji)}
+                aria-label={`Send ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <div className="lw-gift-actions" aria-label="Send a free gift">
+            <span className="lw-gift-label"><FiGift /> Send a gift</span>
+            <div className="lw-gift-options">
+              {GIFTS.map((gift) => (
+                <button
+                  type="button"
+                  key={gift.name}
+                  className="lw-gift-btn"
+                  disabled={ended}
+                  onClick={() => handleGift(gift)}
+                  aria-label={`Send ${gift.name} gift`}
+                  title={`Send ${gift.name} (free)`}
+                >
+                  {gift.emoji}
+                </button>
+              ))}
+            </div>
+            {giftError && <span className="lw-action-error" role="alert">{giftError}</span>}
+          </div>
+          {myId && myId !== stream.host_id && (
+            <div className="lw-join-action">
+              <button
+                type="button"
+                className={`lw-join-btn ${joinStatus}`}
+                onClick={handleJoinRequest}
+                disabled={ended || ["pending", "accepted"].includes(joinStatus)}
+              >
+                <FiUserPlus />
+                {joinStatus === "pending" ? "Request sent" :
+                  joinStatus === "accepted" ? "Host accepted" :
+                    joinStatus === "declined" ? "Request again" : "Request to join"}
+              </button>
+              {joinError && <span className="lw-action-error" role="alert">{joinError}</span>}
+              {joinStatus === "declined" && <span className="lw-join-feedback">The host declined this request.</span>}
+              {joinStatus === "accepted" && <span className="lw-join-feedback">The host accepted your request.</span>}
+            </div>
+          )}
         </div>
       </div>
 

@@ -12,12 +12,14 @@ import {
   FaUser,
   FaPalette,
 } from "react-icons/fa";
+import AvatarCreator from "./AvatarCreator";
 import "./Profile.css";
 
 const Profile = () => {
   const { session, profile, setProfile, refreshProfile } = UserAuth();
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [showAvatarCreator, setShowAvatarCreator] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -96,6 +98,30 @@ const Profile = () => {
   }
 };
 
+  const handleSaveAvatar = async (avatar) => {
+    if (!session?.user?.id) {
+      toast.error("Please sign in again to save your avatar");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ photo: avatar })
+        .eq("id", session.user.id);
+
+      if (error) throw error;
+
+      setProfile((current) => ({ ...current, photo: avatar }));
+      await refreshProfile(session.user.id);
+      setShowAvatarCreator(false);
+      toast.success("Your avatar is ready!");
+    } catch (err) {
+      console.error("Failed to save avatar:", err);
+      toast.error("Couldn't save your avatar. Please try again.");
+    }
+  };
+
   // ⛔ Prevent early render
   if (!profile) return null;
 
@@ -135,6 +161,14 @@ const Profile = () => {
   </div>
 )}
           </div>
+
+          <button
+            type="button"
+            className="create-avatar-button"
+            onClick={() => setShowAvatarCreator(true)}
+          >
+            {profile.photo ? "Create an avatar instead" : "Create your own avatar"}
+          </button>
 
           <h2 className="profile-name">
             {profile.name || t("profileName")}
@@ -224,6 +258,12 @@ const Profile = () => {
     </motion.div>
   </motion.div>
 )}
+        {showAvatarCreator && (
+          <AvatarCreator
+            onClose={() => setShowAvatarCreator(false)}
+            onSave={handleSaveAvatar}
+          />
+        )}
       </motion.div>
     </div>
     

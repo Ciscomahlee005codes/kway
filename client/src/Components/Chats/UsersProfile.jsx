@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoArrowBack, IoEllipsisVertical } from "react-icons/io5";
-import { FiPhone, FiVideo, FiMail } from "react-icons/fi";
+import { FiPhone, FiVideo } from "react-icons/fi";
 import CallModal from "./CallModal";
 import EditProfileModal from "./EditProfileModal";
 import "./UsersProfile.css";
@@ -81,20 +81,35 @@ const UsersProfile = () => {
 
         {/* HEADER */}
         <div className="profile-header">
-          <IoArrowBack className="back-icon" onClick={() => navigate(-1)} />
-          <h3>Profile</h3>
+          <button
+            type="button"
+            className="profile-icon-button"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+          >
+            <IoArrowBack className="back-icon" />
+          </button>
+          <div className="profile-header-title">
+            <h3>Profile</h3>
+            <span>Contact details</span>
+          </div>
 
           <div className="menu-wrapper" ref={dropdownRef}>
-            <IoEllipsisVertical
-              className="menu-icon"
+            <button
+              type="button"
+              className="profile-icon-button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-            />
+              aria-label="Profile options"
+              aria-expanded={dropdownOpen}
+            >
+              <IoEllipsisVertical className="menu-icon" />
+            </button>
 
             {dropdownOpen && (
               <div className="dropdown-menu">
-                <div onClick={handleShare}>Share Contact</div>
+                <button type="button" onClick={handleShare}>Share Contact</button>
                 {session?.user?.id === user.id && (
-                  <div onClick={() => setEditOpen(true)}>Edit Profile</div>
+                  <button type="button" onClick={() => setEditOpen(true)}>Edit Profile</button>
                 )}
               </div>
             )}
@@ -102,55 +117,76 @@ const UsersProfile = () => {
         </div>
 
         {/* AVATAR */}
-        <div className="profile-avatar-section">
-          <img
-  src={
-    user.photo ||
-    `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`
-  }
-  alt={user.name}
-  className="profile-avatar2"
-  onClick={() => setShowPreview(true)}
-  style={{ cursor: "pointer" }}
-/>
-
-          <h2>{user.name}</h2>
-          <p className="username">@{user.username}</p>
+        <div className="profile-hero">
+          <div className="profile-cover" aria-hidden="true" />
+          <div className="profile-avatar-section">
+            <button
+              type="button"
+              className="profile-avatar-button"
+              onClick={() => setShowPreview(true)}
+              aria-label={`View ${user.name || "user"}'s profile photo`}
+            >
+              {user.photo ? (
+                <img
+                  src={user.photo}
+                  alt={user.name || "User"}
+                  className="profile-avatar2"
+                />
+              ) : (
+                <span className="profile-avatar-fallback">
+                  {(user.name || user.username || "?").charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="avatar-view-hint">View photo</span>
+            </button>
+            <h2>{user.name || "Kway user"}</h2>
+            <p className="username">@{user.username || "member"}</p>
+            <span className="profile-member-badge">Kway profile</span>
+          </div>
         </div>
 
         {/* ACTIONS */}
-        <div className="profile-actions">
-          <div
+        <section className="profile-actions-section" aria-label="Contact actions">
+          <h4 className="profile-section-title">Get in touch</h4>
+          <div className="profile-actions">
+          <button
+            type="button"
             className="action-card"
             onClick={() => setCallModal({ open: true, type: "voice" })}
           >
-            <FiPhone />
-            <span>Voice</span>
-          </div>
+            <span className="action-icon"><FiPhone /></span>
+            <span className="action-label">Voice call</span>
+          </button>
 
-          <div
+          <button
+            type="button"
             className="action-card"
             onClick={() => setCallModal({ open: true, type: "video" })}
           >
-            <FiVideo />
-            <span>Video</span>
+            <span className="action-icon"><FiVideo /></span>
+            <span className="action-label">Video call</span>
+          </button>
           </div>
-        </div>
+        </section>
 
         {/* INFO */}
         <div className="profile-info">
-          <div className="info-row">
-            <p className="label">Username</p>
-            <p className="value">@{user.username}</p>
+          <div className="info-row username-info">
+            <span className="info-icon">@</span>
+            <div className="info-copy">
+              <p className="label">Username</p>
+              <p className="value">@{user.username || "member"}</p>
+            </div>
           </div>
 
-          
-
           <div className="info-row">
-            <p className="label">About</p>
-            <p className="value">
-              {user.about || "This user hasn't added an about section yet."}
-            </p>
+            <span className="info-icon about-icon">“</span>
+            <div className="info-copy">
+              <p className="label">About</p>
+              <p className="value">
+                {user.about || "This user hasn't added an about section yet."}
+              </p>
+            </div>
           </div>
         </div>
       </div>

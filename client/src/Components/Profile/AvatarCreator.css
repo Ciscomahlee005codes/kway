@@ -1,0 +1,292 @@
+.avatar-creator-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(12, 20, 16, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+.avatar-creator {
+  width: min(100%, 660px);
+  max-height: min(820px, calc(100dvh - 40px));
+  overflow-y: auto;
+  color: var(--text-color, #17211b);
+  background: var(--bg-color, #fff);
+  border: 1px solid var(--border-color, #e4ebe6);
+  border-radius: 26px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.32);
+  animation: avatar-creator-enter 180ms ease-out;
+}
+
+.avatar-creator-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 25px 28px 19px;
+}
+
+.avatar-creator-eyebrow {
+  color: var(--theme-color, #22c55e);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.avatar-creator-header h2 {
+  margin: 7px 0 5px;
+  color: var(--text-color, #17211b);
+  font-size: 23px;
+  letter-spacing: -0.035em;
+}
+
+.avatar-creator-header p {
+  margin: 0;
+  color: #75827a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.avatar-creator-close {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--text-color, #17211b);
+  background: var(--secondary-bg, #f3f6f4);
+  border: 0;
+  border-radius: 13px;
+  cursor: pointer;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.avatar-creator-body {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 28px;
+  padding: 8px 28px 24px;
+}
+
+.avatar-creator-preview {
+  position: sticky;
+  top: 18px;
+  align-self: start;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 12px;
+  background: var(--secondary-bg, #f3f6f4);
+  border: 1px solid var(--border-color, #e4ebe6);
+  border-radius: 21px;
+}
+
+.avatar-creator-preview img {
+  display: block;
+  width: min(100%, 168px);
+  aspect-ratio: 1;
+  border: 5px solid var(--bg-color, #fff);
+  border-radius: 50%;
+  box-shadow: 0 12px 32px rgba(14, 38, 23, 0.16);
+}
+
+.avatar-creator-preview span {
+  color: #849089;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.avatar-creator-options {
+  display: grid;
+  align-content: start;
+  gap: 17px;
+}
+
+.avatar-option-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.avatar-option-group legend {
+  margin-bottom: 9px;
+  color: var(--text-color, #17211b);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.avatar-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.avatar-swatch {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: white;
+  background: var(--swatch-color);
+  border: 2px solid var(--bg-color, #fff);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border-color, #dfe6e1);
+  cursor: pointer;
+  font-size: 12px;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.avatar-swatch:hover {
+  transform: scale(1.08);
+}
+
+.avatar-swatch.selected {
+  box-shadow: 0 0 0 2px var(--theme-color, #22c55e);
+}
+
+.avatar-style-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.avatar-style-options button {
+  padding: 8px 12px;
+  color: var(--text-color, #17211b);
+  background: var(--secondary-bg, #f3f6f4);
+  border: 1px solid var(--border-color, #e4ebe6);
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.avatar-style-options button.selected {
+  color: color-mix(in srgb, var(--theme-color, #22c55e) 80%, #133b27);
+  background: color-mix(in srgb, var(--theme-color, #22c55e) 12%, var(--bg-color, #fff));
+  border-color: color-mix(in srgb, var(--theme-color, #22c55e) 45%, var(--border-color, #e4ebe6));
+}
+
+.avatar-creator-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 28px 22px;
+  border-top: 1px solid var(--border-color, #e4ebe6);
+}
+
+.avatar-creator-footer button {
+  min-height: 42px;
+  padding: 0 17px;
+  border-radius: 13px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  transition: transform 140ms ease, opacity 140ms ease;
+}
+
+.avatar-creator-footer button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.avatar-creator-footer button:focus-visible,
+.avatar-creator-close:focus-visible,
+.avatar-swatch:focus-visible,
+.avatar-style-options button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--theme-color, #22c55e) 60%, white);
+  outline-offset: 3px;
+}
+
+.avatar-cancel-button {
+  color: var(--text-color, #17211b);
+  background: var(--secondary-bg, #f3f6f4);
+  border: 1px solid var(--border-color, #e4ebe6);
+}
+
+.avatar-save-button {
+  color: white;
+  background: var(--theme-color, #18864c);
+  border: 1px solid var(--theme-color, #18864c);
+}
+
+.avatar-creator-footer button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@keyframes avatar-creator-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 560px) {
+  .avatar-creator-overlay {
+    align-items: end;
+    padding: 0;
+  }
+
+  .avatar-creator {
+    max-height: 94dvh;
+    border-radius: 24px 24px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .avatar-creator-header {
+    padding: 21px 20px 16px;
+  }
+
+  .avatar-creator-body {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 6px 20px 20px;
+  }
+
+  .avatar-creator-preview {
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+
+  .avatar-creator-preview img {
+    width: 86px;
+  }
+
+  .avatar-creator-footer {
+    padding: 14px 20px 18px;
+  }
+
+  .avatar-creator-footer button {
+    flex: 1;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-creator {
+    animation: none;
+  }
+
+  .avatar-swatch,
+  .avatar-style-options button,
+  .avatar-creator-footer button {
+    transition: none;
+  }
+}

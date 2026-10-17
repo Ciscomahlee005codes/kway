@@ -164,10 +164,26 @@ export function useLiveChat(streamId) {
 
 /* ---------- Viewer count + reactions (ephemeral: Presence + Broadcast) ---------- */
 // Not stored in the database on purpose: it's high-frequency and disposable.
-export function useLiveRoom(streamId, { isHost = false } = {}) {
+export function useLiveRoom(streamId, { isHost = false, hostId = null } = {}) {
   const [viewers, setViewers] = useState(0);
   const [reactions, setReactions] = useState([]);
+  const [gifts, setGifts] = useState([]);
+  const [joinRequests, setJoinRequests] = useState([]);
+  const [joinStatus, setJoinStatus] = useState("idle");
   const channelRef = useRef(null);
+  const userRef = useRef(null);
+  const usernameRef = useRef("");
+  const requestIdRef = useRef(null);
+
+  const showGift = useCallback((gift) => {
+    setGifts((previous) => {
+      if (previous.some((item) => item.id === gift.id)) return previous;
+      return [...previous.slice(-3), gift];
+    });
+    setTimeout(() => {
+      setGifts((previous) => previous.filter((item) => item.id !== gift.id));
+    }, 6500);
+  }, []);
 
   useEffect(() => {
     if (!streamId) return;
@@ -178,6 +194,14 @@ export function useLiveRoom(streamId, { isHost = false } = {}) {
       const { data: { user } } = await supabase.auth.getUser();
       if (cancelled) return;
       if (!user) return;
+      userRef.current = user;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .maybeSingle();
+      usernameRef.current =
+        profile?.username || user.user_metadata?.username || user.user_metadata?.name || "Viewer";
       channel = supabase.channel(`room:${streamId}`, {
         config: { presence: { key: user.id }, broadcast: { self: false } },
       });
@@ -194,6 +218,26 @@ export function useLiveRoom(streamId, { isHost = false } = {}) {
           setReactions((prev) => [...prev, { id, emoji: payload.emoji, left: Math.random() * 80 + 5 }]);
           setTimeout(() => setReactions((prev) => prev.filter((r) => r.id !== id)), 3000);
         })
+        .on("broadcast", { event: "gift" }, ({ payload }) => {
+          if (payload?.id && payload?.emoji && payload?.name) showGift(payload);
+        })
+        .on("broadcast", { event: "join_request" }, ({ payload }) => {
+          if (!isHost || !payload?.id || !payload?.userId || payload.userId === user.id) return;
+          setJoinRequests((previous) => {
+            if (previous.some((request) => request.id === payload.id)) return previous;
+            return [...previous, payload];
+          });
+        })
+        .on("broadcast", { event: "join_response" }, ({ payload }) => {
+          if (
+            !isHost &&
+            payload?.to === user.id &&
+            payload?.id === requestIdRef.current &&
+            payload.from === hostId
+          ) {
+            setJoinStatus(payload.accepted ? "accepted" : "declined");
+          }
+        })
         .subscribe(async (status) => {
           if (status === "SUBSCRIBED") await channel.track({ isHost, at: Date.now() });
         });
@@ -205,13 +249,81 @@ export function useLiveRoom(streamId, { isHost = false } = {}) {
       cancelled = true;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [streamId, isHost]);
+  }, [streamId, isHost, hostId, showGift]);
 
   const sendReaction = useCallback((emoji) => {
     channelRef.current?.send({ type: "broadcast", event: "reaction", payload: { emoji } });
   }, []);
 
-  return { viewers, reactions, sendReaction };
+  const sendGift = useCallback(async (gift) => {
+    const user = userRef.current;
+    const channel = channelRef.current;
+    if (!user || !channel) throw new Error("Still connecting to the live room. Try again.");
+    const payload = {
+      id: makeLiveId(),
+      emoji: gift.emoji,
+      name: gift.name,
+      from: user.id,
+      username: usernameRef.current || "A viewer",
+    };
+    const result = await channel.send({ type: "broadcast", event: "gift", payload });
+    if (result !== "ok") throw new Error("Couldn't send your gift. Please try again.");
+    showGift(payload);
+  }, [showGift]);
+
+  const requestToJoin = useCallback(async () => {
+    const user = userRef.current;
+    const channel = channelRef.current;
+    if (!user || !channel) throw new Error("Still connecting to the live room. Try again.");
+    if (joinStatus === "pending") return;
+    const requestId = makeLiveId();
+    requestIdRef.current = requestId;
+    setJoinStatus("pending");
+    const result = await channel.send({
+      type: "broadcast",
+      event: "join_request",
+      payload: {
+        id: requestId,
+        userId: user.id,
+        username: usernameRef.current || "Viewer",
+      },
+    });
+    if (result !== "ok") {
+      requestIdRef.current = null;
+      setJoinStatus("idle");
+      throw new Error("Couldn't send your request. Please try again.");
+    }
+  }, [joinStatus]);
+
+  const respondToJoin = useCallback(async (request, accepted) => {
+    const user = userRef.current;
+    const channel = channelRef.current;
+    if (!isHost || !user || !channel) throw new Error("Unable to respond to this request.");
+    const result = await channel.send({
+      type: "broadcast",
+      event: "join_response",
+      payload: {
+        id: request.id,
+        to: request.userId,
+        from: user.id,
+        accepted,
+      },
+    });
+    if (result !== "ok") throw new Error("Couldn't send the response. Please try again.");
+    setJoinRequests((previous) => previous.filter((item) => item.id !== request.id));
+  }, [isHost]);
+
+  return {
+    viewers,
+    reactions,
+    sendReaction,
+    gifts,
+    sendGift,
+    joinRequests,
+    joinStatus,
+    requestToJoin,
+    respondToJoin,
+  };
 }
 
 /* ---------- Live camera/audio transport (WebRTC + Supabase signaling) ---------- */
@@ -231,6 +343,10 @@ const getLiveIceServers = () => {
 };
 
 const makePeerId = () =>
+  globalThis.crypto?.randomUUID?.() ||
+  `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const makeLiveId = () =>
   globalThis.crypto?.randomUUID?.() ||
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
