@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BsFillCircleFill } from "react-icons/bs";
 import { HiUsers } from "react-icons/hi2";
-import { FiX, FiSend, FiGift, FiUserPlus } from "react-icons/fi";
+import { FiX, FiSend, FiGift, FiUserPlus, FiMic, FiMicOff, FiVideoOff } from "react-icons/fi";
 import { supabase } from "../../supabase";
-import { useLiveChat, useLiveRoom } from "../../hooks/useLive";
+import { useLiveChat, useLiveRoom, useLiveGuests } from "../../hooks/useLive";
 import { usePeerViewer } from "../../hooks/useP2PVideo";
 import "./LiveWatch.css";
 
@@ -32,6 +32,15 @@ const LiveWatch = ({ stream, onClose }) => {
     requestToJoin,
   } = useLiveRoom(stream.id, { isHost: false, hostId: stream.host_id });
   const { remoteStream, status, slow, detail } = usePeerViewer(stream.id);
+  const {
+    guestStatus,
+    guestError,
+    localGuestStream,
+    startGuest,
+    stopGuest,
+    setGuestTrackEnabled,
+    resetGuest,
+  } = useLiveGuests(stream.id, { hostId: stream.host_id });
 
   const [chatInput, setChatInput] = useState("");
   const [giftError, setGiftError] = useState("");
@@ -40,9 +49,24 @@ const LiveWatch = ({ stream, onClose }) => {
   const [following, setFollowing] = useState(false);
   const [ended, setEnded] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
+  const [guestMicOn, setGuestMicOn] = useState(true);
+  const [guestCameraOn, setGuestCameraOn] = useState(true);
 
   const videoRef = useRef(null);
+  const guestVideoRef = useRef(null);
   const chatEndRef = useRef(null);
+  const previousJoinStatus = useRef(joinStatus);
+
+  const handleClose = useCallback(async () => {
+    if (["requesting-media", "connecting", "connected"].includes(guestStatus)) await stopGuest();
+    onClose();
+  }, [guestStatus, stopGuest, onClose]);
+
+  const handleStartGuest = () => {
+    setGuestMicOn(true);
+    setGuestCameraOn(true);
+    startGuest().catch(() => {});
+  };
 
   // Who am I + do I follow this streamer?
   useEffect(() => {
@@ -94,15 +118,38 @@ const LiveWatch = ({ stream, onClose }) => {
   }, [remoteStream]);
 
   useEffect(() => {
+    const video = guestVideoRef.current;
+    if (!video || !localGuestStream) return;
+    video.srcObject = localGuestStream;
+    video.play().catch(() => {});
+    return () => {
+      video.srcObject = null;
+    };
+  }, [localGuestStream, guestStatus]);
+
+  useEffect(() => {
+    if (ended && ["requesting-media", "connecting", "connected"].includes(guestStatus)) {
+      stopGuest();
+    }
+  }, [ended, guestStatus, stopGuest]);
+
+  useEffect(() => {
+    if (joinStatus === "accepted" && previousJoinStatus.current === "pending") {
+      resetGuest();
+    }
+    previousJoinStatus.current = joinStatus;
+  }, [joinStatus, resetGuest]);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Esc closes the viewer
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
+    const onKey = (e) => e.key === "Escape" && void handleClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [handleClose]);
 
   const handleSend = async () => {
     const text = chatInput;
@@ -166,7 +213,62 @@ const LiveWatch = ({ stream, onClose }) => {
             <div className="lw-ended">
               <h3>This stream has ended</h3>
               <p>Thanks for watching {stream.host?.username || "the stream"}.</p>
-              <button className="lw-btn" onClick={onClose}>Back to Live</button>
+              <button className="lw-btn" onClick={handleClose}>Back to Live</button>
+            </div>
+          )}
+
+          {joinStatus === "accepted" && !["connected", "ended"].includes(guestStatus) && (
+            <div className="lw-guest-invite" role="status">
+              <strong>The host invited you on stage</strong>
+              <span>Allow camera and microphone to join the conversation.</span>
+              <button
+                type="button"
+                onClick={handleStartGuest}
+                disabled={guestStatus === "requesting-media" || guestStatus === "connecting"}
+              >
+                {guestStatus === "requesting-media" ? "Waiting for permission..." :
+                  guestStatus === "connecting" ? "Connecting..." : "Join with camera"}
+              </button>
+              {guestError && <small role="alert">{guestError}</small>}
+            </div>
+          )}
+          {guestStatus === "connected" && (
+            <div className="lw-guest-self-preview">
+              <video
+                ref={guestVideoRef}
+                autoPlay
+                playsInline
+                muted
+                aria-label="Your camera preview"
+                style={{ opacity: guestCameraOn ? 1 : 0 }}
+              />
+              {!guestCameraOn && <div className="lw-guest-camera-off">Camera off</div>}
+              <span><i /> You're on stage</span>
+              <div className="lw-guest-controls">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !guestMicOn;
+                    setGuestTrackEnabled("audio", next);
+                    setGuestMicOn(next);
+                  }}
+                  aria-label={guestMicOn ? "Mute your microphone" : "Unmute your microphone"}
+                >
+                  {guestMicOn ? <FiMic /> : <FiMicOff />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !guestCameraOn;
+                    setGuestTrackEnabled("video", next);
+                    setGuestCameraOn(next);
+                  }}
+                  aria-label={guestCameraOn ? "Turn off your camera" : "Turn on your camera"}
+                >
+                  <FiVideoOff />
+                </button>
+                <button type="button" onClick={stopGuest}>Leave</button>
+              </div>
             </div>
           )}
 
@@ -191,7 +293,7 @@ const LiveWatch = ({ stream, onClose }) => {
             <span className="lw-live"><BsFillCircleFill /> LIVE</span>
             <span className="lw-pill"><HiUsers /> {formatViewers(viewers)}</span>
             {status === "connecting" && !ended && <span className="lw-pill">connecting</span>}
-            <button className="lw-close" onClick={onClose} aria-label="Close">
+            <button className="lw-close" onClick={handleClose} aria-label="Close">
               <FiX />
             </button>
           </div>
@@ -257,17 +359,22 @@ const LiveWatch = ({ stream, onClose }) => {
               <button
                 type="button"
                 className={`lw-join-btn ${joinStatus}`}
-                onClick={handleJoinRequest}
-                disabled={ended || ["pending", "accepted"].includes(joinStatus)}
+                onClick={joinStatus === "accepted" && guestStatus !== "ended" ? handleStartGuest : handleJoinRequest}
+                disabled={ended || ["pending", "connected", "connecting", "requesting-media"].includes(joinStatus) ||
+                  ["connected", "connecting", "requesting-media"].includes(guestStatus)}
               >
                 <FiUserPlus />
                 {joinStatus === "pending" ? "Request sent" :
-                  joinStatus === "accepted" ? "Host accepted" :
+                  joinStatus === "accepted" ? guestStatus === "ended" ? "Request to join again" :
+                    guestStatus === "connected" ? "You're on stage" : "Join with camera" :
                     joinStatus === "declined" ? "Request again" : "Request to join"}
               </button>
               {joinError && <span className="lw-action-error" role="alert">{joinError}</span>}
+              {guestError && <span className="lw-action-error" role="alert">{guestError}</span>}
               {joinStatus === "declined" && <span className="lw-join-feedback">The host declined this request.</span>}
-              {joinStatus === "accepted" && <span className="lw-join-feedback">The host accepted your request.</span>}
+              {joinStatus === "accepted" && guestStatus === "ended" && (
+                <span className="lw-join-feedback">Your guest session ended. You can request to join again.</span>
+              )}
             </div>
           )}
         </div>

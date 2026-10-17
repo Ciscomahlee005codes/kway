@@ -4,9 +4,10 @@ import { HiUsers } from "react-icons/hi2";
 import { FiX, FiSend, FiCameraOff, FiCamera, FiCheck } from "react-icons/fi";
 import { MdCallEnd } from "react-icons/md";
 import { supabase } from "../../supabase";
-import { useLiveChat, useLiveRoom, endStream } from "../../hooks/useLive";
+import { useLiveChat, useLiveRoom, useLiveGuests, endStream } from "../../hooks/useLive";
 import { saveRecording } from "../../hooks/useRecordings";
 import { usePeerHost } from "../../hooks/useP2PVideo";
+import LiveGuestTile from "./LiveGuestTile";
 import "./LiveBroadcast.css";
 import "./EndModal.css";
 
@@ -60,6 +61,12 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
   const chatEndRef = useRef(null);
   const peakRef = useRef(0);
   const streamEndedRef = useRef(false);
+
+  const {
+    guests,
+    approveGuest,
+    removeGuest,
+  } = useLiveGuests(streamId, { isHost: true });
 
   // Send the host's camera to every viewer who joins (WebRTC)
   const getStream = useCallback(() => mediaStreamRef.current, []);
@@ -173,8 +180,10 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
   const handleJoinResponse = async (request, accepted) => {
     setJoinResponseError("");
     try {
+      if (accepted) approveGuest(request.userId, request.username);
       await respondToJoin(request, accepted);
     } catch (error) {
+      if (accepted) removeGuest(request.userId);
       setJoinResponseError(error.message || "Couldn't respond to the request.");
     }
   };
@@ -207,6 +216,7 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
     try {
       if (!streamEndedRef.current) {
         streamEndedRef.current = true;
+        await Promise.all(guests.map((guest) => removeGuest(guest.userId)));
         await endStream(streamId); // viewers see it end right away
       }
       if (blobRef.current === null) blobRef.current = await stopRecording();
@@ -259,6 +269,18 @@ const LiveBroadcast = ({ streamId, streamTitle, streamCategory, onEndStream }) =
               <span>Camera is off</span>
             </div>
           )
+        )}
+
+        {guests.length > 0 && (
+          <div className="broadcast-guests" aria-label="Guests on stage">
+            {guests.map((guest) => (
+              <LiveGuestTile
+                key={guest.userId}
+                guest={guest}
+                onRemove={removeGuest}
+              />
+            ))}
+          </div>
         )}
 
         <div className="floating-reactions-layer">

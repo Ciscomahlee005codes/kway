@@ -326,6 +326,467 @@ export function useLiveRoom(streamId, { isHost = false, hostId = null } = {}) {
   };
 }
 
+/* ---------- Accepted live guests (two-way peer connection) ---------- */
+export function useLiveGuests(streamId, { isHost = false, hostId = null } = {}) {
+  const [guests, setGuests] = useState([]);
+  const [guestStatus, setGuestStatus] = useState("idle");
+  const [guestError, setGuestError] = useState("");
+  const channelRef = useRef(null);
+  const userRef = useRef(null);
+  const usernameRef = useRef("Guest");
+  const remoteHostRef = useRef(hostId);
+  const localStreamRef = useRef(null);
+  const peerRef = useRef(null);
+  const approvedRef = useRef(new Map());
+  const retryIntervalRef = useRef(null);
+  const joinTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (!streamId || typeof RTCPeerConnection === "undefined") return undefined;
+    let active = true;
+    let channel;
+    let localPeer;
+    let localUser;
+    let remoteUserId = "";
+    let remoteUsername = "Guest";
+    let pendingCandidates = [];
+
+    const send = async (payload) => {
+      if (!channel) throw new Error("The live guest connection isn't ready.");
+      const result = await channel.send({
+        type: "broadcast",
+        event: "guest_signal",
+        payload: { streamId, ...payload },
+      });
+      if (result !== "ok") throw new Error("Couldn't signal the live guest connection.");
+    };
+
+    const stopLocalMedia = () => {
+      localStreamRef.current?.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    };
+
+    const updateGuest = (userId, updates) => {
+      setGuests((previous) => {
+        const index = previous.findIndex((guest) => guest.userId === userId);
+        if (index < 0) return previous;
+        return previous.map((guest, itemIndex) =>
+          itemIndex === index ? { ...guest, ...updates } : guest
+        );
+      });
+    };
+
+    const closeGuest = (userId, notify = false) => {
+      const connection = isHost
+        ? approvedRef.current.get(userId)?.connection
+        : peerRef.current;
+      if (notify) send({ kind: "guest_end", from: localUser?.id, to: userId });
+      connection?.close();
+      if (isHost) approvedRef.current.delete(userId);
+      else {
+        peerRef.current = null;
+        stopLocalMedia();
+        clearInterval(retryIntervalRef.current);
+        clearTimeout(joinTimeoutRef.current);
+        retryIntervalRef.current = null;
+        joinTimeoutRef.current = null;
+        setGuestStatus("ended");
+      }
+      if (isHost) {
+        setGuests((previous) => previous.filter((guest) => guest.userId !== userId));
+      }
+    };
+
+    const createHostConnection = async (payload) => {
+      if (!isHost || !approvedRef.current.has(payload.from)) return;
+      const accepted = approvedRef.current.get(payload.from);
+      if (accepted.connection && accepted.connection.connectionState !== "closed") {
+        if (accepted.connection.localDescription?.type === "offer") {
+          await send({
+            kind: "guest_offer",
+            from: localUser.id,
+            to: payload.from,
+            description: accepted.connection.localDescription,
+          });
+        }
+        return;
+      }
+
+      remoteUserId = payload.from;
+      remoteUsername = payload.username || accepted.username || "Guest";
+      const connection = new RTCPeerConnection({ iceServers: getLiveIceServers() });
+      accepted.connection = connection;
+      peerRef.current = connection;
+      connection.ontrack = (event) => {
+        if (!active) return;
+        const stream = event.streams[0] || new MediaStream([event.track]);
+        setGuests((previous) => previous.map((guest) =>
+          guest.userId === payload.from ? { ...guest, stream, status: "connected" } : guest
+        ));
+      };
+      connection.onicecandidate = ({ candidate }) => {
+        if (candidate && active) {
+          send({
+            kind: "guest_candidate",
+            from: localUser.id,
+            to: payload.from,
+            candidate: candidate.toJSON(),
+          }).catch((error) => {
+            console.error("Live guest ICE signaling error:", error);
+            updateGuest(payload.from, { status: "error" });
+          });
+        }
+      };
+      connection.onconnectionstatechange = () => {
+        if (!active) return;
+        if (connection.connectionState === "failed") {
+          updateGuest(payload.from, { status: "error" });
+        } else if (connection.connectionState === "connected") {
+          updateGuest(payload.from, { status: "connected" });
+        } else if (connection.connectionState === "disconnected") {
+          updateGuest(payload.from, { status: "reconnecting" });
+        }
+      };
+
+      connection.addTransceiver("video", { direction: "recvonly" });
+      connection.addTransceiver("audio", { direction: "recvonly" });
+      const offer = await connection.createOffer();
+      await connection.setLocalDescription(offer);
+      await send({
+        kind: "guest_offer",
+        from: localUser.id,
+        to: payload.from,
+        description: connection.localDescription,
+      });
+      setGuests((previous) => {
+        const existing = previous.find((guest) => guest.userId === payload.from);
+        if (existing) return previous.map((guest) => guest.userId === payload.from
+          ? { ...guest, status: "connecting" }
+          : guest);
+        return [...previous, { userId: payload.from, username: remoteUsername, stream: null, status: "connecting" }];
+      });
+    };
+
+    const handleSignal = async (payload) => {
+      if (!active || payload.streamId !== streamId) return;
+
+      if (isHost) {
+        if (payload.kind === "guest_join" && approvedRef.current.has(payload.from)) {
+          await createHostConnection(payload);
+          return;
+        }
+        if (payload.to !== localUser?.id || !payload.from) return;
+        const accepted = approvedRef.current.get(payload.from);
+        const connection = accepted?.connection;
+        if (!connection) return;
+        if (payload.kind === "guest_answer") {
+          if (connection.signalingState !== "have-local-offer") return;
+          await connection.setRemoteDescription(payload.description);
+          const candidates = accepted.pendingCandidates || [];
+          accepted.pendingCandidates = [];
+          await Promise.all(candidates.map((candidate) => connection.addIceCandidate(candidate)));
+        } else if (payload.kind === "guest_candidate") {
+          if (connection.remoteDescription) await connection.addIceCandidate(payload.candidate);
+          else accepted.pendingCandidates.push(payload.candidate);
+        } else if (payload.kind === "guest_end") {
+          closeGuest(payload.from);
+        }
+        return;
+      }
+
+      if (payload.to !== localUser?.id || payload.from !== remoteUserId && payload.kind !== "guest_offer") return;
+      if (payload.kind === "guest_offer") {
+        if (peerRef.current?.remoteDescription?.sdp === payload.description.sdp) {
+          if (peerRef.current.localDescription) {
+            await send({
+              kind: "guest_answer",
+              from: localUser.id,
+              to: remoteUserId,
+              description: peerRef.current.localDescription,
+            });
+          }
+          return;
+        }
+        peerRef.current?.close();
+        remoteUserId = payload.from;
+        const connection = new RTCPeerConnection({ iceServers: getLiveIceServers() });
+        peerRef.current = connection;
+        connection.ontrack = (event) => {
+          if (!active) return;
+          setGuestStatus("connected");
+        };
+        connection.onicecandidate = ({ candidate }) => {
+          if (candidate && active) {
+            send({
+              kind: "guest_candidate",
+              from: localUser.id,
+              to: remoteUserId,
+              candidate: candidate.toJSON(),
+            }).catch((error) => {
+              console.error("Live guest ICE signaling error:", error);
+              setGuestStatus("error");
+              setGuestError(error.message || "Couldn't connect to the host.");
+            });
+          }
+        };
+        connection.onconnectionstatechange = () => {
+          if (!active) return;
+          if (connection.connectionState === "failed") {
+            clearInterval(retryIntervalRef.current);
+            clearTimeout(joinTimeoutRef.current);
+            retryIntervalRef.current = null;
+            joinTimeoutRef.current = null;
+            stopLocalMedia();
+            connection.close();
+            if (peerRef.current === connection) peerRef.current = null;
+            setGuestStatus("error");
+            setGuestError("Couldn't connect your camera and microphone to the live.");
+          } else if (connection.connectionState === "connected") {
+            clearInterval(retryIntervalRef.current);
+            clearTimeout(joinTimeoutRef.current);
+            retryIntervalRef.current = null;
+            joinTimeoutRef.current = null;
+            setGuestStatus("connected");
+            setGuestError("");
+          }
+        };
+        localStreamRef.current?.getTracks().forEach((track) =>
+          connection.addTrack(track, localStreamRef.current)
+        );
+        await connection.setRemoteDescription(payload.description);
+        const candidates = pendingCandidates;
+        pendingCandidates = [];
+        await Promise.all(candidates.map((candidate) => connection.addIceCandidate(candidate)));
+        const answer = await connection.createAnswer();
+        await connection.setLocalDescription(answer);
+        await send({
+          kind: "guest_answer",
+          from: localUser.id,
+          to: remoteUserId,
+          description: connection.localDescription,
+        });
+      } else if (payload.kind === "guest_candidate") {
+        if (peerRef.current?.remoteDescription) {
+          await peerRef.current.addIceCandidate(payload.candidate);
+        } else {
+          pendingCandidates.push(payload.candidate);
+        }
+      } else if (payload.kind === "guest_end") {
+        closeGuest(localUser.id);
+      }
+    };
+
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!active || !user) return;
+      localUser = user;
+      userRef.current = user;
+      remoteHostRef.current = hostId;
+      remoteUserId = hostId || "";
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .maybeSingle();
+      usernameRef.current =
+        profile?.username || user.user_metadata?.username || user.user_metadata?.name || "Guest";
+      localPeer = `guest-${user.id}-${makeLiveId()}`;
+      channel = supabase.channel(`live-guests:${streamId}`, {
+        config: { presence: { key: localPeer }, broadcast: { self: false } },
+      });
+      channel.on("broadcast", { event: "guest_signal" }, ({ payload }) => {
+        handleSignal(payload).catch((error) => {
+          console.error("Live guest signaling error:", error);
+          if (!isHost) {
+            setGuestStatus("error");
+            setGuestError(error.message || "Couldn't connect to the live.");
+          } else if (payload?.from) {
+            updateGuest(payload.from, { status: "error" });
+          }
+        });
+      });
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") channelRef.current = channel;
+      });
+    })().catch((error) => {
+      console.error("Live guest channel error:", error);
+      if (!isHost) {
+        setGuestStatus("error");
+        setGuestError(error.message || "Couldn't join the live room.");
+      }
+    });
+
+    return () => {
+      active = false;
+      if (isHost) approvedRef.current.forEach(({ connection }) => connection?.close());
+      else peerRef.current?.close();
+      clearInterval(retryIntervalRef.current);
+      clearTimeout(joinTimeoutRef.current);
+      stopLocalMedia();
+      if (channel) supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [streamId, isHost, hostId]);
+
+  const approveGuest = useCallback((userId, username) => {
+    approvedRef.current.set(userId, {
+      username: username || "Guest",
+      connection: null,
+      pendingCandidates: [],
+    });
+    setGuests((previous) => previous.some((guest) => guest.userId === userId)
+      ? previous
+      : [...previous, { userId, username: username || "Guest", stream: null, status: "waiting" }]);
+  }, []);
+
+  const removeGuest = useCallback(async (userId) => {
+    const connection = approvedRef.current.get(userId)?.connection;
+    const channel = channelRef.current;
+    if (channel) {
+      try {
+        const result = await channel.send({
+          type: "broadcast",
+          event: "guest_signal",
+          payload: { streamId, kind: "guest_end", from: userRef.current?.id, to: userId },
+        });
+        if (result !== "ok") throw new Error("Couldn't notify the guest that they were removed.");
+      } catch (error) {
+        console.error("Live guest removal signal failed:", error);
+      }
+    }
+    connection?.close();
+    approvedRef.current.delete(userId);
+    setGuests((previous) => previous.filter((guest) => guest.userId !== userId));
+  }, [streamId]);
+
+  const startGuest = useCallback(async () => {
+    if (guestStatus === "connecting" || guestStatus === "connected") return;
+    const channel = channelRef.current;
+    const user = userRef.current;
+    if (!channel || !user) throw new Error("Still connecting to the live room. Try again.");
+    setGuestError("");
+    setGuestStatus("requesting-media");
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("This browser doesn't support camera and microphone access.");
+      }
+      const media = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: true,
+      });
+      localStreamRef.current = media;
+      setGuestStatus("connecting");
+      const result = await channel.send({
+        type: "broadcast",
+        event: "guest_signal",
+        payload: {
+          streamId,
+          kind: "guest_join",
+          from: user.id,
+          username: usernameRef.current,
+        },
+      });
+      if (result !== "ok") throw new Error("Couldn't connect to the host. Please try again.");
+      retryIntervalRef.current = setInterval(() => {
+        if (peerRef.current || !channelRef.current) {
+          clearInterval(retryIntervalRef.current);
+          retryIntervalRef.current = null;
+          return;
+        }
+        channelRef.current.send({
+          type: "broadcast",
+          event: "guest_signal",
+          payload: {
+            streamId,
+            kind: "guest_join",
+            from: user.id,
+            username: usernameRef.current,
+          },
+        }).catch((error) => {
+          clearInterval(retryIntervalRef.current);
+          retryIntervalRef.current = null;
+          setGuestStatus("error");
+          setGuestError(error.message || "Couldn't reach the host.");
+        });
+      }, 3000);
+      joinTimeoutRef.current = setTimeout(() => {
+        clearInterval(retryIntervalRef.current);
+        retryIntervalRef.current = null;
+        joinTimeoutRef.current = null;
+        if (!peerRef.current && channelRef.current) {
+          localStreamRef.current?.getTracks().forEach((track) => track.stop());
+          localStreamRef.current = null;
+          setGuestStatus("error");
+          setGuestError("The host isn't responding yet. You can try joining again.");
+        }
+      }, 20000);
+    } catch (error) {
+      clearInterval(retryIntervalRef.current);
+      clearTimeout(joinTimeoutRef.current);
+      retryIntervalRef.current = null;
+      joinTimeoutRef.current = null;
+      localStreamRef.current?.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+      setGuestStatus("accepted");
+      setGuestError(error.message || "Camera and microphone access is required to join.");
+      throw error;
+    }
+  }, [guestStatus, streamId]);
+
+  const stopGuest = useCallback(async () => {
+    const channel = channelRef.current;
+    const user = userRef.current;
+    clearInterval(retryIntervalRef.current);
+    clearTimeout(joinTimeoutRef.current);
+    retryIntervalRef.current = null;
+    joinTimeoutRef.current = null;
+    if (channel && user) {
+      try {
+        await channel.send({
+          type: "broadcast",
+          event: "guest_signal",
+          payload: { streamId, kind: "guest_end", from: user.id, to: remoteHostRef.current },
+        });
+      } catch (error) {
+        console.warn("Couldn't notify the host that the guest left:", error);
+      }
+    }
+    peerRef.current?.close();
+    peerRef.current = null;
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    localStreamRef.current = null;
+    setGuestStatus("ended");
+  }, [streamId]);
+
+  const setGuestTrackEnabled = useCallback((kind, enabled) => {
+    const tracks = kind === "audio"
+      ? localStreamRef.current?.getAudioTracks()
+      : localStreamRef.current?.getVideoTracks();
+    tracks?.forEach((track) => {
+      track.enabled = enabled;
+    });
+  }, []);
+
+  const resetGuest = useCallback(() => {
+    if (peerRef.current || localStreamRef.current) return;
+    setGuestStatus("idle");
+    setGuestError("");
+  }, []);
+
+  return {
+    guests,
+    guestStatus,
+    guestError,
+    localGuestStream: localStreamRef.current,
+    approveGuest,
+    removeGuest,
+    startGuest,
+    stopGuest,
+    setGuestTrackEnabled,
+    resetGuest,
+  };
+}
+
 /* ---------- Live camera/audio transport (WebRTC + Supabase signaling) ---------- */
 const LIVE_ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
