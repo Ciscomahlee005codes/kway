@@ -15,6 +15,7 @@ import MpaImg from "../../assets/Mpa_AI2.png";
 import MpaImg2 from "../../assets/Mpa_AI22.png";
 import VoiceNotePlayer from "./VoiceNotePlayer";
 import { getMpAResponse } from "../../services/mpaService";
+import { useLanguage } from "../../Context/LanguageContext";
 
 const ChatWindow = ({
   lastSeen,
@@ -39,6 +40,7 @@ const ChatWindow = ({
   handleReactionClick,
 }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
@@ -151,7 +153,7 @@ const highlightMatch = (text) => {
   // ✅ Helper: get last N messages from current chat as context string
   const getChatContext = (n = 10) => {
     const msgs = activeChat?.messages?.slice(-n) || [];
-    if (msgs.length === 0) return "No conversation yet.";
+    if (msgs.length === 0) return t("noConversationYet");
     return msgs
       .map(m => `${m.sender === "you" ? "Me" : activeChat?.name}: ${m.content}`)
       .join("\n");
@@ -441,15 +443,15 @@ useEffect(() => {
           <div className="empty-logo">
             <img src={KwayLogo} alt="Kway Logo" className="logo-img" />
           </div>
-          <h2 className="empty-title">Welcome to <span>Kway</span></h2>
+          <h2 className="empty-title">{t("welcomeTo")} <span>Kway</span></h2>
           <p className="empty-desc">
-            Connect with friends using usernames, not just phone numbers.
+            {t("connectWithUsernames")}
           </p>
           <div className="empty-actions">
-            <button onClick={() => navigate("/linkup")}>🔍 Find People</button>
-            <button onClick={() => navigate("/profile")}>👤 Update Profile</button>
+            <button onClick={() => navigate("/linkup")}>🔍 {t("findPeople")}</button>
+            <button onClick={() => navigate("/profile")}>👤 {t("updateProfile")}</button>
           </div>
-          <small className="empty-footer">Your messages are private & secure 🔒</small>
+          <small className="empty-footer">{t("privateMessagesSecure")} 🔒</small>
         </div>
       </div>
     );
@@ -467,7 +469,7 @@ useEffect(() => {
         autoFocus
         type="text"
         className="chat-search-input"
-        placeholder="Search messages..."
+        placeholder={t("searchMessages")}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onKeyDown={(e) => {
@@ -522,9 +524,9 @@ useEffect(() => {
         )}
         <h3>{activeChat.name}</h3>
         {isTyping ? (
-          <p className="typing-indicator">{activeChat.name} is typing...</p>
+          <p className="typing-indicator">{activeChat.name} {t("isTyping")}</p>
         ) : isOnline && !isAIChat ? (
-          <p className="online-indicator"><span className="status-dot online" /> Online</p>
+          <p className="online-indicator"><span className="status-dot online" /> {t("online")}</p>
         ) : !isAIChat ? (
           <p className="last-seen-indicator">{formatLastSeen(lastSeen)}</p>
         ) : null}
@@ -545,10 +547,10 @@ useEffect(() => {
               <p onClick={() => {
                 if (isAIChat) navigate("/mpa-profile");
                 else navigate(`/user-profile/${activeChat.id}`);
-              }}>View contact</p>
-              <p onClick={() => { setShowChatDropdown(false); setShowSearch(true); }}>Search</p>
-              <p>Mute notifications</p>
-              <p className="danger">Block</p>
+              }}>{t("viewContact")}</p>
+              <p onClick={() => { setShowChatDropdown(false); setShowSearch(true); }}>{t("search")}</p>
+              <p>{t("muteNotifications")}</p>
+              <p className="danger">{t("block")}</p>
             </div>
           )}
         </div>
@@ -645,7 +647,7 @@ useEffect(() => {
           ))}
           <input
             className="media-caption-input"
-            placeholder="Add a caption..."
+            placeholder={t("addCaption")}
             value={mediaCaption}
             onChange={(e) => setMediaCaption(e.target.value)}
           />
@@ -662,7 +664,7 @@ useEffect(() => {
           <textarea
             rows={1}
             className="chat-textarea"
-            placeholder="Type a message"
+            placeholder={t("typeMessage")}
             value={newMessage}
             onChange={(e) => {
               setNewMessage(e.target.value);
@@ -730,7 +732,7 @@ useEffect(() => {
               <div className="mpa-header">
                 <div className="mpa-title">
                   <img src={MpaImg2} alt="" />
-                  <span>Mp.A Assistant</span>
+                  <span>{t("mpaAssistant")}</span>
                 </div>
                 <button onClick={() => setShowMPA(false)}>✕</button>
               </div>
@@ -738,19 +740,19 @@ useEffect(() => {
               {/* ✅ SMART BUTTONS — now actually call Groq */}
               <div className={`mpa-actions ${mpaMode === "answer" ? "hidden" : ""}`}>
                 <button onClick={handleSuggestReply} className="mpa2-btn">
-                  💬 Suggest replies
+                  💬 {t("suggestReplies")}
                 </button>
                 <button onClick={handleRewrite} className="mpa2-btn">
-                  ✨ Rewrite message
+                  ✨ {t("rewriteMessage")}
                 </button>
                 <button onClick={handleFixGrammar} className="mpa2-btn">
-                  ✔ Fix grammar
+                  ✔ {t("fixGrammar")}
                 </button>
                 <button onClick={handleMakeShorter} className="mpa2-btn">
-                  ✂️ Make it shorter
+                  ✂️ {t("makeShorter")}
                 </button>
                 <button onClick={handleMakeProfessional} className="mpa2-btn">
-                  💼 Make it professional
+                  💼 {t("makeProfessional")}
                 </button>
               </div>
 
@@ -777,7 +779,7 @@ useEffect(() => {
   <p key={i} className="mpa-line">{paragraph}</p>
 ))}
                     <button className="mpa-use-btn" onClick={useResult}>
-                      Use this ↗
+                      {t("useThis")}
                     </button>
                   </div>
                 )}
@@ -787,7 +789,7 @@ useEffect(() => {
               <div className="mpa-custom">
                 <textarea
                 className="mpa-input"
-                  placeholder="Ask Mp.A anything..."
+                  placeholder={t("askMpaAnything")}
                   value={mpaInput}
                   onChange={(e) => setMpaInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -798,7 +800,7 @@ useEffect(() => {
 }}
                 />
                 <button onClick={handleCustomAsk} disabled={mpaLoading}>
-                  {mpaLoading ? "..." : "Ask"}
+                  {mpaLoading ? "..." : t("ask")}
                 </button>
               </div>
 

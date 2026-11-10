@@ -8,6 +8,7 @@ import { FaSmile } from "react-icons/fa";
 import TestimonialModal from "../TestimonialModal/TestimonialModal";
 import "../TestimonialModal/TestimonialModal.css";
 import { supabase } from "../../supabase";
+import { useLanguage } from "../../Context/LanguageContext";
 
 const ChatList = ({
   typingMap = {},
@@ -39,6 +40,7 @@ useEffect(() => {
 }, []);
 
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const filteredChats = useMemo(() => {
     if (!searchTerm) return chats;
@@ -75,7 +77,7 @@ useEffect(() => {
               <input
                 autoFocus
                 className="mini-search-input"
-                placeholder="Search users, chats..."
+                placeholder={t("searchUsersChats")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onBlur={() => {
@@ -98,10 +100,10 @@ useEffect(() => {
 
             {showSidebarDropdown && (
               <div className="dropdown-menu animated-dropdown">
-                <NavLink to="/settings/help">Help & Support</NavLink>
-                <NavLink to="/settings">Settings</NavLink>
-                <NavLink to="/profile">Profile</NavLink>
-                <NavLink to="/saved">Starred Messages</NavLink>
+                <NavLink to="/settings/help">{t("helpSupport")}</NavLink>
+                <NavLink to="/settings">{t("navSettings")}</NavLink>
+                <NavLink to="/profile">{t("navProfile")}</NavLink>
+                <NavLink to="/saved">{t("starredMessages")}</NavLink>
               </div>
             )}
           </div>
@@ -118,26 +120,25 @@ useEffect(() => {
       <div className="empty-icon"><img src={KwayLogo} alt="Kway Logo" className="logo-img" /></div>
 
       <h3>
-        Welcome to <span>Kway</span>
+        {t("welcomeTo")} <span>Kway</span>
       </h3>
 
       <p>
-        No chats yet. Link up with friends using
-        usernames, not just phone numbers.
+        {t("noChatsYet")}
       </p>
 
       <div className="empty-actions">
         <NavLink to="/linkup">
-          <button>  🔍 Find People </button>
+          <button>  🔍 {t("findPeople")} </button>
         </NavLink>
 
         <NavLink to="/profile">
-          <button>👤 Setup Profile</button>
+          <button>👤 {t("setupProfile")}</button>
         </NavLink>
       </div>
 
       <small>
-        Your messages are private & secure 🔒
+        {t("privateMessagesSecure")} 🔒
       </small>
 
     </div>
@@ -194,27 +195,27 @@ setActiveChat({
 </div>
 
         <div className="chat-info">
-  <h4>{chat?.name || "Unknown"}</h4>
+  <h4>{chat?.name || t("unknownUser")}</h4>
   {typingMap[chat.id] ? (
     <p className="chatlist-typing">
       <span className="chatlist-typing-dot" />
       <span className="chatlist-typing-dot" />
       <span className="chatlist-typing-dot" />
-      typing
+      {t("typing")}
     </p>
   ) : (
     <p>
       {chat?.lastMessageType === "image"
-        ? "📷 Photo"
+        ? `📷 ${t("photo")}`
         : chat?.lastMessageType === "video"
-        ? "🎬 Video"
+        ? `🎬 ${t("video")}`
         : chat?.lastMessageType === "audio"
-        ? "🎤 Voice message"
+        ? `🎤 ${t("voiceMessage")}`
         : chat?.lastMessageType === "status_reply"
-        ? "↩️ Replied to your status"
+        ? `↩️ ${t("repliedToStatus")}`
         : chat?.lastMessage
         ? chat.lastMessage.slice(0, 30)
-        : "No messages yet"}
+        : t("noMessagesYet")}
     </p>
   )}
 </div>

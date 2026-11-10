@@ -9,6 +9,7 @@ import { UserAuth } from "../../Context/AuthContext";
 import { PiEyesBold } from "react-icons/pi";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./Status.css";
 
 const bg_color = ["#25d366", "#34b7f1", "#ffeb3b", "#f44336", "#9c27b0"];
@@ -36,6 +37,7 @@ const Status = () => {
 const [showViewers, setShowViewers] = useState(false);
   const colors = ["#25d366","#34b7f1","#ff9800","#e91e63","#9c27b0"];
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
 
  useEffect(() => {
@@ -540,7 +542,7 @@ const handlePost = async () => {
 
       {/* HEADER */}
       <div className="post-header">
-        <h3>Create Status</h3>
+        <h3>{t("createStatus")}</h3>
         <IoClose onClick={() => {
           setShowPostModal(false);
           setPostType(null);
@@ -552,14 +554,14 @@ const handlePost = async () => {
         <div className="type-grid modern">
           <div className="type-card text" onClick={() => setPostType("text")}>
             <MdEdit />
-            <h4>Text Status</h4>
-            <p>Share your thoughts</p>
+            <h4>{t("textStatus")}</h4>
+            <p>{t("shareThoughts")}</p>
           </div>
 
           <div className="type-card media" onClick={() => setPostType("media")}>
             <FiCamera />
-            <h4>Photo / Video</h4>
-            <p>Share moments</p>
+            <h4>{t("photoVideo")}</h4>
+            <p>{t("shareMoments")}</p>
           </div>
         </div>
       )}
@@ -568,7 +570,7 @@ const handlePost = async () => {
       {postType === "text" && (
         <>
           <textarea
-            placeholder="What's on your mind?"
+            placeholder={t("statusWhatsOnMind")}
             className="post-textarea modern"
             value={postContent}
             onChange={(e) => setPostContent(e.target.value)}
@@ -603,7 +605,7 @@ const handlePost = async () => {
            <div className="cam-container">
              <FiCamera className="cam-2"/>
            </div>
-            <p>Tap to upload</p>
+            <p>{t("tapToUpload")}</p>
             <input type="file" accept="image/*,video/*" onChange={handleFileChange} hidden />
           </label>
 
@@ -618,7 +620,7 @@ const handlePost = async () => {
           )}
 
           <textarea
-            placeholder="Add a caption..."
+            placeholder={t("addCaption")}
             className="post-textarea modern"
             value={postContent}
             onChange={(e) => setPostContent(e.target.value)}
@@ -630,10 +632,10 @@ const handlePost = async () => {
       {postType && (
         <div className="post-actions modern">
           <button className="cancel" onClick={() => setPostType(null)}>
-            Back
+            {t("back")}
           </button>
           <button className="send" onClick={handlePost}>
-            Post
+            {t("postStatus")}
           </button>
         </div>
       )}
@@ -646,15 +648,15 @@ const handlePost = async () => {
 
       {/* Header */}
       <div className="status-header">
-        <h2 className="status-title">Status</h2>
+        <h2 className="status-title">{t("statusTitle")}</h2>
         <div className="dropdown-wrapper">
           <BsThreeDotsVertical className="status-menu" onClick={() => setDropdownOpen(!dropdownOpen)} />
           {dropdownOpen && (
             <div className="dropdown-menu">
-              <p>Refresh</p>
-              <p>Status Privacy</p>
-              <p>Clear My Status</p>
-              <p onClick={() => { navigate("/settings"); setDropdownOpen(false); }} >Settings</p>
+              <p>{t("refresh")}</p>
+              <p>{t("statusPrivacy")}</p>
+              <p>{t("clearMyStatus")}</p>
+              <p onClick={() => { navigate("/settings"); setDropdownOpen(false); }} >{t("navSettings")}</p>
             </div>
           )}
         </div>
@@ -667,7 +669,7 @@ const handlePost = async () => {
   <FiPlus className="add-icon" />
 </div>
         <div className="status-text">
-          <h3>My Status</h3>
+          <h3>{t("myStatus")}</h3>
           <p>
 {
 statuses.find(s => s.id === session.user.id)
@@ -676,14 +678,14 @@ statuses.find(
 s => s.id === session.user.id
 )?.stories?.[0]?.created_at
 )
-: "Tap to add status update"
+: t("tapToAddStatus")
 }
 </p>
         </div>
       </div>
 
       {/* Recent Updates */}
-      <h4 className="section-title">Recent updates</h4>
+      <h4 className="section-title">{t("recentUpdates")}</h4>
       <div className="status-list">
         {statuses.map((s, index) => (
           <div className="status-item" key={s.id} onClick={() => openStatus(index)}>
@@ -785,7 +787,7 @@ onPointerUp={() => {
               <div className="status-bottom-ui">
      <div className="reply-box">
    <input
-  placeholder="Reply..."
+  placeholder={t("reply")}
   value={reply}
   onFocus={() => setPaused(true)}
   onBlur={() => setPaused(false)}
@@ -798,7 +800,7 @@ onPointerUp={() => {
     if (!reply.length) setPaused(false);
   }}
 />
-  <button onClick={sendReply}>Send</button>
+  <button onClick={sendReply}>{t("send")}</button>
            </div>
 
           {statuses[activeUserIndex].id === session.user.id && (

@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../supabase";
 import { FaTimes, FaCheck, FaSearch } from "react-icons/fa";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./AddMemberModal.css";
 
 const AddMemberModal = ({ groupId, existingMembers = [], onClose, onAdded }) => {
+  const { t } = useLanguage();
 
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -107,7 +109,7 @@ const AddMemberModal = ({ groupId, existingMembers = [], onClose, onAdded }) => 
           onClick={onClose}
         />
 
-        <h3>Add Members ({selected.length})</h3>
+        <h3>{t("addMembers")} ({selected.length})</h3>
 
 
         {/* SEARCH INPUT */}
@@ -117,7 +119,7 @@ const AddMemberModal = ({ groupId, existingMembers = [], onClose, onAdded }) => 
           <FaSearch />
 
           <input
-            placeholder="Search users..."
+            placeholder={t("searchUsers")}
             value={search}
             onChange={(e)=>setSearch(e.target.value)}
           />
@@ -131,12 +133,12 @@ const AddMemberModal = ({ groupId, existingMembers = [], onClose, onAdded }) => 
 
           {loading ? (
 
-            <p className="empty-text">Loading users...</p>
+            <p className="empty-text">{t("loadingUsers")}</p>
 
           ) : filteredUsers.length === 0 ? (
 
             <p className="empty-text">
-              No users available to add
+              {t("noUsersAvailableToAdd")}
             </p>
 
           ) : (
@@ -194,7 +196,7 @@ const AddMemberModal = ({ groupId, existingMembers = [], onClose, onAdded }) => 
           disabled={!selected.length}
           onClick={addMembers}
         >
-          Add Members <FaCheck />
+          {t("addMembers")} <FaCheck />
         </button>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { IoMdAdd } from "react-icons/io";
 import { FaTimes, FaCommentDots } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { PiEyesFill } from "react-icons/pi";
+import { useLanguage } from "../../Context/LanguageContext";
 
 
 const LinkUp = () => {
@@ -15,6 +16,7 @@ const LinkUp = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState(null); 
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
 
   const { session } = UserAuth();
@@ -54,12 +56,12 @@ const LinkUp = () => {
     <div className="contact-list-wrapper">
       {/* Header */}
       <div className="contact-header">
-        <h2>Link Ups</h2>
+        <h2>{t("navLinkUp")}</h2>
         <div className="contact-search">
           <FiSearch className="search-icon" />
           <input
             type="text"
-            placeholder="Search by name or username..."
+            placeholder={t("searchNameOrUsername")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -90,7 +92,9 @@ const LinkUp = () => {
             </div>
           ))
         ) : (
-          <p className="no-contacts">{loading ? "Loading..." : "No users found 😕"}</p>
+          <p className="no-contacts">
+            {loading ? t("loading") : t("noUsersFound")}
+          </p>
         )}
       </div>
 
@@ -125,7 +129,7 @@ const LinkUp = () => {
 
             <div className="profile-actions">
               <button className="action-btn2" onClick={() => navigate(`/user-profile/${selectedProfile.id}`)}>
-                <PiEyesFill /> View Profile
+                <PiEyesFill /> {t("viewProfile")}
               </button>
                <button
   className="action-btn2"
@@ -133,7 +137,7 @@ const LinkUp = () => {
     navigate(`/chat/${selectedProfile.id}`);
   }}
 >
-  <FaCommentDots /> Chat
+  <FaCommentDots /> {t("chat")}
 </button>
             </div>
           </div>

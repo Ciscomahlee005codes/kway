@@ -8,6 +8,7 @@ import KwayLogo from "../../assets/kway-logo-1.png";
 import "./Auth.css";
 import { UserAuth } from "../../Context/AuthContext";
 import { supabase } from "../../supabase";
+import PeopleCluster from "./PeopleCluster";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -252,6 +253,7 @@ if (user.email === "vraphael261@gmail.com") {
       Connect freely. Chat privately.
       Your conversations, your control.
     </p>
+    <PeopleCluster />
   </div>
 </div>
 

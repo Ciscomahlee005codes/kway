@@ -151,7 +151,7 @@ const Profile = () => {
            {profile.photo ? (
   <img
     src={profile.photo}
-    alt="profile"
+    alt={t("profilePhotoAlt")}
     onClick={() => setShowPreview(true)}
     style={{ cursor: "pointer" }}
   />
@@ -167,7 +167,7 @@ const Profile = () => {
             className="create-avatar-button"
             onClick={() => setShowAvatarCreator(true)}
           >
-            {profile.photo ? "Create an avatar instead" : "Create your own avatar"}
+            {profile.photo ? t("createAvatarInstead") : t("createYourOwnAvatar")}
           </button>
 
           <h2 className="profile-name">
@@ -244,7 +244,7 @@ const Profile = () => {
 
       <img
         src={profile.photo}
-        alt="preview"
+        alt={t("profilePhotoAlt")}
         className="preview-image"
       />
 
@@ -253,7 +253,7 @@ const Profile = () => {
         download
         className="download-btn"
       >
-        Download Image
+        {t("downloadImage")}
       </a>
     </motion.div>
   </motion.div>

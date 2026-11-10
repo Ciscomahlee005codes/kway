@@ -7,28 +7,31 @@ import { FaUsers, FaUserCircle } from "react-icons/fa";
 import { GiThreeFriends } from "react-icons/gi";
 import { IoSettingsSharp } from "react-icons/io5";
 import { NavLink, useLocation } from 'react-router-dom';
+import { useLanguage } from "../../Context/LanguageContext";
 
 const Sidebar = () => {
+  const { t } = useLanguage();
+
   // "Live" (Channels route) — permanent unique red feature on desktop,
   // and the default center bubble on mobile when no other page is active
   const topLinks = [
-    { icon: <BsFillChatSquareTextFill />, label: "Chats", link: "/chat" },
-    { icon: <HiOutlineStatusOnline />, label: "Status", link: "/status" },
-    { icon: <MdLiveTv />, label: "Live", link: "/channels", isLive: true },
-    { icon: <FaUsers />, label: "Groups", link: "/groups" },
-    { icon: <GiThreeFriends />, label: "LinkUp", link: "/linkup" },
+    { icon: <BsFillChatSquareTextFill />, label: "navChats", link: "/chat" },
+    { icon: <HiOutlineStatusOnline />, label: "navStatus", link: "/status" },
+    { icon: <MdLiveTv />, label: "navLive", link: "/channels", isLive: true },
+    { icon: <FaUsers />, label: "navGroups", link: "/groups" },
+    { icon: <GiThreeFriends />, label: "navLinkUp", link: "/linkup" },
   ];
 
   const bottomLinks = [
-    { icon: <FaUserCircle />, label: "Profile", link: "/profile" },
-    { icon: <IoSettingsSharp />, label: "Settings", link: "/settings" },
+    { icon: <FaUserCircle />, label: "navProfile", link: "/profile" },
+    { icon: <IoSettingsSharp />, label: "navSettings", link: "/settings" },
   ];
 
   const { pathname } = useLocation();
 
   // ✅ Mobile bottom nav = topLinks + Profile only (Settings stays desktop-only)
   const mobileSourceLinks = useMemo(
-    () => [...topLinks, ...bottomLinks.filter((l) => l.label !== "Settings")],
+    () => [...topLinks, ...bottomLinks.filter((l) => l.label !== "navSettings")],
     []
   );
 
@@ -70,7 +73,7 @@ const Sidebar = () => {
               ) : (
                 link.icon
               )}
-              <span className="sidebar-text">{link.label}</span>
+              <span className="sidebar-text">{t(link.label)}</span>
             </NavLink>
           ))}
         </div>
@@ -85,7 +88,7 @@ const Sidebar = () => {
               }
             >
               {link.icon}
-              <span className="sidebar-text">{link.label}</span>
+              <span className="sidebar-text">{t(link.label)}</span>
             </NavLink>
           ))}
         </div>
@@ -108,7 +111,7 @@ const Sidebar = () => {
             ) : (
               link.icon
             )}
-            <span>{link.label}</span>
+            <span>{t(link.label)}</span>
           </NavLink>
         ))}
       </div>

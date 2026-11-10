@@ -165,28 +165,28 @@ const handleLogout = async () => {
     className="logout-btn"
     onClick={() => setShowLogout(true)}
   >
-    Logout
+      {t("logout")}
   </button>
 </div>
 {showLogout && (
   <div className="logout-modal-overlay">
     <div className="logout-modal">
-      <h3>Confirm Logout</h3>
-      <p>Are you sure you want to logout from Kway?</p>
+      <h3>{t("confirmLogout")}</h3>
+      <p>{t("logoutPrompt")}</p>
 
       <div className="logout-actions">
         <button
           className="cancel-btn"
           onClick={() => setShowLogout(false)}
         >
-          Cancel
+          {t("cancel")}
         </button>
 
         <button
           className="confirm-btn"
           onClick={handleLogout}
         >
-          Logout
+          {t("logout")}
         </button>
       </div>
     </div>

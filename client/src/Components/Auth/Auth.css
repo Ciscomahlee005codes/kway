@@ -541,8 +541,7 @@ input:focus {
   .card-3 { left: 10%; }
 }
 
-/* Tablet portrait: stack layout, banner becomes a top hero.
-   Floating cards flow inline under the banner text instead of vanishing. */
+/* Tablet portrait: stack layout and keep the hero compact. */
 @media (max-width: 900px) {
   .auth-container { flex-direction: column; }
 
@@ -550,33 +549,13 @@ input:focus {
     flex: none;
     flex-direction: column;
     height: auto;
-    min-height: 300px;
-    padding: 2rem 1.5rem 1.75rem;
-    gap: 1.25rem;
+    min-height: 0;
+    padding: 1.75rem 1.5rem 1.25rem;
   }
 
   .banner-content { order: 1; }
 
-  .floating-stack {
-    order: 2;
-    position: static;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    pointer-events: none;
-  }
-
-  .float-card {
-    position: static;
-    transform: none !important;
-    animation: none;
-    max-width: none;
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-  .float-card p { max-width: 140px; }
+  .floating-stack { display: none; }
 
   .auth-card {
     flex: 1;
@@ -587,8 +566,8 @@ input:focus {
 /* Mobile landscape */
 @media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
   .auth-container { flex-direction: row; }
-  .auth-banner { flex: 1; flex-direction: column; height: 100vh; min-height: 100dvh; }
-  .auth-card { flex: 1; height: 100vh; height: 100dvh; overflow-y: auto; }
+  .auth-banner { flex: 1; flex-direction: column; height: auto; min-height: 100dvh; }
+  .auth-card { flex: 1; height: auto; min-height: 100dvh; overflow: visible; }
   .banner-content h1 { font-size: 1.8rem; }
   .floating-stack { display: none; } /* genuinely no vertical room here */
 }
@@ -596,26 +575,26 @@ input:focus {
 /* Standard mobile portrait */
 @media (max-width: 600px) {
   .auth-banner {
-    min-height: 260px;
-    padding: 1.75rem 1.25rem 1.5rem;
+    min-height: 0;
+    padding: 1.5rem 1.25rem 1rem;
   }
   .auth-card {
     padding: 1.5rem 1.25rem 2rem;
   }
-  .logo-circle { margin-bottom: 0.7rem; }
+  .logo-circle {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 0.6rem;
+  }
+  .logo-img { width: 30px; }
   .banner-eyebrow { font-size: 9px; padding: 4px 10px; }
   .banner-content h1 { margin-bottom: 0.5rem; }
   .banner-content p { max-width: 300px; margin: 0 auto; }
-
-  .float-card { padding: 7px 10px; font-size: 11px; }
-  .float-card p { max-width: 110px; }
-  .card-live { font-size: 9px; padding: 2px 6px; }
 }
 
-/* Small phones: trim to 2 chips so it never wraps to 3 crowded rows */
+/* Small phones */
 @media (max-width: 380px) {
-  .auth-banner { padding: 1.5rem 1rem 1.25rem; min-height: 230px; }
-  .card-3 { display: none; }
+  .auth-banner { padding: 1.25rem 1rem 0.9rem; }
   .form-box h2 { font-size: 1.35rem; }
   .toggle-password { right: 10px; }
 }
@@ -624,7 +603,6 @@ input:focus {
   .banner-content h1 { font-size: 1.6rem; }
   .banner-content p { font-size: 0.8rem; }
   .login-btn { font-size: 0.92rem; padding: 0.75rem; }
-  .float-card p { max-width: 90px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

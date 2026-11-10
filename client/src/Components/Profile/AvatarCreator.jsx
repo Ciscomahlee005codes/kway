@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FaCheck } from "react-icons/fa";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./AvatarCreator.css";
 
 const skinTones = [
@@ -72,6 +73,7 @@ const makeAvatar = ({ skin, hair, shirt, background, hairstyle }) => {
 };
 
 const AvatarCreator = ({ onClose, onSave }) => {
+  const { t } = useLanguage();
   const [options, setOptions] = useState({
     skin: skinTones[2].value,
     hair: hairColors[0].value,
@@ -105,15 +107,15 @@ const AvatarCreator = ({ onClose, onSave }) => {
       >
         <header className="avatar-creator-header">
           <div>
-            <span className="avatar-creator-eyebrow">MAKE IT YOU</span>
-            <h2 id="avatar-creator-title">Create your avatar</h2>
-            <p>No photo needed. Make a look that feels like you.</p>
+            <span className="avatar-creator-eyebrow">{t("avatarEyebrow")}</span>
+            <h2 id="avatar-creator-title">{t("avatarTitle")}</h2>
+            <p>{t("avatarDescription")}</p>
           </div>
           <button
             type="button"
             className="avatar-creator-close"
             onClick={onClose}
-            aria-label="Close avatar creator"
+            aria-label={t("avatarClose")}
           >
             ×
           </button>
@@ -121,13 +123,13 @@ const AvatarCreator = ({ onClose, onSave }) => {
 
         <div className="avatar-creator-body">
           <div className="avatar-creator-preview">
-            <img src={makeAvatar(options)} alt="Preview of your custom avatar" />
-            <span>YOUR AVATAR</span>
+            <img src={makeAvatar(options)} alt={t("avatarPreviewAlt")} />
+            <span>{t("avatarPreview")}</span>
           </div>
 
           <div className="avatar-creator-options">
             <fieldset className="avatar-option-group">
-              <legend>Skin tone</legend>
+              <legend>{t("avatarSkinTone")}</legend>
               <div className="avatar-swatches">
                 {skinTones.map((tone) => (
                   <button
@@ -146,7 +148,7 @@ const AvatarCreator = ({ onClose, onSave }) => {
             </fieldset>
 
             <fieldset className="avatar-option-group">
-              <legend>Hair style</legend>
+              <legend>{t("avatarHairStyle")}</legend>
               <div className="avatar-style-options">
                 {hairstyles.map((style) => (
                   <button
@@ -156,16 +158,16 @@ const AvatarCreator = ({ onClose, onSave }) => {
                     aria-pressed={options.hairstyle === style}
                     onClick={() => updateOption("hairstyle", style)}
                   >
-                    {style}
+                    {t(`avatarHairStyle${style}`)}
                   </button>
                 ))}
               </div>
             </fieldset>
 
             {[
-              { title: "Hair color", key: "hair", choices: hairColors },
-              { title: "Outfit", key: "shirt", choices: shirtColors },
-              { title: "Background", key: "background", choices: backgrounds },
+              { title: t("avatarHairColor"), key: "hair", choices: hairColors },
+              { title: t("avatarOutfit"), key: "shirt", choices: shirtColors },
+              { title: t("avatarBackground"), key: "background", choices: backgrounds },
             ].map(({ title, key, choices }) => (
               <fieldset className="avatar-option-group" key={key}>
                 <legend>{title}</legend>
@@ -196,7 +198,7 @@ const AvatarCreator = ({ onClose, onSave }) => {
             onClick={onClose}
             disabled={saving}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -204,7 +206,7 @@ const AvatarCreator = ({ onClose, onSave }) => {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? "Saving..." : "Use this avatar"}
+            {saving ? t("avatarSaving") : t("avatarUse")}
           </button>
         </footer>
       </section>

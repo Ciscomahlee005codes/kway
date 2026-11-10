@@ -8,6 +8,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { FiSend, FiSmile } from "react-icons/fi";
 import { FaMicrophoneAlt, FaCameraRetro } from "react-icons/fa";
 import VoiceNotePlayer from "../Chats/VoiceNotePlayer";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./GroupChat.css";
 
 const GroupChat = () => {
@@ -34,6 +35,7 @@ const typingChannelRef = useRef(null);
 const mediaRecorderRef = useRef(null);
 const audioChunksRef = useRef([]);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const bottomRef = useRef();
 
@@ -602,19 +604,19 @@ messages.forEach(m => {
       <div className="dropdown-menu">
 
         <button onClick={() => navigate(`/group-info/${id}`)}>
-          View Group Info
+          {t("viewGroupInfo")}
         </button>
 
         <button onClick={() => {
   setSearchMode(true);
   setShowMenu(false);
 }}>
-  Search Messages
+  {t("searchMessages")}
 </button>
 
-        <button>Mute Notifications</button>
+        <button>{t("muteNotifications")}</button>
 
-        <button>Leave Group</button>
+        <button>{t("leaveGroup")}</button>
 
       </div>
     )}
@@ -626,7 +628,7 @@ messages.forEach(m => {
 {searchMode && (
   <div className="search-bar-modern">
     <input
-      placeholder="Search messages..."
+      placeholder={t("searchMessages")}
       value={searchText}
       onChange={(e)=>setSearchText(e.target.value)}
     />
@@ -848,7 +850,7 @@ i !== index
 
 <input
 className="media-caption-input"
-placeholder="Add a caption..."
+placeholder={t("addCaption")}
 value={mediaCaption}
 onChange={e =>
 setMediaCaption(
@@ -863,8 +865,8 @@ e.target.value
 {recording && (
   <div className="voice-recording-ui">
     <span className="recording-dot"></span>
-    Recording... {recordTime}s 🎤
-Tap mic again to send
+    {t("voiceRecording")} {recordTime}s 🎤
+    {t("tapMicToSend")}
   </div>
 )}
 <span className="typing-dots">
@@ -904,7 +906,7 @@ onChange={handleMediaSelect}
 </label>
 
 <input
-placeholder="Type a message..."
+placeholder={t("typeMessage")}
 value={newMessage}
 onChange={(e) => {
 setNewMessage(e.target.value);

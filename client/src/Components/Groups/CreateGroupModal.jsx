@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import { FaTimes, FaArrowRight } from "react-icons/fa";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./CreateGroupModal.css";
 
 const CreateGroupModal = ({ onClose, onCreated }) => {
+  const { t } = useLanguage();
   const [step, setStep] = useState(1); // 🔥 STEP CONTROL
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState([]);
@@ -137,12 +139,12 @@ if (memberError) {
         {/* ================= STEP 1 ================= */}
         {step === 1 && (
           <>
-            <h3>Select Members ({selected.length})</h3>
+            <h3>{t("selectMembers")} ({selected.length})</h3>
 
             <div className="search-box">
   <input
     type="text"
-    placeholder="Search users..."
+    placeholder={t("searchUsers")}
     value={search}
     onChange={(e) => setSearch(e.target.value)}
   />
@@ -177,7 +179,7 @@ if (memberError) {
               onClick={() => setStep(2)}
               disabled={selected.length === 0}
             >
-              Next <FaArrowRight />
+              {t("next")} <FaArrowRight />
             </button>
           </>
         )}
@@ -185,7 +187,7 @@ if (memberError) {
         {/* ================= STEP 2 ================= */}
         {step === 2 && (
           <>
-            <h3>New Group</h3>
+            <h3>{t("newGroup")}</h3>
 
             <div className="image-picker">
               <label>
@@ -201,7 +203,7 @@ if (memberError) {
             </div>
 
             <input
-              placeholder="Group name..."
+              placeholder={t("groupNamePlaceholder")}
               value={name}
               onChange={e => setName(e.target.value)}
             />
@@ -211,7 +213,7 @@ if (memberError) {
               onClick={createGroup}
               disabled={loading}
             >
-              {loading ? "Creating..." : "Create Group"}
+              {loading ? t("creatingGroup") : t("createGroup")}
             </button>
           </>
         )}

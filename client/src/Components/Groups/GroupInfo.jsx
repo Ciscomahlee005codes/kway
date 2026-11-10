@@ -3,12 +3,14 @@ import { supabase } from "../../supabase";
 import { useParams, useNavigate } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
 import AddMemberModal from "./AddMemberModal";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./GroupInfo.css";
 
 const GroupInfo = () => {
 
 const { id } = useParams();
 const navigate = useNavigate();
+const { t } = useLanguage();
 
 const [group,setGroup]=useState(null);
 const [members,setMembers]=useState([]);
@@ -137,7 +139,7 @@ fetchMembers();
 
 const changeGroupName = async()=>{
 
-const name = prompt("Enter new group name");
+const name = prompt(t("enterNewGroupName"));
 
 if(!name) return;
 
@@ -195,7 +197,7 @@ return(
 onClick={()=>navigate(`/group/${id}`)}
 />
 
-<h3>Group Info</h3>
+<h3>{t("viewGroupInfo")}</h3>
 
 </div>
 
@@ -253,7 +255,7 @@ onClick={changeGroupName}
 
 <div className="member-count-chip">
 
-{members.length} Members
+{members.length} {t("members")}
 
 </div>
 
@@ -271,7 +273,7 @@ onClick={changeGroupName}
 className="action-btn"
  onClick={() => setShowAddMember(true)}>
 
-Add Member
+{t("addMember")}
 
 </button>
 
@@ -287,7 +289,7 @@ Add Member
 
 <div className="members-header">
 
-Participants
+{t("participants")}
 
 <span>
 
@@ -334,7 +336,7 @@ Participants
 
 <span className="admin-badge">
 
-Admin
+{t("admin")}
 
 </span>
 
@@ -355,7 +357,7 @@ removeMember(member.user_id);
 }}
 >
 
-Remove
+{t("remove")}
 
 </button>
 
@@ -409,7 +411,7 @@ Remove
             navigate(`/user-profile/${selectedMember.user_id}`)
           }
         >
-          👁 View Profile
+          👁 {t("viewProfile")}
         </button>
 
         <button
@@ -418,7 +420,7 @@ Remove
             navigate(`/chat/${selectedMember.user_id}`)
           }
         >
-          💬 Chat
+          💬 {t("chat")}
         </button>
       </div>
     </div>

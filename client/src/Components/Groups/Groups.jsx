@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { supabase } from "../../supabase";
 import { useNavigate } from "react-router-dom";
 import CreateGroupModal from "./CreateGroupModal";
+import { useLanguage } from "../../Context/LanguageContext";
 import "./Groups.css";
 
 const Groups = () => {
@@ -13,6 +14,7 @@ const Groups = () => {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchGroups();
@@ -73,7 +75,7 @@ const groupsWithLastMessage = await Promise.all(
 const senderName = sender?.name || "Someone";
     }
 
-    let previewText = "No messages yet";
+    let previewText = t("noMessagesYet");
 
     if (lastMsg) {
       if (lastMsg.type === "audio")
@@ -90,7 +92,7 @@ const senderName = sender?.name || "Someone";
       ...group,
       lastMessage: lastMsg
         ? `${senderName}: ${previewText}`
-        : "No messages yet",
+        : "",
       time: lastMsg?.created_at
         ? formatToNigeriaTime(lastMsg.created_at)
         : ""
@@ -191,10 +193,10 @@ const formatToNigeriaTime = (timestamp) => {
 
       {/* HEADER */}
       <div className="groups-header">
-        <h2>Groups</h2>
+        <h2>{t("navGroups")}</h2>
 
         <button className="create-btn" onClick={() => setShowModal(true)}>
-          <MdGroupAdd /> New Group
+          <MdGroupAdd /> {t("newGroup")}
         </button>
       </div>
 
@@ -202,7 +204,7 @@ const formatToNigeriaTime = (timestamp) => {
       <div className="groups-search">
         <FaSearch />
         <input
-          placeholder="Search groups..."
+          placeholder={t("searchGroups")}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -226,7 +228,7 @@ const formatToNigeriaTime = (timestamp) => {
 
             <div className="group-info">
               <h3>{group.name}</h3>
-              <p>{group.lastMessage}</p>
+              <p>{group.lastMessage || t("noMessagesYet")}</p>
               <div className="group-meta">
                 <span>{group.time}</span>
               </div>
@@ -240,8 +242,8 @@ const formatToNigeriaTime = (timestamp) => {
       {filtered.length === 0 && (
         <div className="groups-empty">
           <FaUsers />
-          <h3>No Groups Found</h3>
-          <p>Create a new group to start chatting</p>
+          <h3>{t("noGroupsFound")}</h3>
+          <p>{t("createGroupPrompt")}</p>
         </div>
       )}
 
